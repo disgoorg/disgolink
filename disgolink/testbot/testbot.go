@@ -9,7 +9,7 @@ import (
 	"github.com/DisgoOrg/disgo/api"
 	"github.com/DisgoOrg/disgo/api/endpoints"
 	"github.com/DisgoOrg/disgo/api/events"
-	"github.com/DisgoOrg/disgolink"
+	"github.com/DisgoOrg/disgolink/disgolink"
 	"github.com/sirupsen/logrus"
 )
 
