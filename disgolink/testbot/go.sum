@@ -6,6 +6,8 @@ github.com/DisgoOrg/disgolink v0.0.0-20210412071636-40769c7951dd h1:sZFoc1HfCzZ+
 github.com/DisgoOrg/disgolink v0.0.0-20210412071636-40769c7951dd/go.mod h1:HLFQ+kdWIVZxCsvifQrt9yzkQ/SuTCspbDh9tShz+Hw=
 github.com/DisgoOrg/log v1.0.2 h1:qDOmBkB2xnN0sG74dTNKs/qdWekVAJAyVPDASofIWOc=
 github.com/DisgoOrg/log v1.0.2/go.mod h1:KFGKhBQr37d6rxZ7p2bmc8BEmDH8DZbtgdlJDSCsE7I=
+github.com/DisgoOrg/log v1.0.3 h1:IjmZQQu/kuBIui22EdXmxzQGYwcPCJEkXa0Fe6W9fJk=
+github.com/DisgoOrg/log v1.0.3/go.mod h1:KFGKhBQr37d6rxZ7p2bmc8BEmDH8DZbtgdlJDSCsE7I=
 github.com/davecgh/go-spew v1.1.0/go.mod h1:J7Y8YcW2NihsgmVo/mv3lAwl/skON4iLHjSsI+c5H38=
 github.com/davecgh/go-spew v1.1.1 h1:vj9j/u1bqnvCEfJOwUhtlOARqs3+rkHYY13jYWTU97c=
 github.com/davecgh/go-spew v1.1.1/go.mod h1:J7Y8YcW2NihsgmVo/mv3lAwl/skON4iLHjSsI+c5H38=

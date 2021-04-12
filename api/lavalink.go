@@ -8,9 +8,9 @@ type Lavalink interface {
 	Logger() log.Logger
 	AddNode(options NodeOptions)
 	RemoveNode(name string)
-	Link(guildID Snowflake) Link
-	ExistingLink(guildID Snowflake) Link
-	Links() map[Snowflake]Link
+	Player(guildID Snowflake) Player
+	ExistingPlayer(guildID Snowflake) Player
+	Players() map[Snowflake]Player
 	UserID() Snowflake
 	ClientName() string
 	Shutdown()

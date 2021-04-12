@@ -5,7 +5,7 @@ type Stats struct {
 	PlayingPlayers int         `json:"playingPlayers"`
 	Uptime         int         `json:"uptime"`
 	Memory         *Memory     `json:"memory"`
-	Cpu            *Cpu        `json:"cpu"`
+	CPU            *CPU        `json:"cpu"`
 	FrameStats     *FrameStats `json:"frameStats"`
 }
 
@@ -16,7 +16,7 @@ type Memory struct {
 	Reservable int `json:"reservable"`
 }
 
-type Cpu struct {
+type CPU struct {
 	Cores        int `json:"cores"`
 	SystemLoad   int `json:"systemLoad"`
 	LavalinkLoad int `json:"lavalinkLoad"`

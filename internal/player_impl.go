@@ -7,13 +7,32 @@ import (
 )
 
 type PlayerImpl struct {
+	lavalink   api.Lavalink
+	node       api.Node
 	track      *api.Track
 	paused     bool
 	updateTime int
 	position   int
 	filters    *filters.Filters
-	link       api.Link
 	listeners  []player.Listener
+	guildID    api.Snowflake
+	channelID  *api.Snowflake
+}
+
+func (p *PlayerImpl) Lavalink() api.Lavalink {
+	return p.lavalink
+}
+func (p *PlayerImpl) GuildID() api.Snowflake {
+	return p.guildID
+}
+func (p *PlayerImpl) ChannelID() *api.Snowflake {
+	return p.channelID
+}
+func (p *PlayerImpl) Node() api.Node {
+	return p.node
+}
+func (p *PlayerImpl) ChangeNode(node api.Node) {
+	p.node = node
 }
 
 func (p *PlayerImpl) PlayingTrack() *api.Track {
@@ -22,8 +41,8 @@ func (p *PlayerImpl) PlayingTrack() *api.Track {
 func (p *PlayerImpl) PlayTrack(track *api.Track) {
 	p.position = track.Position()
 
-	p.link.Node().Send(&api.OpPlayPlayer{
-		OpPlayerCommand: api.NewPlayerCommand(api.PlayOp, p.link.GuildID()),
+	p.Node().Send(&api.OpPlayPlayer{
+		OpPlayerCommand: api.NewPlayerCommand(api.PlayOp, p.GuildID()),
 		Track:           track.Encode(),
 		StartTime:       p.position,
 		Paused:          p.paused,
@@ -33,8 +52,8 @@ func (p *PlayerImpl) PlayTrack(track *api.Track) {
 func (p *PlayerImpl) StopTrack() {
 	p.track = nil
 
-	p.link.Node().Send(&api.OpStopPlayer{
-		OpPlayerCommand: api.NewPlayerCommand(api.StopOp, p.link.GuildID()),
+	p.Node().Send(&api.OpStopPlayer{
+		OpPlayerCommand: api.NewPlayerCommand(api.StopOp, p.GuildID()),
 	})
 
 }
@@ -42,8 +61,8 @@ func (p *PlayerImpl) SetPaused(paused bool) {
 	if p.paused == paused {
 		return
 	}
-	p.link.Node().Send(&api.OpPausePlayer{
-		OpPlayerCommand: api.NewPlayerCommand(api.PauseOP, p.link.GuildID()),
+	p.Node().Send(&api.OpPausePlayer{
+		OpPlayerCommand: api.NewPlayerCommand(api.PauseOP, p.GuildID()),
 		Paused:          paused,
 	})
 	p.paused = paused
@@ -75,7 +94,4 @@ func (p *PlayerImpl) EmitEvent(playerEvent player.Event) {
 	for _, listener := range p.listeners {
 		listener.OnEvent(playerEvent)
 	}
-}
-func (p *PlayerImpl) Link() api.Link {
-	return p.link
 }

@@ -16,7 +16,7 @@ type LavalinkImpl struct {
 	logger log.Logger
 	userID api.Snowflake
 	nodes  []api.Node
-	links  map[api.Snowflake]api.Link
+	players  map[api.Snowflake]api.Player
 }
 
 func (l *LavalinkImpl) Logger() log.Logger {
@@ -38,18 +38,18 @@ func (l *LavalinkImpl) RemoveNode(name string) {
 		}
 	}
 }
-func (l *LavalinkImpl) Link(guildID api.Snowflake) api.Link {
-	if link, ok := l.links[guildID]; ok {
+func (l *LavalinkImpl) Player(guildID api.Snowflake) api.Player {
+	if link, ok := l.players[guildID]; ok {
 		return link
 	}
 	// create new link
 	return nil
 }
-func (l *LavalinkImpl) ExistingLink(guildID api.Snowflake) api.Link {
-	return l.links[guildID]
+func (l *LavalinkImpl) ExistingPlayer(guildID api.Snowflake) api.Player {
+	return l.players[guildID]
 }
-func (l *LavalinkImpl) Links() map[api.Snowflake]api.Link {
-	return l.links
+func (l *LavalinkImpl) Players() map[api.Snowflake]api.Player {
+	return l.players
 }
 func (l *LavalinkImpl) UserID() api.Snowflake {
 	return l.userID
