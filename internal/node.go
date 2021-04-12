@@ -50,11 +50,5 @@ func (n *Node) Open() error {
 	var err error
 	n.conn, _, err = websocket.DefaultDialer.Dial(u.String(), header)
 
-	go n.listen()
-
 	return err
-}
-
-func (n *Node) listen() {
-
 }
