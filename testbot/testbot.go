@@ -1,4 +1,4 @@
-package testbot
+package main
 
 import (
 	"os"
