@@ -1,7 +1,11 @@
 package api
 
+import (
+	"github.com/DisgoOrg/log"
+)
 
 type Lavalink interface {
+	Logger() log.Logger
 	AddNode(options NodeOptions)
 	RemoveNode(name string)
 	Link(guildID Snowflake) Link

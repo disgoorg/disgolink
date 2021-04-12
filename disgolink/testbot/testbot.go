@@ -35,9 +35,10 @@ func main() {
 		return
 	}
 
-	lavalink := disgolink.NewDisgolink(dgo.SelfUserID())
-	dgo.EventManager().AddEventListeners(lavalink)
-	dgo.SetVoiceDispatchInterceptor(lavalink)
+	dgolink := disgolink.NewDisgolink(logger, dgo.SelfUserID())
+
+	dgo.EventManager().AddEventListeners(dgolink)
+	dgo.SetVoiceDispatchInterceptor(dgolink)
 
 	_, err = dgo.RestClient().SetGuildCommands(dgo.SelfUserID(), guildID, commands...)
 	if err != nil {

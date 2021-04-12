@@ -1,17 +1,26 @@
 package internal
 
-import "github.com/DisgoOrg/disgolink/api"
+import (
+	"github.com/DisgoOrg/disgolink/api"
+	"github.com/DisgoOrg/log"
+)
 
-func NewLavalinkImpl(userID api.Snowflake) api.Lavalink{
+func NewLavalinkImpl(logger log.Logger, userID api.Snowflake) *LavalinkImpl {
 	return &LavalinkImpl{
+		logger: logger,
 		userID: userID,
 	}
 }
 
 type LavalinkImpl struct {
+	logger log.Logger
 	userID api.Snowflake
 	nodes  []api.Node
 	links  map[api.Snowflake]api.Link
+}
+
+func (l *LavalinkImpl) Logger() log.Logger {
+	return l.logger
 }
 
 func (l *LavalinkImpl) AddNode(options api.NodeOptions) {

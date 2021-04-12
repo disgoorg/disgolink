@@ -2,23 +2,10 @@ package disgolink
 
 import (
 	"github.com/DisgoOrg/disgolink/api"
-	"github.com/DisgoOrg/disgolink/discordgolink"
-	"github.com/DisgoOrg/disgolink/disgolink"
-	"github.com/DisgoOrg/disgolink/disgordlink"
+	"github.com/DisgoOrg/disgolink/internal"
+	"github.com/DisgoOrg/log"
 )
 
-func NewLavalink() api.Lavalink {
-	return nil
-}
-
-func NewDisgolink() disgolink.Disgolink {
-	return nil
-}
-
-func NewDisgordlink() disgordlink.Disgordlink {
-	return nil
-}
-
-func NewDiscordgolink() discordgolink.Discordgolink {
-	return nil
+func NewLavalink(logger log.Logger, userID api.Snowflake) api.Lavalink {
+	return internal.NewLavalinkImpl(logger, userID)
 }
