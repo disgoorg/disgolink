@@ -16,3 +16,57 @@ const (
 	ConfigureResumingOp OpType = "configureResuming"
 	FiltersOp           OpType = "filters"
 )
+
+func NewCommand(op OpType) *OpCommand {
+	return &OpCommand{Op: op}
+}
+
+type OpCommand struct {
+	Op      OpType    `json:"op"`
+	GuildID Snowflake `json:"guildId"`
+}
+
+func NewPlayerCommand(op OpType, guildID Snowflake) *OpPlayerCommand {
+	return &OpPlayerCommand{
+		OpCommand: NewCommand(op),
+		GuildID:   guildID,
+	}
+}
+
+type OpPlayerCommand struct {
+	*OpCommand
+	GuildID Snowflake `json:"guildId"`
+}
+
+type EventCommand struct {
+	*OpCommand
+	SessionID string      `json:"sessionId"`
+	Event     interface{} `json:"event"`
+}
+
+type OpPlayPlayer struct {
+	*OpPlayerCommand
+	Track     string `json:"track"`
+	StartTime int    `json:"startTime"`
+	EndTime   int    `json:"endTime"`
+	NoReplace bool   `json:"noReplace"`
+	Paused    bool   `json:"pause"`
+}
+
+type OpDestroyPlayer struct {
+	*OpPlayerCommand
+}
+
+type OpStopPlayer struct {
+	*OpPlayerCommand
+}
+
+type OpPausePlayer struct {
+	*OpPlayerCommand
+	Paused bool `json:"pause"`
+}
+
+type OpSeekPlayer struct {
+	*OpPlayerCommand
+	Position int `json:"position"`
+}

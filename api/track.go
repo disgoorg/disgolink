@@ -5,6 +5,18 @@ type Track struct {
 	track string
 }
 
+func (t *Track) Encode() string {
+	return ""
+}
+
+func (t *Track) Info() TrackInfo {
+	return t.info
+}
+
+func (t *Track) Position() int {
+	return t.info.Position
+}
+
 type TrackInfo struct {
 	Identifier string `json:"identifier"`
 	IsSeekable bool   `json:"isSeekable"`

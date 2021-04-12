@@ -2,4 +2,7 @@ module github.com/DisgoOrg/disgolink
 
 go 1.16
 
-require github.com/gorilla/websocket v1.4.2
+require (
+	github.com/gorilla/websocket v1.4.2
+)
+
