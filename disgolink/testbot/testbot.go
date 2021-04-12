@@ -21,7 +21,6 @@ func main() {
 	logger.SetLevel(logrus.DebugLevel)
 	logger.Info("starting testbot...")
 
-	lavalink := disgolink.NewDisgolink("")
 
 	dgo, err := disgo.NewBuilder(endpoints.Token(os.Getenv("token"))).
 		SetLogger(logger).
@@ -29,13 +28,16 @@ func main() {
 		SetMemberCachePolicy(api.MemberCachePolicyVoice).
 		AddEventListeners(&events.ListenerAdapter{
 			OnSlashCommand: slashCommandListener,
-		}, lavalink).
-		SetVoiceDispatchInterceptor(lavalink).
+		}).
 		Build()
 	if err != nil {
 		logger.Fatalf("error while building disgo instance: %s", err)
 		return
 	}
+
+	lavalink := disgolink.NewDisgolink(dgo.SelfUserID())
+	dgo.EventManager().AddEventListeners(lavalink)
+	dgo.SetVoiceDispatchInterceptor(lavalink)
 
 	_, err = dgo.RestClient().SetGuildCommands(dgo.SelfUserID(), guildID, commands...)
 	if err != nil {
