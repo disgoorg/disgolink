@@ -10,6 +10,6 @@ type Lavalink interface {
 	UserID() Snowflake
 	ClientName() string
 	Shutdown()
-	OnVoiceServerUpdate(voiceServerUpdateEvent *VoiceServer)
-	OnVoiceStateUpdate(voiceStateUpdateEvent *VoiceState)
+	VoiceServerUpdate(voiceServerUpdate *VoiceServerUpdate)
+	VoiceStateUpdate(voiceStateUpdate *VoiceStateUpdate)
 }

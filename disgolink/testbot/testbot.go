@@ -21,7 +21,7 @@ func main() {
 	logger.SetLevel(logrus.DebugLevel)
 	logger.Info("starting testbot...")
 
-	lavalink := disgolink.NewDisgolink()
+	lavalink := disgolink.NewDisgolink("")
 
 	dgo, err := disgo.NewBuilder(endpoints.Token(os.Getenv("token"))).
 		SetLogger(logger).
@@ -29,7 +29,7 @@ func main() {
 		SetMemberCachePolicy(api.MemberCachePolicyVoice).
 		AddEventListeners(&events.ListenerAdapter{
 			OnSlashCommand: slashCommandListener,
-		}).
+		}, lavalink).
 		SetVoiceDispatchInterceptor(lavalink).
 		Build()
 	if err != nil {

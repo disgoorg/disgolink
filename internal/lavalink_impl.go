@@ -2,6 +2,12 @@ package internal
 
 import "github.com/DisgoOrg/disgolink/api"
 
+func NewLavalinkImpl(userID api.Snowflake) api.Lavalink{
+	return &LavalinkImpl{
+		userID: userID,
+	}
+}
+
 type LavalinkImpl struct {
 	userID api.Snowflake
 	nodes  []api.Node
@@ -49,10 +55,10 @@ func (l *LavalinkImpl) Shutdown() {
 
 }
 
-func (l *LavalinkImpl) OnVoiceServerUpdate(voiceServerUpdateEvent *api.VoiceServer) {
+func (l *LavalinkImpl) VoiceServerUpdate(voiceServerUpdate *api.VoiceServerUpdate) {
 
 }
 
-func (l *LavalinkImpl) OnVoiceStateUpdate(voiceStateUpdateEvent *api.VoiceState) {
+func (l *LavalinkImpl) VoiceStateUpdate(voiceStateUpdate *api.VoiceStateUpdate) {
 
 }
