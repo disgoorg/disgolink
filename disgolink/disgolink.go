@@ -23,13 +23,21 @@ type DisgolinkImpl struct {
 	dapi.VoiceDispatchInterceptor
 }
 
-
-func (l *DisgolinkImpl) OnVoiceServerUpdate(voiceServerUpdateEvent *dapi.VoiceServerUpdateEvent) {
-
+func (l *DisgolinkImpl) OnVoiceServerUpdate(voiceServerUpdate *dapi.VoiceServerUpdateEvent) {
+	l.Lavalink.VoiceServerUpdate(&api.VoiceServerUpdate{
+		Token:    voiceServerUpdate.Token,
+		GuildID: api.Snowflake(voiceServerUpdate.GuildID),
+		Endpoint: voiceServerUpdate.Endpoint,
+	})
 }
 
-func (l *DisgolinkImpl) OnVoiceStateUpdate(voiceStateUpdateEvent *dapi.VoiceStateUpdateEvent) {
-
+func (l *DisgolinkImpl) OnVoiceStateUpdate(voiceStateUpdate *dapi.VoiceStateUpdateEvent) {
+	l.Lavalink.VoiceStateUpdate(&api.VoiceStateUpdate{
+		GuildID:   api.Snowflake(voiceStateUpdate.GuildID),
+		ChannelID: (*api.Snowflake)(voiceStateUpdate.ChannelID),
+		UserID:    api.Snowflake(voiceStateUpdate.UserID),
+		SessionID: voiceStateUpdate.SessionID,
+	})
 }
 
 func (l *DisgolinkImpl) OnEvent(event interface{}) {
