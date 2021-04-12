@@ -1,6 +1,8 @@
 package internal
 
 import (
+	"time"
+
 	"github.com/DisgoOrg/disgolink/api"
 	"github.com/DisgoOrg/log"
 )
@@ -13,10 +15,10 @@ func NewLavalinkImpl(logger log.Logger, userID api.Snowflake) *LavalinkImpl {
 }
 
 type LavalinkImpl struct {
-	logger log.Logger
-	userID api.Snowflake
-	nodes  []api.Node
-	players  map[api.Snowflake]api.Player
+	logger  log.Logger
+	userID  api.Snowflake
+	nodes   []api.Node
+	players map[api.Snowflake]api.Player
 }
 
 func (l *LavalinkImpl) Logger() log.Logger {
@@ -24,10 +26,24 @@ func (l *LavalinkImpl) Logger() log.Logger {
 }
 
 func (l *LavalinkImpl) AddNode(options api.NodeOptions) {
-	l.nodes = append(l.nodes, &NodeImpl{
+	node := &NodeImpl{
 		NodeOptions: options,
 		lavalink:    l,
-	})
+	}
+	l.nodes = append(l.nodes, node)
+	go func() {
+		delay := 500
+		for {
+			err := node.Open()
+			if err == nil {
+				break
+			}
+			delay += int(float64(delay) * 1.2)
+			l.Logger().Errorf("error while connecting to node: %s, waiting %ds, error: %s", node.Name(), delay/1000, err)
+			time.Sleep(time.Duration(delay) * time.Millisecond)
+		}
+	}()
+
 }
 
 func (l *LavalinkImpl) RemoveNode(name string) {

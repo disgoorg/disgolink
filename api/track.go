@@ -9,6 +9,10 @@ func (t *Track) Encode() string {
 	return ""
 }
 
+func (t *Track) Decode() TrackInfo{
+	return TrackInfo{}
+}
+
 func (t *Track) Info() TrackInfo {
 	return t.info
 }

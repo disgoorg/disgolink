@@ -9,6 +9,7 @@ import (
 	"github.com/DisgoOrg/disgo/api"
 	"github.com/DisgoOrg/disgo/api/endpoints"
 	"github.com/DisgoOrg/disgo/api/events"
+	dapi "github.com/DisgoOrg/disgolink/api"
 	"github.com/DisgoOrg/disgolink/disgolink"
 	"github.com/sirupsen/logrus"
 )
@@ -39,6 +40,14 @@ func main() {
 
 	dgo.EventManager().AddEventListeners(dgolink)
 	dgo.SetVoiceDispatchInterceptor(dgolink)
+
+	dgolink.AddNode(dapi.NodeOptions{
+		Name:     "test",
+		Host:     "lavalink.kittybot.de",
+		Port:     443,
+		Password: "",
+		Secure:   true,
+	})
 
 	_, err = dgo.RestClient().SetGuildCommands(dgo.SelfUserID(), guildID, commands...)
 	if err != nil {
