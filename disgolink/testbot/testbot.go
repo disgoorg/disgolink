@@ -36,7 +36,7 @@ func main() {
 		return
 	}
 
-	dgolink := disgolink.NewDisgolink(logger, dgo.SelfUserID())
+	dgolink := disgolink.NewDisgolink(logger, dgo.ApplicationID())
 
 	dgo.EventManager().AddEventListeners(dgolink)
 	dgo.SetVoiceDispatchInterceptor(dgolink)
@@ -45,11 +45,10 @@ func main() {
 		Name:     "test",
 		Host:     "lavalink.kittybot.de",
 		Port:     443,
-		Password: "",
 		Secure:   true,
 	})
 
-	_, err = dgo.RestClient().SetGuildCommands(dgo.SelfUserID(), guildID, commands...)
+	_, err = dgo.RestClient().SetGuildCommands(dgo.ApplicationID(), guildID, commands...)
 	if err != nil {
 		logger.Errorf("error while registering guild commands: %s", err)
 	}
