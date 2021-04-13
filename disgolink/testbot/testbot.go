@@ -45,6 +45,7 @@ func main() {
 		Name:     "test",
 		Host:     "lavalink.kittybot.de",
 		Port:     443,
+		Password: "6bc34523qc7z377v645",
 		Secure:   true,
 	})
 
@@ -67,5 +68,9 @@ func main() {
 }
 
 func slashCommandListener(event *events.SlashCommandEvent) {
+	switch event.CommandName {
+	case "play":
+		event.Option("query")
 
+	}
 }

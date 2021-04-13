@@ -1,24 +1,8 @@
 package api
 
 type Track struct {
-	info  TrackInfo
-	track string
-}
-
-func (t *Track) Encode() string {
-	return ""
-}
-
-func (t *Track) Decode() TrackInfo{
-	return TrackInfo{}
-}
-
-func (t *Track) Info() TrackInfo {
-	return t.info
-}
-
-func (t *Track) Position() int {
-	return t.info.Position
+	Track string    `json:"track"`
+	Info  TrackInfo `json:"info"`
 }
 
 type TrackInfo struct {

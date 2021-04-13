@@ -3,6 +3,7 @@ module github.com/DisgoOrg/disgolink/disgolink/testbot
 go 1.16
 
 replace (
+	github.com/DisgoOrg/disgo => ../../../disgo
 	github.com/DisgoOrg/disgolink => ../../
 	github.com/DisgoOrg/disgolink/disgolink => ../
 )
