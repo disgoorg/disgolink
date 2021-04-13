@@ -7,6 +7,11 @@ import (
 	"github.com/DisgoOrg/log"
 )
 
+var _ Disgolink = (*DisgolinkImpl)(nil)
+var _ api.Lavalink = (*DisgolinkImpl)(nil)
+var _ dapi.VoiceDispatchInterceptor = (*DisgolinkImpl)(nil)
+var _ dapi.EventListener = (*DisgolinkImpl)(nil)
+
 type Disgolink interface {
 	api.Lavalink
 	dapi.VoiceDispatchInterceptor
