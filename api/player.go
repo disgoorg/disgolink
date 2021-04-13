@@ -10,6 +10,7 @@ type Player interface {
 	PlayTrack(track *Track)
 	StopTrack()
 	SetPaused(paused bool)
+	Resume()
 	Paused() bool
 	TrackPosition() int
 	SeekTo(position int)
@@ -18,8 +19,8 @@ type Player interface {
 	RemoveListener(playerListener player.Listener)
 	EmitEvent(playerEvent player.Event)
 	Lavalink() Lavalink
-	GuildID() Snowflake
-	ChannelID() *Snowflake
+	GuildID() string
+	ChannelID() *string
 	Node() Node
 	ChangeNode(node Node)
 }

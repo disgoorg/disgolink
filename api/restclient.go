@@ -12,5 +12,5 @@ type RestClient interface {
 	GetYoutubeMusicSearchResult(query string)
 	GetSoundcloudSearchResult(query string)
 	LoadItemAsync(identifier string, audioLoaderResultHandler AudioLoaderResultHandler)
-	LoadItem(identifier string, audioLoaderResultHandler AudioLoaderResultHandler)
+	LoadItem(identifier string) (*LoadResult, error)
 }

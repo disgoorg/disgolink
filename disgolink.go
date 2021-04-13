@@ -6,6 +6,6 @@ import (
 	"github.com/DisgoOrg/log"
 )
 
-func NewLavalink(logger log.Logger, userID api.Snowflake) api.Lavalink {
+func NewLavalink(logger log.Logger, userID string) api.Lavalink {
 	return internal.NewLavalinkImpl(logger, userID)
 }

@@ -14,6 +14,16 @@ var commands = []api.Command{
 				Description: "what to play",
 				Required:    true,
 			},
+			{
+				Type:        api.CommandOptionTypeString,
+				Name:        "search-provider",
+				Description: "where to search",
+				Choices: []api.OptionChoice{
+					{Name: "YouTube", Value: "yt"},
+					{Name: "YouTube Music", Value: "ytm"},
+					{Name: "SoundCloud", Value: "sc"},
+				},
+			},
 		},
 	},
 }

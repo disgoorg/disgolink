@@ -6,6 +6,8 @@ github.com/DisgoOrg/disgo v0.1.7-0.20210413081111-ff68bf4a3230 h1:n9fUmH3OuYx3+L
 github.com/DisgoOrg/disgo v0.1.7-0.20210413081111-ff68bf4a3230/go.mod h1:f+JB1vQhiPy9hkoNRKCumfzlHfhV1CPpopI+RDhgtMY=
 github.com/DisgoOrg/disgo v0.1.7-0.20210413103623-4961ab4ae005 h1:RDtQpbA+jRzlwpRDxF9UMoRA7AV08f4y02QhME1ILXs=
 github.com/DisgoOrg/disgo v0.1.7-0.20210413103623-4961ab4ae005/go.mod h1:f+JB1vQhiPy9hkoNRKCumfzlHfhV1CPpopI+RDhgtMY=
+github.com/DisgoOrg/disgo v0.2.0 h1:iom3hNfRGMSECOvkZz9BKRVSQ1GlyVbet6qh2BK5oR4=
+github.com/DisgoOrg/disgo v0.2.0/go.mod h1:f+JB1vQhiPy9hkoNRKCumfzlHfhV1CPpopI+RDhgtMY=
 github.com/DisgoOrg/log v1.0.2 h1:qDOmBkB2xnN0sG74dTNKs/qdWekVAJAyVPDASofIWOc=
 github.com/DisgoOrg/log v1.0.2/go.mod h1:KFGKhBQr37d6rxZ7p2bmc8BEmDH8DZbtgdlJDSCsE7I=
 github.com/DisgoOrg/log v1.0.3 h1:IjmZQQu/kuBIui22EdXmxzQGYwcPCJEkXa0Fe6W9fJk=

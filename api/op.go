@@ -11,6 +11,7 @@ const (
 	EqualizerOP         OpType = "equalizer"
 	DestroyOp           OpType = "destroy"
 	StatsOp             OpType = "stats"
+	VoiceUpdateOp       OpType = "voiceUpdate"
 	PlayerUpdateOp      OpType = "playerUpdate"
 	EventOp             OpType = "event"
 	ConfigureResumingOp OpType = "configureResuming"
@@ -22,11 +23,11 @@ func NewCommand(op OpType) *OpCommand {
 }
 
 type OpCommand struct {
-	Op      OpType    `json:"op"`
-	GuildID Snowflake `json:"guildId"`
+	Op      OpType `json:"op"`
+	GuildID string `json:"guildId"`
 }
 
-func NewPlayerCommand(op OpType, guildID Snowflake) *OpPlayerCommand {
+func NewPlayerCommand(op OpType, guildID string) *OpPlayerCommand {
 	return &OpPlayerCommand{
 		OpCommand: NewCommand(op),
 		GuildID:   guildID,
@@ -35,7 +36,7 @@ func NewPlayerCommand(op OpType, guildID Snowflake) *OpPlayerCommand {
 
 type OpPlayerCommand struct {
 	*OpCommand
-	GuildID Snowflake `json:"guildId"`
+	GuildID string `json:"guildId"`
 }
 
 type EventCommand struct {

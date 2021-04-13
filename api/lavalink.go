@@ -6,12 +6,13 @@ import (
 
 type Lavalink interface {
 	Logger() log.Logger
-	AddNode(options NodeOptions)
+	AddNode(options *NodeOptions)
 	RemoveNode(name string)
-	Player(guildID Snowflake) Player
-	ExistingPlayer(guildID Snowflake) Player
-	Players() map[Snowflake]Player
-	UserID() Snowflake
+	Player(guildID string) Player
+	ExistingPlayer(guildID string) Player
+	Players() map[string]Player
+	RestClient() RestClient
+	UserID() string
 	ClientName() string
 	Shutdown()
 	VoiceServerUpdate(voiceServerUpdate *VoiceServerUpdate)

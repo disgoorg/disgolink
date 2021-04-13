@@ -15,17 +15,18 @@ type PlayerImpl struct {
 	position   int
 	filters    *filters.Filters
 	listeners  []player.Listener
-	guildID    api.Snowflake
-	channelID  *api.Snowflake
+	guildID    string
+	channelID  *string
+	lastSessionID *string
 }
 
 func (p *PlayerImpl) Lavalink() api.Lavalink {
 	return p.lavalink
 }
-func (p *PlayerImpl) GuildID() api.Snowflake {
+func (p *PlayerImpl) GuildID() string {
 	return p.guildID
 }
-func (p *PlayerImpl) ChannelID() *api.Snowflake {
+func (p *PlayerImpl) ChannelID() *string {
 	return p.channelID
 }
 func (p *PlayerImpl) Node() api.Node {
@@ -39,11 +40,11 @@ func (p *PlayerImpl) PlayingTrack() *api.Track {
 	return p.track
 }
 func (p *PlayerImpl) PlayTrack(track *api.Track) {
-	p.position = track.Position()
+	p.position = track.Info.Position
 
 	p.Node().Send(&api.OpPlayPlayer{
 		OpPlayerCommand: api.NewPlayerCommand(api.PlayOp, p.GuildID()),
-		Track:           track.Encode(),
+		Track:           track.Track,
 		StartTime:       p.position,
 		Paused:          p.paused,
 	})
@@ -67,6 +68,11 @@ func (p *PlayerImpl) SetPaused(paused bool) {
 	})
 	p.paused = paused
 }
+
+func (p *PlayerImpl) Resume() {
+	p.SetPaused(false)
+}
+
 func (p *PlayerImpl) Paused() bool {
 	return p.paused
 }
@@ -75,7 +81,7 @@ func (p *PlayerImpl) TrackPosition() int {
 	return 0
 }
 func (p *PlayerImpl) SeekTo(position int) {
-
+	// todo
 }
 func (p *PlayerImpl) Filters() *filters.Filters {
 	return p.filters

@@ -12,17 +12,39 @@ import (
 )
 
 type NodeImpl struct {
-	api.NodeOptions
-	lavalink  api.Lavalink
-	conn      *websocket.Conn
-	quit      chan interface{}
-	status    api.NodeStatus
-	stats     *api.Stats
-	available bool
+	options    *api.NodeOptions
+	lavalink   api.Lavalink
+	conn       *websocket.Conn
+	quit       chan interface{}
+	status     api.NodeStatus
+	stats      *api.Stats
+	available  bool
+	restClient api.RestClient
+}
+
+func (n NodeImpl) RestURL() string {
+	scheme := "http"
+	if n.options.Secure {
+		scheme += "s"
+	}
+
+	return fmt.Sprintf("%s://%s:%d", scheme, n.options.Host, n.options.Port)
+}
+
+func (n *NodeImpl) Lavalink() api.Lavalink {
+	return n.lavalink
+}
+
+func (n *NodeImpl) Options() *api.NodeOptions {
+	return n.options
+}
+
+func (n *NodeImpl) RestClient() api.RestClient {
+	return n.restClient
 }
 
 func (n *NodeImpl) Name() string {
-	return n.NodeOptions.Name
+	return n.options.Name
 }
 
 func (n *NodeImpl) Send(d interface{}) {
@@ -68,7 +90,7 @@ func (n *NodeImpl) Close() {
 	}
 }
 
-func (n *NodeImpl) name() {
+func (n *NodeImpl) listen() {
 	defer func() {
 		n.lavalink.Logger().Info("shut down listen goroutine")
 	}()
@@ -96,16 +118,16 @@ func (n *NodeImpl) name() {
 
 func (n *NodeImpl) Open() error {
 	scheme := "ws"
-	if n.Secure {
+	if n.options.Secure {
 		scheme += "s"
 	}
 	header := http.Header{}
-	header.Add("Authorization", n.Password)
-	header.Add("User-Id", n.lavalink.UserID().String())
+	header.Add("Authorization", n.options.Password)
+	header.Add("User-Id", n.lavalink.UserID())
 	header.Add("Client-Name", n.lavalink.ClientName())
 	u := url.URL{
 		Scheme: scheme,
-		Host:   fmt.Sprintf("%v:%v", n.Host, n.Port),
+		Host:   fmt.Sprintf("%v:%v", n.options.Host, n.options.Port),
 	}
 
 	var err error
