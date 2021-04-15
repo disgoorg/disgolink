@@ -1,16 +1,16 @@
 package api
 
+type SearchType string
+
 // search prefixes
 const (
-	YoutubeSearchPrefix      = "ytsearch:"
-	YoutubeMusicSearchPrefix = "ytmsearch"
-	SoundCloudSearchPrefix   = "scsearch:"
+	SearchTypeYoutube      SearchType = "ytsearch:"
+	SearchTypeYoutubeMusic SearchType = "ytmsearch:"
+	SearchTypeSoundCloud   SearchType = "scsearch:"
 )
 
 type RestClient interface {
-	GetYoutubeSearchResult(query string)
-	GetYoutubeMusicSearchResult(query string)
-	GetSoundcloudSearchResult(query string)
+	SearchItem(searchType SearchType, query string) ([]*Track, *Exception)
 	LoadItemAsync(identifier string, audioLoaderResultHandler AudioLoaderResultHandler)
 	LoadItem(identifier string) (*LoadResult, error)
 }

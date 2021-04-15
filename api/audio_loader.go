@@ -18,14 +18,6 @@ const (
 	SeverityFault      Severity = "FAULT"
 )
 
-var _ error = (*Error)(nil)
-
-type Error string
-
-func (e Error) Error() string {
-	return string(e)
-}
-
 type LoadResult struct {
 	LoadType     LoadType      `json:"loadType"`
 	PlaylistInfo *PlaylistInfo `json:"playlistInfo"`
@@ -33,30 +25,45 @@ type LoadResult struct {
 	Exception    *Exception    `json:"exception"`
 }
 
+var _ error = (*Exception)(nil)
+
+func NewExceptionFromErr(err error) *Exception {
+	return &Exception{Message: err.Error(), Severity: SeverityFault}
+}
+
+func NewException(message string, severity Severity) *Exception {
+	return &Exception{Message: message, Severity: severity}
+}
+
 type Exception struct {
-	Error    error    `json:"message"`
+	Message  string   `json:"message"`
 	Severity Severity `json:"severity"`
 }
 
+func (e *Exception) Error() string {
+	return e.Message
+}
 
 type AudioLoaderResultHandler interface {
 	TrackLoaded(track *Track)
 	PlaylistLoaded(playlist *Playlist)
+	SearchResultLoaded(tracks []*Track)
 	NoMatches()
 	LoadFailed(e *Exception)
 }
 
 var _ AudioLoaderResultHandler = (*FunctionalResultHandler)(nil)
 
-func NewFunctionalResultHandler(trackLoaded func(track *Track), playlistLoaded func(playlist *Playlist), noMatches func(), loadFailed func(e *Exception)) AudioLoaderResultHandler {
-	return &FunctionalResultHandler{trackLoaded: trackLoaded, playlistLoaded: playlistLoaded, noMatches: noMatches, loadFailed: loadFailed}
+func NewResultHandler(trackLoaded func(track *Track), playlistLoaded func(playlist *Playlist), searchResultLoaded func(tracks []*Track), noMatches func(), loadFailed func(e *Exception)) AudioLoaderResultHandler {
+	return &FunctionalResultHandler{trackLoaded: trackLoaded, playlistLoaded: playlistLoaded, searchResultLoaded: searchResultLoaded, noMatches: noMatches, loadFailed: loadFailed}
 }
 
 type FunctionalResultHandler struct {
-	trackLoaded    func(track *Track)
-	playlistLoaded func(playlist *Playlist)
-	noMatches      func()
-	loadFailed     func(e *Exception)
+	trackLoaded        func(track *Track)
+	playlistLoaded     func(playlist *Playlist)
+	searchResultLoaded func(tracks []*Track)
+	noMatches          func()
+	loadFailed         func(e *Exception)
 }
 
 func (h *FunctionalResultHandler) TrackLoaded(track *Track) {
@@ -64,6 +71,9 @@ func (h *FunctionalResultHandler) TrackLoaded(track *Track) {
 }
 func (h *FunctionalResultHandler) PlaylistLoaded(playlist *Playlist) {
 	h.playlistLoaded(playlist)
+}
+func (h *FunctionalResultHandler) SearchResultLoaded(tracks []*Track) {
+	h.searchResultLoaded(tracks)
 }
 func (h *FunctionalResultHandler) NoMatches() {
 	h.noMatches()

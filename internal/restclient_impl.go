@@ -18,23 +18,21 @@ type RestClientImpl struct {
 	httpClient *http.Client
 }
 
-func (c *RestClientImpl) GetYoutubeSearchResult(query string) {
-
-}
-func (c *RestClientImpl) GetYoutubeMusicSearchResult(query string) {
-
-}
-func (c *RestClientImpl) GetSoundcloudSearchResult(query string) {
-
+func (c *RestClientImpl) SearchItem(searchType api.SearchType, query string) ([]*api.Track, *api.Exception) {
+	result, err := c.LoadItem(string(searchType) + query)
+	if err != nil {
+		return nil, api.NewExceptionFromErr(err)
+	}
+	if result.Exception != nil {
+		return nil, result.Exception
+	}
+	return result.Tracks, nil
 }
 func (c *RestClientImpl) LoadItemAsync(identifier string, audioLoaderResultHandler api.AudioLoaderResultHandler) {
 	go func() {
 		result, err := c.LoadItem(identifier)
 		if err != nil {
-			audioLoaderResultHandler.LoadFailed(&api.Exception{
-				Error:    err,
-				Severity: api.SeverityFault,
-			})
+			audioLoaderResultHandler.LoadFailed(api.NewExceptionFromErr(err))
 			return
 		}
 
@@ -42,9 +40,9 @@ func (c *RestClientImpl) LoadItemAsync(identifier string, audioLoaderResultHandl
 		case api.LoadTypeTrackLoaded:
 			audioLoaderResultHandler.TrackLoaded(result.Tracks[0])
 		case api.LoadTypePlaylistLoaded:
-			audioLoaderResultHandler.PlaylistLoaded(api.NewPlaylist(result, false))
+			audioLoaderResultHandler.PlaylistLoaded(api.NewPlaylist(result))
 		case api.LoadTypeSearchResult:
-			audioLoaderResultHandler.PlaylistLoaded(api.NewPlaylist(result, true))
+			audioLoaderResultHandler.SearchResultLoaded(result.Tracks)
 		case api.LoadTypeNoMatches:
 			audioLoaderResultHandler.NoMatches()
 		case api.LoadTypeLoadFailed:

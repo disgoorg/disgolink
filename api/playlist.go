@@ -1,20 +1,21 @@
 package api
 
-func NewPlaylist(result *LoadResult, searchResult bool) *Playlist {
+func NewPlaylist(result *LoadResult) *Playlist {
 	return &Playlist{
-		Info:         result.PlaylistInfo,
-		Tracks:       result.Tracks,
-		SearchResult: searchResult,
+		Info:   result.PlaylistInfo,
+		Tracks: result.Tracks,
 	}
 }
 
 type Playlist struct {
-	Info         *PlaylistInfo
-	Tracks       []*Track
-	SearchResult bool
+	Info   *PlaylistInfo
+	Tracks []*Track
 }
 
 func (p Playlist) SelectedTrack() *Track {
+	if p.Info.SelectedTrack == -1 {
+		return nil
+	}
 	return p.Tracks[p.Info.SelectedTrack]
 }
 

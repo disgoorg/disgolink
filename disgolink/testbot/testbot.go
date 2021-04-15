@@ -88,42 +88,45 @@ func slashCommandListener(event *events.SlashCommandEvent) {
 			if searchProvider != nil {
 				switch searchProvider.String() {
 				case "yt":
-					query = dapi.YoutubeSearchPrefix + query
+					query = string(dapi.SearchTypeYoutube) + query
 				case "ytm":
-					query = dapi.YoutubeMusicSearchPrefix + query
+					query = string(dapi.SearchTypeYoutubeMusic) + query
 				case "sc":
-					query = dapi.SoundCloudSearchPrefix + query
+					query = string(dapi.SearchTypeSoundCloud) + query
 				}
 			}
 
-			result, err := dgolink.RestClient().LoadItem(query)
-			if err != nil || result.Exception != nil {
-				var errStr string
-				if err != nil {
-					errStr = err.Error()
-				} else {
-					errStr = result.Exception.Error.Error()
-				}
-				_, _ = event.EditOriginal(api.NewFollowupMessageBuilder().SetContent("error while loading:\n" + errStr).Build())
-				return
-			}
-			if result.Tracks == nil || len(result.Tracks) == 0 {
-				_, _ = event.EditOriginal(api.NewFollowupMessageBuilder().SetContent("no tracks found").Build())
-				return
-			}
-			var track *dapi.Track
-			if result.PlaylistInfo.SelectedTrack != -1 {
-				track = result.Tracks[result.PlaylistInfo.SelectedTrack]
-			} else {
-				track = result.Tracks[0]
-			}
-			err = voiceState.VoiceChannel().Connect()
-			if err != nil {
-				_, _ = event.EditOriginal(api.NewFollowupMessageBuilder().SetContent("error while connecting to channel:\n" + err.Error()).Build())
-				return
-			}
-			dgolink.Player(event.GuildID.String()).PlayTrack(track)
-			_, _ = event.EditOriginal(api.NewFollowupMessageBuilder().SetContent("playing [" + track.Info.Title + "](" + track.Info.URI + ")").Build())
+			dgolink.RestClient().LoadItemAsync(query, dapi.NewResultHandler(
+				func(track *dapi.Track) {
+					queueOrPlay(event, voiceState, track)
+				},
+				func(playlist *dapi.Playlist) {
+					track := playlist.SelectedTrack()
+					if track == nil {
+						track = playlist.Tracks[0]
+					}
+					queueOrPlay(event, voiceState, track)
+				},
+				func(tracks []*dapi.Track) {
+					queueOrPlay(event, voiceState, tracks[0])
+				},
+				func() {
+					_, _ = event.EditOriginal(api.NewFollowupMessageBuilder().SetContent("no tracks found").Build())
+				},
+				func(e *dapi.Exception) {
+					_, _ = event.EditOriginal(api.NewFollowupMessageBuilder().SetContent("error while loading:\n" + e.Error()).Build())
+				},
+			))
 		}()
 	}
+}
+
+func queueOrPlay(event *events.SlashCommandEvent, voiceState *api.VoiceState, track *dapi.Track) {
+	err := voiceState.VoiceChannel().Connect()
+	if err != nil {
+		_, _ = event.EditOriginal(api.NewFollowupMessageBuilder().SetContent("error while connecting to channel:\n" + err.Error()).Build())
+		return
+	}
+	dgolink.Player(event.GuildID.String()).PlayTrack(track)
+	_, _ = event.EditOriginal(api.NewFollowupMessageBuilder().SetContent("playing [" + track.Info.Title + "](" + track.Info.URI + ")").Build())
 }
