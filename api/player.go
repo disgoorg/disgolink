@@ -15,12 +15,15 @@ type Player interface {
 	TrackPosition() int
 	SeekTo(position int)
 	Filters() *filters.Filters
+	Commit()
 	AddListener(playerListener player.Listener)
 	RemoveListener(playerListener player.Listener)
 	EmitEvent(playerEvent player.Event)
-	Lavalink() Lavalink
 	GuildID() string
 	ChannelID() *string
+	SetChannelID(channelID *string)
+	LastSessionID() *string
+	SetLastSessionID(sessionID string)
 	Node() Node
 	ChangeNode(node Node)
 }

@@ -14,7 +14,7 @@ func NewLavalinkImpl(logger log.Logger, userID string) api.Lavalink {
 		logger:     logger,
 		userID:     userID,
 		httpClient: &http.Client{},
-		players:    map[string]*PlayerImpl{},
+		players:    map[string]api.Player{},
 	}
 	return lavalink
 }
@@ -23,7 +23,7 @@ type LavalinkImpl struct {
 	logger     log.Logger
 	userID     string
 	nodes      []api.Node
-	players    map[string]*PlayerImpl
+	players    map[string]api.Player
 	httpClient *http.Client
 }
 
@@ -73,11 +73,7 @@ func (l *LavalinkImpl) Player(guildID string) api.Player {
 	if player, ok := l.players[guildID]; ok {
 		return player
 	}
-	player := &PlayerImpl{
-		lavalink: l,
-		node:     l.nodes[0],
-		guildID:  guildID,
-	}
+	player := NewPlayer(l.nodes[0], guildID)
 	l.players[guildID] = player
 	return player
 }
@@ -108,23 +104,12 @@ func (l *LavalinkImpl) VoiceServerUpdate(voiceServerUpdate *api.VoiceServerUpdat
 	}
 	player.Node().Send(api.EventCommand{
 		OpCommand: &api.OpCommand{
-			Op:      api.VoiceUpdateOp,
+			Op:      api.OpVoiceUpdate,
 			GuildID: voiceServerUpdate.GuildID,
 		},
-		SessionID: *player.lastSessionID,
+		SessionID: *player.LastSessionID(),
 		Event:     voiceServerUpdate,
 	})
-}
-
-type T struct {
-	Op        string `json:"op"`
-	SessionId string `json:"sessionId"`
-	GuildId   string `json:"guildId"`
-	Event     struct {
-		GuildId  int64  `json:"guild_id"`
-		Endpoint string `json:"endpoint"`
-		Token    string `json:"token"`
-	} `json:"event"`
 }
 
 func (l *LavalinkImpl) VoiceStateUpdate(voiceStateUpdate *api.VoiceStateUpdate) {
@@ -132,6 +117,6 @@ func (l *LavalinkImpl) VoiceStateUpdate(voiceStateUpdate *api.VoiceStateUpdate) 
 	if player == nil {
 		return
 	}
-	player.channelID = voiceStateUpdate.ChannelID
-	player.lastSessionID = &voiceStateUpdate.SessionID
+	player.SetChannelID(voiceStateUpdate.ChannelID)
+	player.SetLastSessionID(voiceStateUpdate.SessionID)
 }

@@ -6,28 +6,50 @@ import (
 	"github.com/DisgoOrg/disgolink/api/player"
 )
 
-type PlayerImpl struct {
-	lavalink   api.Lavalink
-	node       api.Node
-	track      *api.Track
-	paused     bool
-	updateTime int
-	position   int
-	filters    *filters.Filters
-	listeners  []player.Listener
-	guildID    string
-	channelID  *string
-	lastSessionID *string
+func NewPlayer(node api.Node, guildID string) api.Player {
+	return &PlayerImpl{
+		guildID:       guildID,
+		channelID:     nil,
+		lastSessionID: nil,
+		track:         nil,
+		paused:        false,
+		position:      -1,
+		updateTime:    -1,
+		filters:       nil,
+		connected:     false,
+		node:          node,
+		listeners:     nil,
+	}
 }
 
-func (p *PlayerImpl) Lavalink() api.Lavalink {
-	return p.lavalink
+type PlayerImpl struct {
+	guildID       string
+	channelID     *string
+	lastSessionID *string
+	track         *api.Track
+	paused        bool
+	position      int
+	updateTime    int
+	filters       *filters.Filters
+	connected     bool
+	node          api.Node
+	listeners     []player.Listener
 }
+
 func (p *PlayerImpl) GuildID() string {
 	return p.guildID
 }
 func (p *PlayerImpl) ChannelID() *string {
 	return p.channelID
+}
+func (p *PlayerImpl) SetChannelID(channelID *string) {
+	p.channelID = channelID
+}
+func (p *PlayerImpl) LastSessionID() *string {
+	return p.lastSessionID
+}
+func (p *PlayerImpl) SetLastSessionID(sessionID string) {
+	p.lastSessionID = &sessionID
 }
 func (p *PlayerImpl) Node() api.Node {
 	return p.node
@@ -42,19 +64,19 @@ func (p *PlayerImpl) PlayingTrack() *api.Track {
 func (p *PlayerImpl) PlayTrack(track *api.Track) {
 	p.position = track.Info.Position
 
-	p.Node().Send(&api.OpPlayPlayer{
-		OpPlayerCommand: api.NewPlayerCommand(api.PlayOp, p.GuildID()),
-		Track:           track.Track,
-		StartTime:       p.position,
-		Paused:          p.paused,
+	p.Node().Send(&api.PlayPlayerCommand{
+		PlayerCommand: api.NewPlayerCommand(api.OpPlay, p),
+		Track:         track.Track,
+		StartTime:     p.position,
+		Paused:        p.paused,
 	})
 
 }
 func (p *PlayerImpl) StopTrack() {
 	p.track = nil
 
-	p.Node().Send(&api.OpStopPlayer{
-		OpPlayerCommand: api.NewPlayerCommand(api.StopOp, p.GuildID()),
+	p.Node().Send(&api.StopPlayerCommand{
+		PlayerCommand: api.NewPlayerCommand(api.OpStop, p),
 	})
 
 }
@@ -62,9 +84,9 @@ func (p *PlayerImpl) SetPaused(paused bool) {
 	if p.paused == paused {
 		return
 	}
-	p.Node().Send(&api.OpPausePlayer{
-		OpPlayerCommand: api.NewPlayerCommand(api.PauseOP, p.GuildID()),
-		Paused:          paused,
+	p.Node().Send(&api.PausePlayerCommand{
+		PlayerCommand: api.NewPlayerCommand(api.OpPause, p),
+		Paused:        paused,
 	})
 	p.paused = paused
 }
@@ -81,11 +103,24 @@ func (p *PlayerImpl) TrackPosition() int {
 	return 0
 }
 func (p *PlayerImpl) SeekTo(position int) {
-	// todo
+	p.Node().Send(&api.SeekPlayerCommand{
+		PlayerCommand: api.NewPlayerCommand(api.OpSeek, p),
+		Position:      position,
+	})
 }
 func (p *PlayerImpl) Filters() *filters.Filters {
+	if p.filters == nil {
+		p.filters = filters.NewFilters(p.commit)
+	}
 	return p.filters
 }
+func (p *PlayerImpl) Commit() {
+	if p.filters == nil {
+		return
+	}
+	p.filters.Commit()
+}
+
 func (p *PlayerImpl) AddListener(playerListener player.Listener) {
 	p.listeners = append(p.listeners, playerListener)
 }
@@ -100,4 +135,8 @@ func (p *PlayerImpl) EmitEvent(playerEvent player.Event) {
 	for _, listener := range p.listeners {
 		listener.OnEvent(playerEvent)
 	}
+}
+
+func (p *PlayerImpl) commit(filters *filters.Filters) {
+	p.node.Send(filters)
 }

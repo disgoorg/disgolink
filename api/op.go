@@ -1,42 +1,37 @@
 package api
 
-type OpType string
+type Op string
 
 const (
-	PlayOp              OpType = "play"
-	StopOp              OpType = "stop"
-	PauseOP             OpType = "pause"
-	SeekOP              OpType = "seek"
-	VolumeOP            OpType = "volume"
-	EqualizerOP         OpType = "equalizer"
-	DestroyOp           OpType = "destroy"
-	StatsOp             OpType = "stats"
-	VoiceUpdateOp       OpType = "voiceUpdate"
-	PlayerUpdateOp      OpType = "playerUpdate"
-	EventOp             OpType = "event"
-	ConfigureResumingOp OpType = "configureResuming"
-	FiltersOp           OpType = "filters"
+	OpPlay              Op = "play"
+	OpStop              Op = "stop"
+	OpPause             Op = "pause"
+	OpSeek              Op = "seek"
+	OpVolume            Op = "volume"
+	OpEqualizer         Op = "equalizer"
+	OpDestroy           Op = "destroy"
+	OpStats             Op = "stats"
+	OpVoiceUpdate       Op = "voiceUpdate"
+	OpPlayerUpdate      Op = "playerUpdate"
+	OpEvent             Op = "event"
+	OpConfigureResuming Op = "configureResuming"
+	OpFilters           Op = "filters"
 )
 
-func NewCommand(op OpType) *OpCommand {
+func NewCommand(op Op) *OpCommand {
 	return &OpCommand{Op: op}
 }
 
 type OpCommand struct {
-	Op      OpType `json:"op"`
+	Op      Op     `json:"op"`
 	GuildID string `json:"guildId"`
 }
 
-func NewPlayerCommand(op OpType, guildID string) *OpPlayerCommand {
-	return &OpPlayerCommand{
+func NewPlayerCommand(op Op, p Player) *PlayerCommand {
+	return &PlayerCommand{
 		OpCommand: NewCommand(op),
-		GuildID:   guildID,
+		GuildID:   p.GuildID(),
 	}
-}
-
-type OpPlayerCommand struct {
-	*OpCommand
-	GuildID string `json:"guildId"`
 }
 
 type EventCommand struct {
@@ -45,29 +40,34 @@ type EventCommand struct {
 	Event     interface{} `json:"event"`
 }
 
-type OpPlayPlayer struct {
-	*OpPlayerCommand
+type PlayerCommand struct {
+	*OpCommand
+	GuildID string `json:"guildId"`
+}
+
+type PlayPlayerCommand struct {
+	*PlayerCommand
 	Track     string `json:"track"`
-	StartTime int    `json:"startTime"`
-	EndTime   int    `json:"endTime"`
+	StartTime int    `json:"startTime,omitempty"`
+	EndTime   int    `json:"endTime,omitempty"`
 	NoReplace bool   `json:"noReplace"`
 	Paused    bool   `json:"pause"`
 }
 
-type OpDestroyPlayer struct {
-	*OpPlayerCommand
+type DestroyPlayerCommand struct {
+	*PlayerCommand
 }
 
-type OpStopPlayer struct {
-	*OpPlayerCommand
+type StopPlayerCommand struct {
+	*PlayerCommand
 }
 
-type OpPausePlayer struct {
-	*OpPlayerCommand
+type PausePlayerCommand struct {
+	*PlayerCommand
 	Paused bool `json:"pause"`
 }
 
-type OpSeekPlayer struct {
-	*OpPlayerCommand
+type SeekPlayerCommand struct {
+	*PlayerCommand
 	Position int `json:"position"`
 }

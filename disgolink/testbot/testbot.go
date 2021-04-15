@@ -127,6 +127,7 @@ func queueOrPlay(event *events.SlashCommandEvent, voiceState *api.VoiceState, tr
 		_, _ = event.EditOriginal(api.NewFollowupMessageBuilder().SetContent("error while connecting to channel:\n" + err.Error()).Build())
 		return
 	}
-	dgolink.Player(event.GuildID.String()).PlayTrack(track)
+	player := dgolink.Player(event.GuildID.String())
+	player.PlayTrack(track)
 	_, _ = event.EditOriginal(api.NewFollowupMessageBuilder().SetContent("playing [" + track.Info.Title + "](" + track.Info.URI + ")").Build())
 }
