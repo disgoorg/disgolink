@@ -2,8 +2,8 @@ package internal
 
 import (
 	"github.com/DisgoOrg/disgolink/api"
+	"github.com/DisgoOrg/disgolink/api/events"
 	"github.com/DisgoOrg/disgolink/api/filters"
-	"github.com/DisgoOrg/disgolink/api/player"
 )
 
 func NewPlayer(node api.Node, guildID string) api.Player {
@@ -33,7 +33,7 @@ type PlayerImpl struct {
 	filters       *filters.Filters
 	connected     bool
 	node          api.Node
-	listeners     []player.Listener
+	listeners     []events.PlayerEventListener
 }
 
 func (p *PlayerImpl) GuildID() string {
@@ -99,8 +99,7 @@ func (p *PlayerImpl) Paused() bool {
 	return p.paused
 }
 func (p *PlayerImpl) TrackPosition() int {
-	// TODO
-	return 0
+	return p.position
 }
 func (p *PlayerImpl) SeekTo(position int) {
 	p.Node().Send(&api.SeekPlayerCommand{
@@ -110,7 +109,7 @@ func (p *PlayerImpl) SeekTo(position int) {
 }
 func (p *PlayerImpl) Filters() *filters.Filters {
 	if p.filters == nil {
-		p.filters = filters.NewFilters(p.commit)
+		p.filters = filters.NewFilters(p.commitFilters)
 	}
 	return p.filters
 }
@@ -121,22 +120,25 @@ func (p *PlayerImpl) Commit() {
 	p.filters.Commit()
 }
 
-func (p *PlayerImpl) AddListener(playerListener player.Listener) {
+func (p *PlayerImpl) AddListener(playerListener events.PlayerEventListener) {
 	p.listeners = append(p.listeners, playerListener)
 }
-func (p *PlayerImpl) RemoveListener(playerListener player.Listener) {
+func (p *PlayerImpl) RemoveListener(playerListener events.PlayerEventListener) {
 	for i, listener := range p.listeners {
 		if listener == playerListener {
 			p.listeners = append(p.listeners[:i], p.listeners[i+1:]...)
 		}
 	}
 }
-func (p *PlayerImpl) EmitEvent(playerEvent player.Event) {
+func (p *PlayerImpl) EmitEvent(playerEvent events.PlayerEvent) {
 	for _, listener := range p.listeners {
 		listener.OnEvent(playerEvent)
 	}
 }
 
-func (p *PlayerImpl) commit(filters *filters.Filters) {
-	p.node.Send(filters)
+func (p *PlayerImpl) commitFilters(filters *filters.Filters) {
+	p.node.Send(&api.FilterPlayerCommand{
+		PlayerCommand: api.NewPlayerCommand(api.OpFilters, p),
+		Filters: filters,
+	})
 }

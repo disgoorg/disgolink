@@ -1,5 +1,7 @@
 package api
 
+import "github.com/DisgoOrg/disgolink/api/filters"
+
 type Op string
 
 const (
@@ -18,31 +20,31 @@ const (
 	OpFilters           Op = "filters"
 )
 
-func NewCommand(op Op) *OpCommand {
-	return &OpCommand{Op: op}
-}
-
-type OpCommand struct {
+type GenericOpCommand struct {
 	Op      Op     `json:"op"`
 	GuildID string `json:"guildId"`
 }
 
-func NewPlayerCommand(op Op, p Player) *PlayerCommand {
-	return &PlayerCommand{
-		OpCommand: NewCommand(op),
-		GuildID:   p.GuildID(),
-	}
+func NewCommand(op Op) *GenericOpCommand {
+	return &GenericOpCommand{Op: op}
 }
 
 type EventCommand struct {
-	*OpCommand
+	*GenericOpCommand
 	SessionID string      `json:"sessionId"`
 	Event     interface{} `json:"event"`
 }
 
 type PlayerCommand struct {
-	*OpCommand
+	*GenericOpCommand
 	GuildID string `json:"guildId"`
+}
+
+func NewPlayerCommand(op Op, p Player) *PlayerCommand {
+	return &PlayerCommand{
+		GenericOpCommand: NewCommand(op),
+		GuildID:          p.GuildID(),
+	}
 }
 
 type PlayPlayerCommand struct {
@@ -70,4 +72,17 @@ type PausePlayerCommand struct {
 type SeekPlayerCommand struct {
 	*PlayerCommand
 	Position int `json:"position"`
+}
+
+type FilterPlayerCommand struct {
+	*PlayerCommand
+	*filters.Filters
+}
+
+type GenericOpEvent struct {
+	Op      Op     `json:"op"`
+}
+
+type PlayerUpdateEvent struct {
+	GenericOpEvent
 }

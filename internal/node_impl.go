@@ -111,9 +111,14 @@ func (n *NodeImpl) listen() {
 				return
 			}
 			n.lavalink.Logger().Infof("type: %d, data: %+v", mt, string(data))
+
 			// TODO: handle stuff
 		}
 	}
+}
+
+func (n *NodeImpl) onEvent() {
+
 }
 
 func (n *NodeImpl) Open() error {
@@ -132,6 +137,8 @@ func (n *NodeImpl) Open() error {
 
 	var err error
 	n.conn, _, err = websocket.DefaultDialer.Dial(u.String(), header)
+
+	go n.listen()
 
 	return err
 }

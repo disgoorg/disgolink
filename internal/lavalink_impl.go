@@ -103,7 +103,7 @@ func (l *LavalinkImpl) VoiceServerUpdate(voiceServerUpdate *api.VoiceServerUpdat
 		return
 	}
 	player.Node().Send(api.EventCommand{
-		OpCommand: &api.OpCommand{
+		GenericOpCommand: &api.GenericOpCommand{
 			Op:      api.OpVoiceUpdate,
 			GuildID: voiceServerUpdate.GuildID,
 		},
