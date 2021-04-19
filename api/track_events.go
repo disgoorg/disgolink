@@ -1,10 +1,8 @@
-package events
+package api
 
 import (
 	"encoding/json"
 	"log"
-
-	"github.com/DisgoOrg/disgolink/api"
 )
 
 type RawTrackEvent struct {
@@ -14,18 +12,18 @@ type RawTrackEvent struct {
 }
 
 type TrackEvent interface {
-	Track() api.Track
+	Track() Track
 }
 
 type genericTrackEvent struct {
 	genericPlayerEvent
 	RawTrack string `json:"track"`
-	track *api.Track
+	track *Track
 }
 
-func (e genericTrackEvent) Track() *api.Track {
+func (e genericTrackEvent) Track() *Track {
 	if e.track == nil {
-		e.track = &api.Track{Track: e.RawTrack}
+		e.track = &Track{Track: e.RawTrack}
 		err := e.track.DecodeInfo()
 		if err != nil {
 			log.Printf("error while unpacking track info: %s", err)
@@ -37,12 +35,12 @@ func (e genericTrackEvent) Track() *api.Track {
 
 type TrackEndEvent struct {
 	genericTrackEvent
-	EndReason api.EndReason `json:"reason"`
+	EndReason EndReason `json:"reason"`
 }
 
 type TrackExceptionEvent struct {
 	genericTrackEvent
-	Exception api.Exception `json:"exception"`
+	Exception Exception `json:"exception"`
 }
 
 type TrackStartEvent struct {

@@ -1,12 +1,14 @@
 package api
 
 import (
+	"encoding/base64"
+	"log"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
 )
 
-var track = &Track{
+var testTrack = &Track{
 	Track: "QAAAfwIAFkFyY2hpdGVjdHMgLSAiQW5pbWFscyIAD0VwaXRhcGggUmVjb3JkcwAAAAAAA70IAAtqZFdoSmNycmpRcwABACtodHRwczovL3d3dy55b3V0dWJlLmNvbS93YXRjaD92PWpkV2hKY3JyalFzAAd5b3V0dWJlAAAAAAADuiQ=",
 	Info: &TrackInfo{
 		Identifier: "jdWhJcrrjQs",
@@ -22,7 +24,15 @@ var track = &Track{
 }
 
 func TestDecodeString(t *testing.T) {
-	trackInfo, err := DecodeString(track.Track)
+	trackInfo, err := DecodeString(testTrack.Track)
 	assert.NoError(t, err)
-	assert.Equal(t, track.Info, trackInfo)
+	assert.Equal(t, testTrack.Info, trackInfo)
+}
+
+func TestEncodeTrackInfo(t *testing.T) {
+	data, _ := base64.StdEncoding.DecodeString(testTrack.Track)
+	log.Println("expected: ", data)
+	track, err := EncodeToString(testTrack.Info)
+	assert.NoError(t, err)
+	assert.Equal(t, testTrack.Track, track)
 }

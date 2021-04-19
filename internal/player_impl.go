@@ -2,7 +2,6 @@ package internal
 
 import (
 	"github.com/DisgoOrg/disgolink/api"
-	"github.com/DisgoOrg/disgolink/api/events"
 	"github.com/DisgoOrg/disgolink/api/filters"
 )
 
@@ -33,7 +32,7 @@ type PlayerImpl struct {
 	filters       *filters.Filters
 	connected     bool
 	node          api.Node
-	listeners     []events.PlayerEventListener
+	listeners     []api.PlayerEventListener
 }
 
 func (p *PlayerImpl) GuildID() string {
@@ -120,17 +119,17 @@ func (p *PlayerImpl) Commit() {
 	p.filters.Commit()
 }
 
-func (p *PlayerImpl) AddListener(playerListener events.PlayerEventListener) {
+func (p *PlayerImpl) AddListener(playerListener api.PlayerEventListener) {
 	p.listeners = append(p.listeners, playerListener)
 }
-func (p *PlayerImpl) RemoveListener(playerListener events.PlayerEventListener) {
+func (p *PlayerImpl) RemoveListener(playerListener api.PlayerEventListener) {
 	for i, listener := range p.listeners {
 		if listener == playerListener {
 			p.listeners = append(p.listeners[:i], p.listeners[i+1:]...)
 		}
 	}
 }
-func (p *PlayerImpl) EmitEvent(playerEvent events.PlayerEvent) {
+func (p *PlayerImpl) EmitEvent(playerEvent api.PlayerEvent) {
 	for _, listener := range p.listeners {
 		listener.OnEvent(playerEvent)
 	}
