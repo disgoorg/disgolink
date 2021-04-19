@@ -1,7 +1,6 @@
 package api
 
 import (
-	"github.com/DisgoOrg/disgolink/api/events"
 	"github.com/DisgoOrg/disgolink/api/filters"
 )
 
@@ -16,9 +15,9 @@ type Player interface {
 	SeekTo(position int)
 	Filters() *filters.Filters
 	Commit()
-	AddListener(playerListener events.PlayerEventListener)
-	RemoveListener(playerListener events.PlayerEventListener)
-	EmitEvent(playerEvent events.PlayerEvent)
+	AddListener(playerListener PlayerEventListener)
+	RemoveListener(playerListener PlayerEventListener)
+	EmitEvent(playerEvent PlayerEvent)
 	GuildID() string
 	ChannelID() *string
 	SetChannelID(channelID *string)

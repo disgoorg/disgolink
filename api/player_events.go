@@ -1,18 +1,14 @@
-package events
-
-import (
-	"github.com/DisgoOrg/disgolink/api"
-)
+package api
 
 type PlayerEvent interface {
-	Player() api.Player
+	Player() Player
 }
 
 type genericPlayerEvent struct {
-	player api.Player
+	player Player
 }
 
-func (e genericPlayerEvent) Player() api.Player {
+func (e genericPlayerEvent) Player() Player {
 	return e.player
 }
 
