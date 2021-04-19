@@ -5,11 +5,10 @@ import (
 	"encoding/base64"
 	"encoding/binary"
 	"io"
-	"log"
 )
 
 const trackInfoVersioned int = 1
-const trackInfoVersion int32 = 2
+const trackInfoVersion int8 = 2
 
 type Track struct {
 	Track string     `json:"track"`
@@ -17,15 +16,15 @@ type Track struct {
 }
 
 type TrackInfo struct {
-	Identifier string `json:"identifier"`
-	IsSeekable bool   `json:"isSeekable"`
-	Author     string `json:"author"`
-	Length     int    `json:"length"`
-	IsStream   bool   `json:"isStream"`
-	Position   int    `json:"position"`
-	Title      string `json:"title"`
-	URI        string `json:"uri"`
-	SourceName string `json:"sourceName"`
+	Identifier string  `json:"identifier"`
+	IsSeekable bool    `json:"isSeekable"`
+	Author     string  `json:"author"`
+	Length     int     `json:"length"`
+	IsStream   bool    `json:"isStream"`
+	Position   int     `json:"position"`
+	Title      string  `json:"title"`
+	URI        *string `json:"uri"`
+	SourceName string  `json:"sourceName"`
 }
 
 func (t *Track) EncodeInfo() (err error) {
@@ -45,33 +44,37 @@ func EncodeToString(info *TrackInfo) (str string, err error) {
 	if err = writeStr(w, info.Author); err != nil {
 		return
 	}
-	if err = binary.Write(w, binary.LittleEndian, uint64(info.Length)); err != nil {
+	if err = binary.Write(w, binary.BigEndian, uint64(info.Length)); err != nil {
 		return
 	}
 	if err = writeStr(w, info.Identifier); err != nil {
 		return
 	}
-	if err = binary.Write(w, binary.LittleEndian, info.IsStream); err != nil {
+	if err = writeBool(w, info.IsStream); err != nil {
 		return
 	}
-	if err = writeStr(w, info.URI); err != nil {
+	if err = writeBool(w, info.URI != nil); err != nil {
 		return
 	}
+	if info.URI != nil {
+		if err = writeStr(w, *info.URI); err != nil {
+			return
+		}
+	}
+
 	if err = writeStr(w, info.SourceName); err != nil {
 		return
 	}
-	if err = binary.Write(w, binary.LittleEndian, uint64(info.Position)); err != nil {
+	if err = binary.Write(w, binary.BigEndian, uint64(info.Position)); err != nil {
 		return
 	}
 
-
 	buf := new(bytes.Buffer)
-	log.Println("BRUG: ", trackInfoVersioned << 30)
-	_ = binary.Write(buf, binary.LittleEndian, int32(w.Len() | trackInfoVersioned << 30))
+	err = binary.Write(buf, binary.BigEndian, int32(w.Len()|trackInfoVersioned<<30))
+	if err != nil {
+		return
+	}
 	buf.Write(w.Bytes())
-
-	log.Println("actual: ", buf.Bytes())
-	log.Println("actual: ", string(buf.Bytes()))
 
 	str = base64.StdEncoding.EncodeToString(buf.Bytes())
 	return
@@ -84,6 +87,20 @@ func writeStr(w io.Writer, str string) (err error) {
 		return
 	}
 	if err = binary.Write(w, binary.BigEndian, data); err != nil {
+		return
+	}
+	return
+}
+
+func writeBool(w io.Writer, bool bool) (err error) {
+	var bInt uint8
+	if bool {
+		bInt = 1
+	} else {
+		bInt = 0
+	}
+
+	if err = binary.Write(w, binary.BigEndian, bInt); err != nil {
 		return
 	}
 	return
@@ -103,8 +120,6 @@ func DecodeString(str string) (info *TrackInfo, err error) {
 		return
 	}
 
-	log.Println("data: ", data)
-	log.Println("data: ", string(data))
 	r := bytes.NewReader(data)
 
 	info = &TrackInfo{}
@@ -120,12 +135,9 @@ func DecodeString(str string) (info *TrackInfo, err error) {
 	if err = binary.Read(r, binary.LittleEndian, &ignore); err != nil {
 		return
 	}
-	log.Println("ignore: ", ignore)
-	log.Println("value: ", value)
 
 	var version uint8
 	if flags&int32(trackInfoVersioned) == 0 {
-		println("flags&trackInfoVersioned == 0")
 		version = 1
 	} else {
 		if err = binary.Read(r, binary.LittleEndian, &version); err != nil {
@@ -136,7 +148,6 @@ func DecodeString(str string) (info *TrackInfo, err error) {
 	if err = binary.Read(r, binary.LittleEndian, &ignore); err != nil {
 		return nil, err
 	}
-	log.Println("ignore: ", ignore)
 
 	info.Title, err = readStr(r)
 	if err != nil {
@@ -172,11 +183,14 @@ func DecodeString(str string) (info *TrackInfo, err error) {
 	}
 
 	if hasURI == 1 {
-		info.URI, err = readStr(r)
+		var uri string
+		uri, err = readStr(r)
+		info.URI = &uri
 		if err != nil {
 			return
 		}
 	} else {
+		info.URI = nil
 		_, err = readStr(r)
 		if err != nil {
 			return
@@ -187,6 +201,12 @@ func DecodeString(str string) (info *TrackInfo, err error) {
 	if err != nil {
 		return
 	}
+
+	var position uint64
+	if err = binary.Read(r, binary.BigEndian, &position); err != nil {
+		return
+	}
+	info.Position = int(position)
 
 	return info, nil
 }
