@@ -4,6 +4,14 @@ import "github.com/DisgoOrg/disgo/api"
 
 var commands = []api.Command{
 	{
+		Name:              "pause",
+		Description:       "pauses the music",
+	},
+	{
+		Name:              "queue",
+		Description:       "shows you all tracks in queue",
+	},
+	{
 		Name:              "play",
 		Description:       "plays some music",
 		Options: []*api.CommandOption{

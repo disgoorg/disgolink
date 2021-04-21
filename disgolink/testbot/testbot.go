@@ -1,6 +1,7 @@
 package main
 
 import (
+	"fmt"
 	"os"
 	"os/signal"
 	"strconv"
@@ -19,6 +20,7 @@ const guildID = "817327181659111454"
 
 var logger = logrus.New()
 var dgolink disgolink.Disgolink
+var musicPlayers = map[string]*MusicPlayer{}
 
 func main() {
 	logger.SetLevel(logrus.InfoLevel)
@@ -73,6 +75,34 @@ func main() {
 
 func slashCommandListener(event *events.SlashCommandEvent) {
 	switch event.CommandName {
+	case "queue":
+		musicPlayer, ok := musicPlayers[event.GuildID.String()]
+		if !ok {
+			_ = event.Reply(api.NewInteractionResponseBuilder().SetContent("No MusicPlayer found for this guild").Build())
+			return
+		}
+		tracks := ""
+		for i, track := range musicPlayer.queue {
+			tracks += fmt.Sprintf("%d. [%s](%s)\n", i+1, track.Info.Title, *track.Info.URI)
+		}
+		_ = event.Reply(api.NewInteractionResponseBuilder().SetEmbeds(api.NewEmbedBuilder().
+			SetTitle("Queue:").
+			SetDescription(tracks).
+			Build(),
+		).Build())
+	case "pause":
+		musicPlayer, ok := musicPlayers[event.GuildID.String()]
+		if !ok {
+			_ = event.Reply(api.NewInteractionResponseBuilder().SetContent("No MusicPlayer found for this guild").Build())
+			return
+		}
+		pause := !musicPlayer.player.Paused()
+		musicPlayer.player.Pause(pause)
+		message := "paused"
+		if !pause {
+			message = "resumed"
+		}
+		_ = event.Reply(api.NewInteractionResponseBuilder().SetContent(message + "music").Build())
 	case "play":
 		voiceState := event.Member.VoiceState()
 
@@ -99,20 +129,29 @@ func slashCommandListener(event *events.SlashCommandEvent) {
 					query = string(dapi.SearchTypeYoutube) + query
 				}
 			}
-
+			musicPlayer, ok := musicPlayers[event.GuildID.String()]
+			if !ok {
+				musicPlayer = NewMusicPlayer(event.GuildID.String())
+				musicPlayers[event.GuildID.String()] = musicPlayer
+			}
 			dgolink.RestClient().LoadItemAsync(query, dapi.NewResultHandler(
 				func(track *dapi.Track) {
-					queueOrPlay(event, voiceState, track)
+					if ok := connect(event, voiceState); !ok {
+						return
+					}
+					musicPlayer.Queue(event, track)
 				},
 				func(playlist *dapi.Playlist) {
-					track := playlist.SelectedTrack()
-					if track == nil {
-						track = playlist.Tracks[0]
+					if ok := connect(event, voiceState); !ok {
+						return
 					}
-					queueOrPlay(event, voiceState, track)
+					musicPlayer.Queue(event, playlist.Tracks...)
 				},
 				func(tracks []*dapi.Track) {
-					queueOrPlay(event, voiceState, tracks[0])
+					if ok := connect(event, voiceState); !ok {
+						return
+					}
+					musicPlayer.Queue(event, tracks[0])
 				},
 				func() {
 					_, _ = event.EditOriginal(api.NewFollowupMessageBuilder().SetContent("no tracks found").Build())
@@ -125,17 +164,12 @@ func slashCommandListener(event *events.SlashCommandEvent) {
 	}
 }
 
-func connect(event *events.SlashCommandEvent, voiceState *api.VoiceState) {
+func connect(event *events.SlashCommandEvent, voiceState *api.VoiceState) bool {
 	err := voiceState.VoiceChannel().Connect()
 	if err != nil {
 		_, _ = event.EditOriginal(api.NewFollowupMessageBuilder().SetContent("error while connecting to channel:\n" + err.Error()).Build())
-		return
+		logger.Errorf("error while connecting to channel: %s", err)
+		return false
 	}
-}
-
-func queueOrPlay(, track *dapi.Track) {
-
-	player := dgolink.Player(event.GuildID.String())
-	player.Play(track)
-	_, _ = event.EditOriginal(api.NewFollowupMessageBuilder().SetContent("playing [" + track.Info.Title + "](" + *track.Info.URI + ")").Build())
+	return true
 }

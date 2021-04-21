@@ -41,6 +41,10 @@ func (p *PlayerImpl) Track() *api.Track {
 	return p.track
 }
 
+func (p *PlayerImpl) SetTrack(track *api.Track) {
+	p.track = track
+}
+
 func (p *PlayerImpl) Play(track *api.Track) {
 	p.Node().Send(&api.PlayPlayerCommand{
 		PlayerCommand: api.NewPlayerCommand(api.OpPlay, p),

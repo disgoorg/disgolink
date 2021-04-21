@@ -175,8 +175,10 @@ func (n *NodeImpl) onTrackEvent(data []byte) {
 			n.lavalink.Logger().Errorf("error unmarshalling TrackStartEvent: %s", err)
 			return
 		}
+		track := trackStartEvent.Track()
+		p.SetTrack(track)
 		p.EmitEvent(func(listener api.PlayerEventListener) {
-			listener.OnTrackStart(p, trackStartEvent.Track())
+			listener.OnTrackStart(p, track)
 		})
 	case api.WebsocketEventTrackEnd:
 		var trackEndEvent api.TrackEndEvent
