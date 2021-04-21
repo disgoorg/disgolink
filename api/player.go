@@ -5,24 +5,32 @@ import (
 )
 
 type Player interface {
-	PlayingTrack() *Track
-	PlayTrack(track *Track)
-	StopTrack()
-	SetPaused(paused bool)
-	Resume()
+	Track() *Track
+	SetTrack(track *Track)
+	Play(track *Track)
+	PlayAt(track *Track, start int, end int)
+	Stop()
+	Destroy()
+	Pause(paused bool)
 	Paused() bool
-	TrackPosition() int
-	SeekTo(position int)
+	Position() int
+	Seek(position int)
+	Volume() int
+	SetVolume(volume int)
 	Filters() *filters.Filters
-	Commit()
-	AddListener(playerListener PlayerEventListener)
-	RemoveListener(playerListener PlayerEventListener)
-	EmitEvent(playerEvent PlayerEvent)
+	SetFilters(filters *filters.Filters)
+
 	GuildID() string
 	ChannelID() *string
 	SetChannelID(channelID *string)
 	LastSessionID() *string
 	SetLastSessionID(sessionID string)
+
 	Node() Node
 	ChangeNode(node Node)
+
+	PlayerUpdate(state State)
+	EmitEvent(listenerCaller func(listener PlayerEventListener))
+	AddListener(playerListener PlayerEventListener)
+	RemoveListener(playerListener PlayerEventListener)
 }
