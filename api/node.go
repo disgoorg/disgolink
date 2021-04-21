@@ -1,6 +1,7 @@
 package api
 
 type Node interface {
+	Lavalink() Lavalink
 	Send(d interface{})
 	Open() error
 	Name() string

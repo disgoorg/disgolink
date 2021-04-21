@@ -1,6 +1,7 @@
 package internal
 
 import (
+	"encoding/json"
 	"fmt"
 	"log"
 	"net/http"
@@ -110,15 +111,113 @@ func (n *NodeImpl) listen() {
 				n.reconnect(1 * time.Second)
 				return
 			}
-			n.lavalink.Logger().Infof("type: %d, data: %+v", mt, string(data))
-
-			// TODO: handle stuff
+			op, err := n.getOp(mt, data)
+			if err != nil {
+				n.lavalink.Logger().Errorf("error getting op from websocket message: %s", err)
+				continue
+			}
+			switch *op {
+			case api.OpPlayerUpdate:
+				n.onPlayerUpdate(data)
+			case api.OpEvent:
+				n.onTrackEvent(data)
+			case api.OpStats:
+			default:
+				n.lavalink.Logger().Warnf("unexpected op received: %s", op)
+			}
 		}
 	}
 }
 
-func (n *NodeImpl) onEvent() {
+func (n *NodeImpl) getOp(mt int, data []byte) (*api.Op, error) {
+	if mt != websocket.TextMessage {
+		return nil, fmt.Errorf("recieved unexpected mt type: %d", mt)
+	}
 
+	var op api.GenericOp
+	if err := json.Unmarshal(data, &op); err != nil {
+		return nil, err
+	}
+	return &op.Op, nil
+}
+
+func (n *NodeImpl) onPlayerUpdate(data []byte) {
+	var playerUpdate api.PlayerUpdateEvent
+	err := json.Unmarshal(data, &playerUpdate)
+	if err != nil {
+		n.lavalink.Logger().Errorf("error unmarshalling PlayerUpdateEvent: %s", err)
+		return
+	}
+	if player := n.lavalink.ExistingPlayer(playerUpdate.GuildID); player != nil {
+		player.PlayerUpdate(playerUpdate.State)
+		player.EmitEvent(func(listener api.PlayerEventListener) {
+			listener.OnPlayerUpdate(player, playerUpdate.State)
+		})
+	}
+}
+
+func (n *NodeImpl) onTrackEvent(data []byte) {
+	var event api.GenericPlayerEvent
+	err := json.Unmarshal(data, &event)
+	if err != nil {
+		n.lavalink.Logger().Errorf("error unmarshalling GenericPlayerEvent: %s", err)
+		return
+	}
+	p := n.lavalink.ExistingPlayer(event.GuildID)
+	if p == nil {
+		return
+	}
+
+	switch event.Type {
+	case api.WebsocketEventTrackStart:
+		var trackStartEvent api.TrackStartEvent
+		if err = json.Unmarshal(data, &trackStartEvent); err != nil {
+			n.lavalink.Logger().Errorf("error unmarshalling TrackStartEvent: %s", err)
+			return
+		}
+		p.EmitEvent(func(listener api.PlayerEventListener) {
+			listener.OnTrackStart(p, trackStartEvent.Track())
+		})
+	case api.WebsocketEventTrackEnd:
+		var trackEndEvent api.TrackEndEvent
+		if err = json.Unmarshal(data, &trackEndEvent); err != nil {
+			n.lavalink.Logger().Errorf("error unmarshalling TrackEndEvent: %s", err)
+			return
+		}
+		p.EmitEvent(func(listener api.PlayerEventListener) {
+			listener.OnTrackEnd(p, trackEndEvent.Track(), trackEndEvent.EndReason)
+		})
+	case api.WebsocketEventTrackException:
+		var trackExceptionEvent api.TrackExceptionEvent
+		if err = json.Unmarshal(data, &trackExceptionEvent); err != nil {
+			n.lavalink.Logger().Errorf("error unmarshalling TrackExceptionEvent: %s", err)
+			return
+		}
+		p.EmitEvent(func(listener api.PlayerEventListener) {
+			listener.OnTrackException(p, trackExceptionEvent.Track(), trackExceptionEvent.Exception)
+		})
+	case api.WebsocketEventTrackStuck:
+		var trackStuckEvent api.TrackStuckEvent
+		if err = json.Unmarshal(data, &trackStuckEvent); err != nil {
+			n.lavalink.Logger().Errorf("error unmarshalling TrackStuckEvent: %s", err)
+			return
+		}
+		p.EmitEvent(func(listener api.PlayerEventListener) {
+			listener.OnTrackStuck(p, trackStuckEvent.Track(), trackStuckEvent.ThresholdMs)
+		})
+	case api.WebSocketEventClosed:
+		var websocketClosedEvent api.WebSocketClosedEvent
+		if err = json.Unmarshal(data, &websocketClosedEvent); err != nil {
+			n.lavalink.Logger().Errorf("error unmarshalling WebSocketClosedEvent: %s", err)
+			return
+		}
+		p.EmitEvent(func(listener api.PlayerEventListener) {
+			listener.OnWebSocketClosed(p, websocketClosedEvent.Code, websocketClosedEvent.Reason, websocketClosedEvent.ByRemote)
+		})
+	default:
+		n.lavalink.Logger().Warnf("unexpected event received: %s", string(data))
+		return
+	}
 }
 
 func (n *NodeImpl) Open() error {

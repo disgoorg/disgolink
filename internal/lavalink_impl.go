@@ -81,7 +81,7 @@ func (l *LavalinkImpl) ExistingPlayer(guildID string) api.Player {
 	return l.players[guildID]
 }
 func (l *LavalinkImpl) Players() map[string]api.Player {
-	return nil //l.players
+	return l.players
 }
 func (l *LavalinkImpl) UserID() string {
 	return l.userID
@@ -103,10 +103,10 @@ func (l *LavalinkImpl) VoiceServerUpdate(voiceServerUpdate *api.VoiceServerUpdat
 		return
 	}
 	player.Node().Send(api.EventCommand{
-		GenericOpCommand: &api.GenericOpCommand{
-			Op:      api.OpVoiceUpdate,
-			GuildID: voiceServerUpdate.GuildID,
+		GenericOp: api.GenericOp{
+			Op: api.OpVoiceUpdate,
 		},
+		GuildID:   voiceServerUpdate.GuildID,
 		SessionID: *player.LastSessionID(),
 		Event:     voiceServerUpdate,
 	})

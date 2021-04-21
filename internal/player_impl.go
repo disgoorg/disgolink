@@ -11,11 +11,12 @@ func NewPlayer(node api.Node, guildID string) api.Player {
 		channelID:     nil,
 		lastSessionID: nil,
 		track:         nil,
+		volume:        100,
 		paused:        false,
 		position:      -1,
+		connected:     false,
 		updateTime:    -1,
 		filters:       nil,
-		connected:     false,
 		node:          node,
 		listeners:     nil,
 	}
@@ -26,13 +27,114 @@ type PlayerImpl struct {
 	channelID     *string
 	lastSessionID *string
 	track         *api.Track
+	volume        int
 	paused        bool
 	position      int
+	connected     bool
 	updateTime    int
 	filters       *filters.Filters
-	connected     bool
 	node          api.Node
 	listeners     []api.PlayerEventListener
+}
+
+func (p *PlayerImpl) Track() *api.Track {
+	return p.track
+}
+
+func (p *PlayerImpl) Play(track *api.Track) {
+	p.Node().Send(&api.PlayPlayerCommand{
+		PlayerCommand: api.NewPlayerCommand(api.OpPlay, p),
+		Track:         track.Track,
+	})
+}
+
+func (p *PlayerImpl) PlayAt(track *api.Track, start int, end int) {
+	p.Node().Send(&api.PlayPlayerCommand{
+		PlayerCommand: api.NewPlayerCommand(api.OpPlay, p),
+		Track:         track.Track,
+		StartTime:     &start,
+		EndTime:       &end,
+	})
+}
+
+func (p *PlayerImpl) Stop() {
+	p.track = nil
+
+	p.Node().Send(&api.StopPlayerCommand{
+		PlayerCommand: api.NewPlayerCommand(api.OpStop, p),
+	})
+}
+
+func (p *PlayerImpl) Destroy() {
+	p.track = nil
+
+	p.Node().Send(&api.DestroyPlayerCommand{
+		PlayerCommand: api.NewPlayerCommand(api.OpDestroy, p),
+	})
+}
+
+func (p *PlayerImpl) Pause(pause bool) {
+	if p.paused == pause {
+		return
+	}
+	p.Node().Send(&api.PausePlayerCommand{
+		PlayerCommand: api.NewPlayerCommand(api.OpPause, p),
+		Pause:         pause,
+	})
+	p.paused = pause
+	if pause {
+		p.EmitEvent(func(listener api.PlayerEventListener) {
+			listener.OnPlayerPause(p)
+		})
+	} else {
+		p.EmitEvent(func(listener api.PlayerEventListener) {
+			listener.OnPlayerResume(p)
+		})
+	}
+}
+
+func (p *PlayerImpl) Paused() bool {
+	return p.paused
+}
+
+func (p *PlayerImpl) Position() int {
+	return p.position
+}
+
+func (p *PlayerImpl) Seek(position int) {
+	p.Node().Send(&api.SeekPlayerCommand{
+		PlayerCommand: api.NewPlayerCommand(api.OpSeek, p),
+		Position:      position,
+	})
+}
+
+func (p *PlayerImpl) Volume() int {
+	return p.volume
+}
+
+func (p *PlayerImpl) SetVolume(volume int) {
+	if volume < 0 {
+		volume = 0
+	}
+	if volume > 1000 {
+		volume = 1000
+	}
+	p.Node().Send(&api.VolumePlayerCommand{
+		PlayerCommand: api.NewPlayerCommand(api.OpSeek, p),
+		Volume:        volume,
+	})
+	p.volume = volume
+}
+
+func (p *PlayerImpl) Filters() *filters.Filters {
+	if p.filters == nil {
+		p.filters = filters.NewFilters(p.commitFilters)
+	}
+	return p.filters
+}
+
+func (p *PlayerImpl) SetFilters(filters *filters.Filters) {
+	p.filters = filters
 }
 
 func (p *PlayerImpl) GuildID() string {
@@ -57,67 +159,33 @@ func (p *PlayerImpl) ChangeNode(node api.Node) {
 	p.node = node
 }
 
-func (p *PlayerImpl) PlayingTrack() *api.Track {
-	return p.track
+func (p *PlayerImpl) PlayerUpdate(state api.State) {
+	p.position = state.Position
+	p.connected = state.Connected
 }
-func (p *PlayerImpl) PlayTrack(track *api.Track) {
-	p.position = track.Info.Position
 
-	p.Node().Send(&api.PlayPlayerCommand{
-		PlayerCommand: api.NewPlayerCommand(api.OpPlay, p),
-		Track:         track.Track,
-		StartTime:     p.position,
-		Paused:        p.paused,
-	})
-
-}
-func (p *PlayerImpl) StopTrack() {
-	p.track = nil
-
-	p.Node().Send(&api.StopPlayerCommand{
-		PlayerCommand: api.NewPlayerCommand(api.OpStop, p),
-	})
-
-}
-func (p *PlayerImpl) SetPaused(paused bool) {
-	if p.paused == paused {
-		return
+func (p *PlayerImpl) EmitEvent(listenerCaller func(listener api.PlayerEventListener)) {
+	for _, listener := range p.listeners {
+		listenerCaller(listener)
 	}
-	p.Node().Send(&api.PausePlayerCommand{
-		PlayerCommand: api.NewPlayerCommand(api.OpPause, p),
-		Paused:        paused,
-	})
-	p.paused = paused
 }
 
-func (p *PlayerImpl) Resume() {
-	p.SetPaused(false)
-}
-
-func (p *PlayerImpl) Paused() bool {
-	return p.paused
-}
-func (p *PlayerImpl) TrackPosition() int {
-	return p.position
-}
-func (p *PlayerImpl) SeekTo(position int) {
-	p.Node().Send(&api.SeekPlayerCommand{
-		PlayerCommand: api.NewPlayerCommand(api.OpSeek, p),
-		Position:      position,
-	})
-}
-func (p *PlayerImpl) Filters() *filters.Filters {
-	if p.filters == nil {
-		p.filters = filters.NewFilters(p.commitFilters)
-	}
-	return p.filters
-}
-func (p *PlayerImpl) Commit() {
-	if p.filters == nil {
-		return
-	}
-	p.filters.Commit()
-}
+/*
+switch e := event.(type) {
+case api.TrackStartEvent:
+listener.OnTrackStart(p, e.Track())
+case api.PlayerPauseEvent:
+listener.OnPlayerPause(p)
+case api.PlayerResumeEvent:
+listener.OnPlayerResume(p)
+case api.TrackEndEvent:
+listener.OnTrackEnd(p, e.Track(), e.EndReason)
+case api.TrackExceptionEvent:
+listener.OnTrackException(p, e.Track(), e.Exception)
+case api.TrackStuckEvent:
+listener.OnTrackStuck(p, e.Track(), e.ThresholdMs)
+default:
+p.Node().Lavalink().Logger().Errorf("received unknown event: %+v", event)*/
 
 func (p *PlayerImpl) AddListener(playerListener api.PlayerEventListener) {
 	p.listeners = append(p.listeners, playerListener)
@@ -129,15 +197,10 @@ func (p *PlayerImpl) RemoveListener(playerListener api.PlayerEventListener) {
 		}
 	}
 }
-func (p *PlayerImpl) EmitEvent(playerEvent api.PlayerEvent) {
-	for _, listener := range p.listeners {
-		listener.OnEvent(playerEvent)
-	}
-}
 
 func (p *PlayerImpl) commitFilters(filters *filters.Filters) {
 	p.node.Send(&api.FilterPlayerCommand{
 		PlayerCommand: api.NewPlayerCommand(api.OpFilters, p),
-		Filters: filters,
+		Filters:       filters,
 	})
 }

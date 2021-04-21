@@ -94,6 +94,10 @@ func slashCommandListener(event *events.SlashCommandEvent) {
 				case "sc":
 					query = string(dapi.SearchTypeSoundCloud) + query
 				}
+			} else {
+				if !dapi.URLPattern.MatchString(query) {
+					query = string(dapi.SearchTypeYoutube) + query
+				}
 			}
 
 			dgolink.RestClient().LoadItemAsync(query, dapi.NewResultHandler(
@@ -121,13 +125,17 @@ func slashCommandListener(event *events.SlashCommandEvent) {
 	}
 }
 
-func queueOrPlay(event *events.SlashCommandEvent, voiceState *api.VoiceState, track *dapi.Track) {
+func connect(event *events.SlashCommandEvent, voiceState *api.VoiceState) {
 	err := voiceState.VoiceChannel().Connect()
 	if err != nil {
 		_, _ = event.EditOriginal(api.NewFollowupMessageBuilder().SetContent("error while connecting to channel:\n" + err.Error()).Build())
 		return
 	}
+}
+
+func queueOrPlay(, track *dapi.Track) {
+
 	player := dgolink.Player(event.GuildID.String())
-	player.PlayTrack(track)
-	_, _ = event.EditOriginal(api.NewFollowupMessageBuilder().SetContent("playing [" + track.Info.Title + "](" + track.Info.URI + ")").Build())
+	player.Play(track)
+	_, _ = event.EditOriginal(api.NewFollowupMessageBuilder().SetContent("playing [" + track.Info.Title + "](" + *track.Info.URI + ")").Build())
 }
