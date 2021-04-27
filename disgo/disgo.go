@@ -20,14 +20,14 @@ type Disgolink interface {
 	dapi.EventListener
 }
 
-func NewDisgolink(logger log.Logger, userID dapi.Snowflake) Disgolink {
+func NewDisgolinkByUserID(logger log.Logger, userID dapi.Snowflake) Disgolink {
 	return &DisgolinkImpl{
 		Lavalink: internal.NewLavalinkImpl(logger, string(userID)),
 	}
 }
 
-func NewDisgolinkWithDisgo(logger log.Logger, dgo dapi.Disgo) Disgolink {
-	dgolink := NewDisgolink(logger, dgo.ApplicationID())
+func NewDisgolink(logger log.Logger, dgo dapi.Disgo) Disgolink {
+	dgolink := NewDisgolinkByUserID(logger, dgo.ApplicationID())
 	dgo.EventManager().AddEventListeners(dgolink)
 	dgo.SetVoiceDispatchInterceptor(dgolink)
 	return dgolink

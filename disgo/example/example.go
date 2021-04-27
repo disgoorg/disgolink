@@ -26,9 +26,9 @@ func main() {
 
 	dgo, err := disgo.NewBuilder(os.Getenv("token")).
 		SetLogger(logger).
-		SetIntents(api.IntentsGuilds | api.IntentsGuildMembers | api.IntentsGuildVoiceStates).
+		SetIntents(api.IntentsGuilds | api.IntentsGuildVoiceStates).
 		SetCacheFlags(api.CacheFlagsDefault | api.CacheFlagVoiceState).
-		SetMemberCachePolicy(api.MemberCachePolicyAll).
+		SetMemberCachePolicy(api.MemberCachePolicyNone).
 		AddEventListeners(&events.ListenerAdapter{
 			OnSlashCommand: slashCommandListener,
 		}).
@@ -38,7 +38,7 @@ func main() {
 		return
 	}
 
-	dgolink = disgolink.NewDisgolinkWithDisgo(logger, dgo)
+	dgolink = disgolink.NewDisgolink(logger, dgo)
 	registerNodes()
 
 	_, err = dgo.RestClient().SetGuildCommands(dgo.ApplicationID(), guildID, commands...)
