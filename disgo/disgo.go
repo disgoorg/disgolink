@@ -26,6 +26,13 @@ func NewDisgolink(logger log.Logger, userID dapi.Snowflake) Disgolink {
 	}
 }
 
+func NewDisgolinkWithDisgo(logger log.Logger, dgo dapi.Disgo) Disgolink {
+	dgolink := NewDisgolink(logger, dgo.ApplicationID())
+	dgo.EventManager().AddEventListeners(dgolink)
+	dgo.SetVoiceDispatchInterceptor(dgolink)
+	return dgolink
+}
+
 type DisgolinkImpl struct {
 	api.Lavalink
 }
@@ -51,3 +58,4 @@ func (l *DisgolinkImpl) OnVoiceStateUpdate(voiceStateUpdate *dapi.VoiceStateUpda
 func (l *DisgolinkImpl) OnEvent(event interface{}) {
 
 }
+

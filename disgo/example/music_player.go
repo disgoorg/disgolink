@@ -2,6 +2,7 @@ package main
 
 import (
 	"fmt"
+
 	"github.com/DisgoOrg/disgo/api"
 	"github.com/DisgoOrg/disgo/api/events"
 	dapi "github.com/DisgoOrg/disgolink/api"
@@ -39,7 +40,7 @@ func (p *MusicPlayer) Queue(event *events.SlashCommandEvent, tracks ...*dapi.Tra
 	} else {
 		embed.SetDescriptionf("queued %d tracks", len(tracks))
 	}
-	embed.SetFooterBy("executed by "+event.Member.EffectiveName(), event.Member.User.AvatarURL())
+	embed.SetFooter("executed by "+event.Member.EffectiveName(), event.Member.User.AvatarURL())
 	if _, err := event.EditOriginal(api.NewFollowupMessageBuilder().SetEmbeds(embed.Build()).Build()); err != nil {
 		logger.Errorf("error while edit original: %s", err)
 	}

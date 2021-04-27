@@ -9,6 +9,10 @@ const (
 	SearchTypeSoundCloud   SearchType = "scsearch:"
 )
 
+func (t SearchType) Apply(searchString string) string {
+	return string(t) + searchString
+}
+
 type RestClient interface {
 	SearchItem(searchType SearchType, query string) ([]*Track, *Exception)
 	LoadItemAsync(identifier string, audioLoaderResultHandler AudioLoaderResultHandler)

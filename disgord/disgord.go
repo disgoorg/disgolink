@@ -1,4 +1,4 @@
-package disgordlink
+package disgord
 
 type Disgordlink interface {
 
