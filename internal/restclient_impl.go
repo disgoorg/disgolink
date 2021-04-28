@@ -18,7 +18,7 @@ type RestClientImpl struct {
 	httpClient *http.Client
 }
 
-func (c *RestClientImpl) SearchItem(searchType api.SearchType, query string) ([]*api.Track, *api.Exception) {
+func (c *RestClientImpl) SearchItem(searchType api.SearchType, query string) ([]api.Track, *api.Exception) {
 	result, err := c.LoadItem(string(searchType) + query)
 	if err != nil {
 		return nil, api.NewExceptionFromErr(err)
@@ -26,7 +26,8 @@ func (c *RestClientImpl) SearchItem(searchType api.SearchType, query string) ([]
 	if result.Exception != nil {
 		return nil, result.Exception
 	}
-	return result.Tracks, nil
+
+	return api.DefaultTracksToTracks(result.Tracks), nil
 }
 func (c *RestClientImpl) LoadItemAsync(identifier string, audioLoaderResultHandler api.AudioLoaderResultHandler) {
 	go func() {
@@ -42,7 +43,7 @@ func (c *RestClientImpl) LoadItemAsync(identifier string, audioLoaderResultHandl
 		case api.LoadTypePlaylistLoaded:
 			audioLoaderResultHandler.PlaylistLoaded(api.NewPlaylist(result))
 		case api.LoadTypeSearchResult:
-			audioLoaderResultHandler.SearchResultLoaded(result.Tracks)
+			audioLoaderResultHandler.SearchResultLoaded(api.DefaultTracksToTracks(result.Tracks))
 		case api.LoadTypeNoMatches:
 			audioLoaderResultHandler.NoMatches()
 		case api.LoadTypeLoadFailed:

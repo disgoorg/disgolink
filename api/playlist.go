@@ -3,16 +3,16 @@ package api
 func NewPlaylist(result *LoadResult) *Playlist {
 	return &Playlist{
 		Info:   result.PlaylistInfo,
-		Tracks: result.Tracks,
+		Tracks: DefaultTracksToTracks(result.Tracks),
 	}
 }
 
 type Playlist struct {
 	Info   *PlaylistInfo
-	Tracks []*Track
+	Tracks []Track
 }
 
-func (p Playlist) SelectedTrack() *Track {
+func (p Playlist) SelectedTrack() Track {
 	if p.Info.SelectedTrack == -1 {
 		return nil
 	}

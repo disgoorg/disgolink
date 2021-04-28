@@ -38,8 +38,8 @@ type GenericTrackEvent struct {
 	RawTrack string `json:"track"`
 }
 
-func (e GenericTrackEvent) Track() *Track {
-	track := &Track{Track: e.RawTrack}
+func (e GenericTrackEvent) Track() Track {
+	track := &DefaultTrack{Track_: &e.RawTrack}
 	err := track.DecodeInfo()
 	if err != nil {
 		log.Printf("error while unpacking track info: %s", err)

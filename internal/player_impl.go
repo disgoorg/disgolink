@@ -26,7 +26,7 @@ type PlayerImpl struct {
 	guildID       string
 	channelID     *string
 	lastSessionID *string
-	track         *api.Track
+	track         api.Track
 	volume        int
 	paused        bool
 	position      int
@@ -37,25 +37,25 @@ type PlayerImpl struct {
 	listeners     []api.PlayerEventListener
 }
 
-func (p *PlayerImpl) Track() *api.Track {
+func (p *PlayerImpl) Track() api.Track {
 	return p.track
 }
 
-func (p *PlayerImpl) SetTrack(track *api.Track) {
+func (p *PlayerImpl) SetTrack(track api.Track) {
 	p.track = track
 }
 
-func (p *PlayerImpl) Play(track *api.Track) {
+func (p *PlayerImpl) Play(track api.Track) {
 	p.Node().Send(&api.PlayPlayerCommand{
 		PlayerCommand: api.NewPlayerCommand(api.OpPlay, p),
-		Track:         track.Track,
+		Track:         *track.Track(),
 	})
 }
 
-func (p *PlayerImpl) PlayAt(track *api.Track, start int, end int) {
+func (p *PlayerImpl) PlayAt(track api.Track, start int, end int) {
 	p.Node().Send(&api.PlayPlayerCommand{
 		PlayerCommand: api.NewPlayerCommand(api.OpPlay, p),
-		Track:         track.Track,
+		Track:         *track.Track(),
 		StartTime:     &start,
 		EndTime:       &end,
 	})
@@ -144,21 +144,27 @@ func (p *PlayerImpl) SetFilters(filters *filters.Filters) {
 func (p *PlayerImpl) GuildID() string {
 	return p.guildID
 }
+
 func (p *PlayerImpl) ChannelID() *string {
 	return p.channelID
 }
+
 func (p *PlayerImpl) SetChannelID(channelID *string) {
 	p.channelID = channelID
 }
+
 func (p *PlayerImpl) LastSessionID() *string {
 	return p.lastSessionID
 }
+
 func (p *PlayerImpl) SetLastSessionID(sessionID string) {
 	p.lastSessionID = &sessionID
 }
+
 func (p *PlayerImpl) Node() api.Node {
 	return p.node
 }
+
 func (p *PlayerImpl) ChangeNode(node api.Node) {
 	p.node = node
 }
@@ -174,26 +180,10 @@ func (p *PlayerImpl) EmitEvent(listenerCaller func(listener api.PlayerEventListe
 	}
 }
 
-/*
-switch e := event.(type) {
-case api.TrackStartEvent:
-listener.OnTrackStart(p, e.Track())
-case api.PlayerPauseEvent:
-listener.OnPlayerPause(p)
-case api.PlayerResumeEvent:
-listener.OnPlayerResume(p)
-case api.TrackEndEvent:
-listener.OnTrackEnd(p, e.Track(), e.EndReason)
-case api.TrackExceptionEvent:
-listener.OnTrackException(p, e.Track(), e.Exception)
-case api.TrackStuckEvent:
-listener.OnTrackStuck(p, e.Track(), e.ThresholdMs)
-default:
-p.Node().Lavalink().Logger().Errorf("received unknown event: %+v", event)*/
-
 func (p *PlayerImpl) AddListener(playerListener api.PlayerEventListener) {
 	p.listeners = append(p.listeners, playerListener)
 }
+
 func (p *PlayerImpl) RemoveListener(playerListener api.PlayerEventListener) {
 	for i, listener := range p.listeners {
 		if listener == playerListener {

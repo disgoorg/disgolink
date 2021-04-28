@@ -19,41 +19,41 @@ const (
 )
 
 type LoadResult struct {
-	LoadType     LoadType      `json:"loadType"`
-	PlaylistInfo *PlaylistInfo `json:"playlistInfo"`
-	Tracks       []*Track      `json:"tracks"`
-	Exception    *Exception    `json:"exception"`
+	LoadType     LoadType        `json:"loadType"`
+	PlaylistInfo *PlaylistInfo   `json:"playlistInfo"`
+	Tracks       []*DefaultTrack `json:"tracks"`
+	Exception    *Exception      `json:"exception"`
 }
 
 type AudioLoaderResultHandler interface {
-	TrackLoaded(track *Track)
+	TrackLoaded(track Track)
 	PlaylistLoaded(playlist *Playlist)
-	SearchResultLoaded(tracks []*Track)
+	SearchResultLoaded(tracks []Track)
 	NoMatches()
 	LoadFailed(e *Exception)
 }
 
 var _ AudioLoaderResultHandler = (*FunctionalResultHandler)(nil)
 
-func NewResultHandler(trackLoaded func(track *Track), playlistLoaded func(playlist *Playlist), searchResultLoaded func(tracks []*Track), noMatches func(), loadFailed func(e *Exception)) AudioLoaderResultHandler {
+func NewResultHandler(trackLoaded func(track Track), playlistLoaded func(playlist *Playlist), searchResultLoaded func(tracks []Track), noMatches func(), loadFailed func(e *Exception)) AudioLoaderResultHandler {
 	return &FunctionalResultHandler{trackLoaded: trackLoaded, playlistLoaded: playlistLoaded, searchResultLoaded: searchResultLoaded, noMatches: noMatches, loadFailed: loadFailed}
 }
 
 type FunctionalResultHandler struct {
-	trackLoaded        func(track *Track)
+	trackLoaded        func(track Track)
 	playlistLoaded     func(playlist *Playlist)
-	searchResultLoaded func(tracks []*Track)
+	searchResultLoaded func(tracks []Track)
 	noMatches          func()
 	loadFailed         func(e *Exception)
 }
 
-func (h *FunctionalResultHandler) TrackLoaded(track *Track) {
+func (h *FunctionalResultHandler) TrackLoaded(track Track) {
 	h.trackLoaded(track)
 }
 func (h *FunctionalResultHandler) PlaylistLoaded(playlist *Playlist) {
 	h.playlistLoaded(playlist)
 }
-func (h *FunctionalResultHandler) SearchResultLoaded(tracks []*Track) {
+func (h *FunctionalResultHandler) SearchResultLoaded(tracks []Track) {
 	h.searchResultLoaded(tracks)
 }
 func (h *FunctionalResultHandler) NoMatches() {

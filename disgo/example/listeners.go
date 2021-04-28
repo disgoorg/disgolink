@@ -18,7 +18,7 @@ func slashCommandListener(event *events.SlashCommandEvent) {
 		}
 		tracks := ""
 		for i, track := range musicPlayer.queue {
-			tracks += fmt.Sprintf("%d. [%s](%s)\n", i+1, track.Info.Title, *track.Info.URI)
+			tracks += fmt.Sprintf("%d. [%s](%s)\n", i+1, track.Info().Title(), *track.Info().URI())
 		}
 		_ = event.Reply(api.NewInteractionResponseBuilder().SetEmbeds(api.NewEmbedBuilder().
 			SetTitle("Queue:").
@@ -70,7 +70,7 @@ func slashCommandListener(event *events.SlashCommandEvent) {
 				musicPlayers[event.GuildID.String()] = musicPlayer
 			}
 			dgolink.RestClient().LoadItemAsync(query, dapi.NewResultHandler(
-				func(track *dapi.Track) {
+				func(track dapi.Track) {
 					if ok = connect(event, voiceState); !ok {
 						return
 					}
@@ -82,7 +82,7 @@ func slashCommandListener(event *events.SlashCommandEvent) {
 					}
 					musicPlayer.Queue(event, playlist.Tracks...)
 				},
-				func(tracks []*dapi.Track) {
+				func(tracks []dapi.Track) {
 					if ok = connect(event, voiceState); !ok {
 						return
 					}

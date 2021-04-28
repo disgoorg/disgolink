@@ -5,10 +5,10 @@ import (
 )
 
 type Player interface {
-	Track() *Track
-	SetTrack(track *Track)
-	Play(track *Track)
-	PlayAt(track *Track, start int, end int)
+	Track() Track
+	SetTrack(track Track)
+	Play(track Track)
+	PlayAt(track Track, start int, end int)
 	Stop()
 	Destroy()
 	Pause(paused bool)
