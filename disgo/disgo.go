@@ -1,8 +1,6 @@
 package disgolink
 
 import (
-	"fmt"
-
 	dapi "github.com/DisgoOrg/disgo/api"
 	"github.com/DisgoOrg/disgolink/api"
 	"github.com/DisgoOrg/disgolink/internal"
@@ -38,10 +36,9 @@ type DisgolinkImpl struct {
 }
 
 func (l *DisgolinkImpl) OnVoiceServerUpdate(voiceServerUpdate *dapi.VoiceServerUpdateEvent) {
-	fmt.Printf("voiceServerUpdate: %+v", voiceServerUpdate)
 	l.Lavalink.VoiceServerUpdate(&api.VoiceServerUpdate{
 		Token:    voiceServerUpdate.Token,
-		GuildID:  string(voiceServerUpdate.GuildID),
+		GuildID:  voiceServerUpdate.GuildID.String(),
 		Endpoint: voiceServerUpdate.Endpoint,
 	})
 }

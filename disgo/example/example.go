@@ -41,17 +41,19 @@ func main() {
 	dgolink = disgolink.NewDisgolink(logger, dgo)
 	registerNodes()
 
+	defer dgolink.Close()
+
 	_, err = dgo.RestClient().SetGuildCommands(dgo.ApplicationID(), guildID, commands...)
 	if err != nil {
 		logger.Errorf("error while registering guild commands: %s", err)
 	}
 
+	defer dgo.Close()
+
 	err = dgo.Connect()
 	if err != nil {
 		logger.Fatalf("error while connecting to discord: %s", err)
 	}
-
-	defer dgo.Close()
 
 	logger.Infof("example is now running. Press CTRL-C to exit.")
 	s := make(chan os.Signal, 1)

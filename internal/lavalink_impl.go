@@ -1,7 +1,6 @@
 package internal
 
 import (
-	"fmt"
 	"net/http"
 	"time"
 
@@ -14,6 +13,7 @@ func NewLavalinkImpl(logger log.Logger, userID string) api.Lavalink {
 		logger:     logger,
 		userID:     userID,
 		httpClient: &http.Client{},
+		nodes:      map[string]api.Node{},
 		players:    map[string]api.Player{},
 	}
 	return lavalink
@@ -22,9 +22,9 @@ func NewLavalinkImpl(logger log.Logger, userID string) api.Lavalink {
 type LavalinkImpl struct {
 	logger     log.Logger
 	userID     string
-	nodes      []api.Node
-	players    map[string]api.Player
 	httpClient *http.Client
+	nodes      map[string]api.Node
+	players    map[string]api.Player
 }
 
 func (l *LavalinkImpl) Logger() log.Logger {
@@ -38,7 +38,7 @@ func (l *LavalinkImpl) AddNode(options *api.NodeOptions) {
 	}
 	node.restClient = newRestClientImpl(node, l.httpClient)
 
-	l.nodes = append(l.nodes, node)
+	l.nodes[options.Name] = node
 	go func() {
 		delay := 500
 		for {
@@ -51,53 +51,69 @@ func (l *LavalinkImpl) AddNode(options *api.NodeOptions) {
 			time.Sleep(time.Duration(delay) * time.Millisecond)
 		}
 	}()
+}
 
+func (l *LavalinkImpl) Node(name string) api.Node {
+	return l.nodes[name]
+}
+
+func (l *LavalinkImpl) BestNode() api.Node {
+	var bestNode api.Node
+	for _, node := range l.nodes {
+		if bestNode == nil || node.Stats().Better(bestNode.Stats()) {
+			bestNode = node
+		}
+	}
+	return bestNode
 }
 
 func (l *LavalinkImpl) RemoveNode(name string) {
-	for i, node := range l.nodes {
-		if node.Name() == name {
-			l.nodes = append(l.nodes[:i], l.nodes[i+1:]...)
-			return
-		}
-	}
+	delete(l.nodes, name)
 }
+
 func (l LavalinkImpl) RestClient() api.RestClient {
 	if len(l.nodes) == 0 {
 		return nil
 	}
-	// TODO: return best one
-	return l.nodes[0].RestClient()
+	return l.BestNode().RestClient()
 }
+
 func (l *LavalinkImpl) Player(guildID string) api.Player {
 	if player, ok := l.players[guildID]; ok {
 		return player
 	}
-	player := NewPlayer(l.nodes[0], guildID)
+	player := NewPlayer(l.BestNode(), guildID)
 	l.players[guildID] = player
 	return player
 }
+
 func (l *LavalinkImpl) ExistingPlayer(guildID string) api.Player {
 	return l.players[guildID]
 }
+
 func (l *LavalinkImpl) Players() map[string]api.Player {
 	return l.players
 }
+
 func (l *LavalinkImpl) UserID() string {
 	return l.userID
 }
+
 func (l *LavalinkImpl) SetUserID(userID string) {
 	l.userID = userID
 }
+
 func (l *LavalinkImpl) ClientName() string {
 	return "disgolink"
 }
-func (l *LavalinkImpl) Shutdown() {
 
+func (l *LavalinkImpl) Close() {
+	for _, node := range l.nodes {
+		node.Close()
+	}
 }
 
 func (l *LavalinkImpl) VoiceServerUpdate(voiceServerUpdate *api.VoiceServerUpdate) {
-	fmt.Printf("voiceServerUpdate: %+v", voiceServerUpdate)
 	player := l.players[voiceServerUpdate.GuildID]
 	if player == nil {
 		return

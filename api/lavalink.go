@@ -7,6 +7,8 @@ import (
 type Lavalink interface {
 	Logger() log.Logger
 	AddNode(options *NodeOptions)
+	Node(name string) Node
+	BestNode() Node
 	RemoveNode(name string)
 	Player(guildID string) Player
 	ExistingPlayer(guildID string) Player
@@ -14,7 +16,7 @@ type Lavalink interface {
 	RestClient() RestClient
 	UserID() string
 	ClientName() string
-	Shutdown()
+	Close()
 	VoiceServerUpdate(voiceServerUpdate *VoiceServerUpdate)
 	VoiceStateUpdate(voiceStateUpdate *VoiceStateUpdate)
 }

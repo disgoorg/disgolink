@@ -9,6 +9,24 @@ type Stats struct {
 	FrameStats     *FrameStats `json:"frameStats"`
 }
 
+func (s *Stats) Better(stats *Stats) bool {
+	if s == nil {
+		return false
+	}
+	if stats == nil {
+		return true
+	}
+	sLoad := 0
+	statsLoad := 0
+	if s.CPU != nil {
+		sLoad = s.CPU.SystemLoad / s.CPU.Cores * 100
+	}
+	if s.CPU != nil {
+		statsLoad = stats.CPU.SystemLoad / stats.CPU.Cores * 100
+	}
+	return sLoad > statsLoad
+}
+
 type Memory struct {
 	Free       int `json:"free"`
 	Used       int `json:"used"`

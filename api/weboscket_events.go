@@ -14,13 +14,13 @@ const (
 
 type PlayerUpdateEvent struct {
 	GenericOp
-	GuildID string      `json:"guildId"`
-	State   State `json:"state"`
+	GuildID string `json:"guildId"`
+	State   State  `json:"state"`
 }
 
 type StatsEvent struct {
 	GenericOp
-	Stats
+	*Stats
 }
 
 type GenericWebsocketEvent struct {

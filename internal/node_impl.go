@@ -59,6 +59,10 @@ func (n *NodeImpl) Status() api.NodeStatus {
 	return n.status
 }
 
+func (n *NodeImpl) Stats() *api.Stats {
+	return n.stats
+}
+
 func (n *NodeImpl) reconnect(delay time.Duration) {
 	go func() {
 		time.Sleep(delay)
@@ -122,6 +126,7 @@ func (n *NodeImpl) listen() {
 			case api.OpEvent:
 				n.onTrackEvent(data)
 			case api.OpStats:
+				n.onStatsEvent(data)
 			default:
 				n.lavalink.Logger().Warnf("unexpected op received: %s", op)
 			}
@@ -220,6 +225,16 @@ func (n *NodeImpl) onTrackEvent(data []byte) {
 		n.lavalink.Logger().Warnf("unexpected event received: %s", string(data))
 		return
 	}
+}
+
+func (n *NodeImpl) onStatsEvent(data []byte) {
+	var event api.StatsEvent
+	err := json.Unmarshal(data, &event)
+	if err != nil {
+		n.lavalink.Logger().Errorf("error unmarshalling StatsEvent: %s", err)
+		return
+	}
+	n.stats = event.Stats
 }
 
 func (n *NodeImpl) Open() error {
