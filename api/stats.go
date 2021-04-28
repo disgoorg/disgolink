@@ -19,10 +19,10 @@ func (s *Stats) Better(stats *Stats) bool {
 	sLoad := 0
 	statsLoad := 0
 	if s.CPU != nil {
-		sLoad = s.CPU.SystemLoad / s.CPU.Cores * 100
+		sLoad = int(s.CPU.SystemLoad / float64(s.CPU.Cores) * 100)
 	}
 	if s.CPU != nil {
-		statsLoad = stats.CPU.SystemLoad / stats.CPU.Cores * 100
+		statsLoad = int(stats.CPU.SystemLoad / float64(stats.CPU.Cores) * 100)
 	}
 	return sLoad > statsLoad
 }
@@ -36,8 +36,8 @@ type Memory struct {
 
 type CPU struct {
 	Cores        int `json:"cores"`
-	SystemLoad   int `json:"systemLoad"`
-	LavalinkLoad int `json:"lavalinkLoad"`
+	SystemLoad   float64 `json:"systemLoad"`
+	LavalinkLoad float64 `json:"lavalinkLoad"`
 }
 
 type FrameStats struct {
