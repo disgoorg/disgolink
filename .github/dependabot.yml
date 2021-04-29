@@ -1,0 +1,26 @@
+version: 2
+updates:
+- package-ecosystem: gomod
+  directory: "/"
+  schedule:
+    interval: daily
+  open-pull-requests-limit: 10
+- package-ecosystem: gomod
+  directory: "/disgo"
+  schedule:
+    interval: daily
+  open-pull-requests-limit: 10
+  reviewers:
+  - TopiSenpai
+  assignees:
+  - TopiSenpai
+- package-ecosystem: gomod
+  directory: "/discordgo"
+  schedule:
+    interval: daily
+  open-pull-requests-limit: 10
+- package-ecosystem: gomod
+  directory: "/disgord"
+  schedule:
+    interval: daily
+  open-pull-requests-limit: 10
