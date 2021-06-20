@@ -22,7 +22,7 @@ type MusicPlayer struct {
 	queue  []dapi.Track
 }
 
-func (p *MusicPlayer) Queue(event *events.SlashCommandEvent, tracks ...dapi.Track) {
+func (p *MusicPlayer) Queue(event events.CommandEvent, tracks ...dapi.Track) {
 	for _, track := range tracks {
 		p.queue = append(p.queue, track)
 	}
@@ -40,8 +40,8 @@ func (p *MusicPlayer) Queue(event *events.SlashCommandEvent, tracks ...dapi.Trac
 	} else {
 		embed.SetDescriptionf("queued %d tracks", len(tracks))
 	}
-	embed.SetFooter("executed by "+event.Member.EffectiveName(), event.Member.User.AvatarURL())
-	if _, err := event.EditOriginal(api.NewFollowupMessageBuilder().SetEmbeds(embed.Build()).Build()); err != nil {
+	embed.SetFooter("executed by "+event.Interaction.Member.EffectiveName(), event.Interaction.Member.User.AvatarURL(1024))
+	if _, err := event.EditOriginal(api.NewMessageUpdateBuilder().SetEmbeds(embed.Build()).Build()); err != nil {
 		logger.Errorf("error while edit original: %s", err)
 	}
 }

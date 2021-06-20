@@ -8,27 +8,27 @@ import (
 	dapi "github.com/DisgoOrg/disgolink/api"
 )
 
-func slashCommandListener(event *events.SlashCommandEvent) {
+func commandListener(event events.CommandEvent) {
 	switch event.CommandName {
 	case "queue":
-		musicPlayer, ok := musicPlayers[event.GuildID.String()]
+		musicPlayer, ok := musicPlayers[event.Interaction.GuildID.String()]
 		if !ok {
-			_ = event.Reply(api.NewInteractionResponseBuilder().SetContent("No MusicPlayer found for this guild").Build())
+			_ = event.Reply(api.NewMessageCreateBuilder().SetContent("No MusicPlayer found for this guild").Build())
 			return
 		}
 		tracks := ""
 		for i, track := range musicPlayer.queue {
 			tracks += fmt.Sprintf("%d. [%s](%s)\n", i+1, track.Info().Title(), *track.Info().URI())
 		}
-		_ = event.Reply(api.NewInteractionResponseBuilder().SetEmbeds(api.NewEmbedBuilder().
+		_ = event.Reply(api.NewMessageCreateBuilder().SetEmbeds(api.NewEmbedBuilder().
 			SetTitle("Queue:").
 			SetDescription(tracks).
 			Build(),
 		).Build())
 	case "pause":
-		musicPlayer, ok := musicPlayers[event.GuildID.String()]
+		musicPlayer, ok := musicPlayers[event.Interaction.GuildID.String()]
 		if !ok {
-			_ = event.Reply(api.NewInteractionResponseBuilder().SetContent("No MusicPlayer found for this guild").Build())
+			_ = event.Reply(api.NewMessageCreateBuilder().SetContent("No MusicPlayer found for this guild").Build())
 			return
 		}
 		pause := !musicPlayer.player.Paused()
@@ -37,16 +37,16 @@ func slashCommandListener(event *events.SlashCommandEvent) {
 		if !pause {
 			message = "resumed"
 		}
-		_ = event.Reply(api.NewInteractionResponseBuilder().SetContent(message + "music").Build())
+		_ = event.Reply(api.NewMessageCreateBuilder().SetContent(message + "music").Build())
 	case "play":
-		voiceState := event.Member.VoiceState()
+		voiceState := event.Interaction.Member.VoiceState()
 
 		if voiceState == nil || voiceState.ChannelID == nil {
-			_ = event.Reply(api.NewInteractionResponseBuilder().SetContent("Please join a VoiceChannel to use this command").Build())
+			_ = event.Reply(api.NewMessageCreateBuilder().SetContent("Please join a VoiceChannel to use this command").Build())
 			return
 		}
 		go func() {
-			_ = event.Acknowledge()
+			_ = event.DeferReply(false)
 
 			query := event.Option("query").String()
 			searchProvider := event.Option("search-provider")
@@ -64,10 +64,10 @@ func slashCommandListener(event *events.SlashCommandEvent) {
 					query = string(dapi.SearchTypeYoutube) + query
 				}
 			}
-			musicPlayer, ok := musicPlayers[event.GuildID.String()]
+			musicPlayer, ok := musicPlayers[event.Interaction.GuildID.String()]
 			if !ok {
-				musicPlayer = NewMusicPlayer(event.GuildID.String())
-				musicPlayers[event.GuildID.String()] = musicPlayer
+				musicPlayer = NewMusicPlayer(event.Interaction.GuildID.String())
+				musicPlayers[event.Interaction.GuildID.String()] = musicPlayer
 			}
 			dgolink.RestClient().LoadItemAsync(query, dapi.NewResultHandler(
 				func(track dapi.Track) {
@@ -89,10 +89,10 @@ func slashCommandListener(event *events.SlashCommandEvent) {
 					musicPlayer.Queue(event, tracks[0])
 				},
 				func() {
-					_, _ = event.EditOriginal(api.NewFollowupMessageBuilder().SetContent("no tracks found").Build())
+					_, _ = event.EditOriginal(api.NewMessageUpdateBuilder().SetContent("no tracks found").Build())
 				},
 				func(e *dapi.Exception) {
-					_, _ = event.EditOriginal(api.NewFollowupMessageBuilder().SetContent("error while loading:\n" + e.Error()).Build())
+					_, _ = event.EditOriginal(api.NewMessageUpdateBuilder().SetContent("error while loading:\n" + e.Error()).Build())
 				},
 			))
 		}()

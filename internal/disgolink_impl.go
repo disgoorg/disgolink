@@ -1,35 +1,14 @@
-package disgolink
+package internal
 
 import (
 	dapi "github.com/DisgoOrg/disgo/api"
 	"github.com/DisgoOrg/disgolink/api"
-	"github.com/DisgoOrg/disgolink/internal"
-	"github.com/DisgoOrg/log"
 )
 
-var _ Disgolink = (*DisgolinkImpl)(nil)
+var _ api.Disgolink = (*DisgolinkImpl)(nil)
 var _ api.Lavalink = (*DisgolinkImpl)(nil)
 var _ dapi.VoiceDispatchInterceptor = (*DisgolinkImpl)(nil)
 var _ dapi.EventListener = (*DisgolinkImpl)(nil)
-
-type Disgolink interface {
-	api.Lavalink
-	dapi.VoiceDispatchInterceptor
-	dapi.EventListener
-}
-
-func NewDisgolinkByUserID(logger log.Logger, userID dapi.Snowflake) Disgolink {
-	return &DisgolinkImpl{
-		Lavalink: internal.NewLavalinkImpl(logger, string(userID)),
-	}
-}
-
-func NewDisgolink(logger log.Logger, dgo dapi.Disgo) Disgolink {
-	dgolink := NewDisgolinkByUserID(logger, dgo.ApplicationID())
-	dgo.EventManager().AddEventListeners(dgolink)
-	dgo.SetVoiceDispatchInterceptor(dgolink)
-	return dgolink
-}
 
 type DisgolinkImpl struct {
 	api.Lavalink

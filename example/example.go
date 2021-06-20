@@ -1,6 +1,7 @@
 package main
 
 import (
+	"github.com/DisgoOrg/disgolink"
 	"os"
 	"os/signal"
 	"strconv"
@@ -10,14 +11,13 @@ import (
 	"github.com/DisgoOrg/disgo/api"
 	"github.com/DisgoOrg/disgo/api/events"
 	dapi "github.com/DisgoOrg/disgolink/api"
-	"github.com/DisgoOrg/disgolink/disgo"
 	"github.com/sirupsen/logrus"
 )
 
 const guildID = "817327181659111454"
 
 var logger = logrus.New()
-var dgolink disgolink.Disgolink
+var dgolink dapi.Disgolink
 var musicPlayers = map[string]*MusicPlayer{}
 
 func main() {
@@ -26,11 +26,11 @@ func main() {
 
 	dgo, err := disgo.NewBuilder(os.Getenv("token")).
 		SetLogger(logger).
-		SetIntents(api.IntentsGuilds | api.IntentsGuildVoiceStates).
+		SetGatewayIntents(api.GatewayIntentsNonPrivileged).
 		SetCacheFlags(api.CacheFlagsDefault | api.CacheFlagVoiceState).
 		SetMemberCachePolicy(api.MemberCachePolicyNone).
 		AddEventListeners(&events.ListenerAdapter{
-			OnSlashCommand: slashCommandListener,
+			OnCommand: commandListener,
 		}).
 		Build()
 	if err != nil {
@@ -61,10 +61,10 @@ func main() {
 	<-s
 }
 
-func connect(event *events.SlashCommandEvent, voiceState *api.VoiceState) bool {
+func connect(event events.CommandEvent, voiceState *api.VoiceState) bool {
 	err := voiceState.VoiceChannel().Connect()
 	if err != nil {
-		_, _ = event.EditOriginal(api.NewFollowupMessageBuilder().SetContent("error while connecting to channel:\n" + err.Error()).Build())
+		_, _ = event.EditOriginal(api.NewMessageUpdateBuilder().SetContent("error while connecting to channel:\n" + err.Error()).Build())
 		logger.Errorf("error while connecting to channel: %s", err)
 		return false
 	}

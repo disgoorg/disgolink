@@ -2,7 +2,7 @@ package main
 
 import "github.com/DisgoOrg/disgo/api"
 
-var commands = []*api.CommandCreate{
+var commands = []api.CommandCreate{
 	{
 		Name:        "pause",
 		Description: "pauses the music",
@@ -14,7 +14,7 @@ var commands = []*api.CommandCreate{
 	{
 		Name:        "play",
 		Description: "plays some music",
-		Options: []*api.CommandOption{
+		Options: []api.CommandOption{
 			{
 				Type:        api.CommandOptionTypeString,
 				Name:        "query",
@@ -25,7 +25,7 @@ var commands = []*api.CommandCreate{
 				Type:        api.CommandOptionTypeString,
 				Name:        "search-provider",
 				Description: "where to search",
-				Choices: []*api.OptionChoice{
+				Choices: []api.OptionChoice{
 					{Name: "YouTube", Value: "yt"},
 					{Name: "YouTube Music", Value: "ytm"},
 					{Name: "SoundCloud", Value: "sc"},
