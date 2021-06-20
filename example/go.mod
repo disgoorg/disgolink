@@ -2,9 +2,7 @@ module github.com/DisgoOrg/disgolink/disgo/example
 
 go 1.16
 
-replace (
-	github.com/DisgoOrg/disgolink => ../
-)
+replace github.com/DisgoOrg/disgolink => ../
 
 require (
 	github.com/DisgoOrg/disgo v0.4.3
