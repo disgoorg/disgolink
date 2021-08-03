@@ -29,28 +29,6 @@ func (c *RestClientImpl) SearchItem(searchType api.SearchType, query string) ([]
 
 	return api.DefaultTracksToTracks(result.Tracks), nil
 }
-func (c *RestClientImpl) LoadItemAsync(identifier string, audioLoaderResultHandler api.AudioLoaderResultHandler) {
-	go func() {
-		result, err := c.LoadItem(identifier)
-		if err != nil {
-			audioLoaderResultHandler.LoadFailed(api.NewExceptionFromErr(err))
-			return
-		}
-
-		switch result.LoadType {
-		case api.LoadTypeTrackLoaded:
-			audioLoaderResultHandler.TrackLoaded(result.Tracks[0])
-		case api.LoadTypePlaylistLoaded:
-			audioLoaderResultHandler.PlaylistLoaded(api.NewPlaylist(result))
-		case api.LoadTypeSearchResult:
-			audioLoaderResultHandler.SearchResultLoaded(api.DefaultTracksToTracks(result.Tracks))
-		case api.LoadTypeNoMatches:
-			audioLoaderResultHandler.NoMatches()
-		case api.LoadTypeLoadFailed:
-			audioLoaderResultHandler.LoadFailed(result.Exception)
-		}
-	}()
-}
 
 func (c *RestClientImpl) LoadItem(identifier string) (*api.LoadResult, error) {
 	var result *api.LoadResult
@@ -59,6 +37,27 @@ func (c *RestClientImpl) LoadItem(identifier string) (*api.LoadResult, error) {
 		return nil, err
 	}
 	return result, nil
+}
+
+func (c *RestClientImpl) LoadItemHandler(identifier string, audioLoaderResultHandler api.AudioLoaderResultHandler) {
+	result, err := c.LoadItem(identifier)
+	if err != nil {
+		audioLoaderResultHandler.LoadFailed(api.NewExceptionFromErr(err))
+		return
+	}
+
+	switch result.LoadType {
+	case api.LoadTypeTrackLoaded:
+		audioLoaderResultHandler.TrackLoaded(result.Tracks[0])
+	case api.LoadTypePlaylistLoaded:
+		audioLoaderResultHandler.PlaylistLoaded(api.NewPlaylist(result))
+	case api.LoadTypeSearchResult:
+		audioLoaderResultHandler.SearchResultLoaded(api.DefaultTracksToTracks(result.Tracks))
+	case api.LoadTypeNoMatches:
+		audioLoaderResultHandler.NoMatches()
+	case api.LoadTypeLoadFailed:
+		audioLoaderResultHandler.LoadFailed(result.Exception)
+	}
 }
 
 func (c *RestClientImpl) get(url string, v interface{}) error {

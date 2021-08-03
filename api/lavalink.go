@@ -1,6 +1,7 @@
 package api
 
 import (
+	dapi "github.com/DisgoOrg/disgo/api"
 	"github.com/DisgoOrg/log"
 )
 
@@ -10,11 +11,11 @@ type Lavalink interface {
 	Node(name string) Node
 	BestNode() Node
 	RemoveNode(name string)
-	Player(guildID string) Player
-	ExistingPlayer(guildID string) Player
-	Players() map[string]Player
+	Player(guildID dapi.Snowflake) Player
+	ExistingPlayer(guildID dapi.Snowflake) Player
+	Players() map[dapi.Snowflake]Player
 	RestClient() RestClient
-	UserID() string
+	UserID() dapi.Snowflake
 	ClientName() string
 	Close()
 	VoiceServerUpdate(voiceServerUpdate *VoiceServerUpdate)

@@ -2,13 +2,14 @@ package main
 
 import (
 	"fmt"
+	"github.com/DisgoOrg/log"
 
-	"github.com/DisgoOrg/disgo/api"
+	dapi "github.com/DisgoOrg/disgo/api"
 	"github.com/DisgoOrg/disgo/api/events"
-	dapi "github.com/DisgoOrg/disgolink/api"
+	"github.com/DisgoOrg/disgolink/api"
 )
 
-func NewMusicPlayer(guildID string) *MusicPlayer {
+func NewMusicPlayer(guildID dapi.Snowflake) *MusicPlayer {
 	player := dgolink.Player(guildID)
 	musicPlayer := &MusicPlayer{
 		player: player,
@@ -18,18 +19,20 @@ func NewMusicPlayer(guildID string) *MusicPlayer {
 }
 
 type MusicPlayer struct {
-	player dapi.Player
-	queue  []dapi.Track
+	player      api.Player
+	queue       []api.Track
+	textChannel *dapi.TextChannel
 }
 
-func (p *MusicPlayer) Queue(event events.CommandEvent, tracks ...dapi.Track) {
+func (p *MusicPlayer) Queue(event *events.CommandEvent, tracks ...api.Track) {
+	p.textChannel = event.Interaction.TextChannel()
 	for _, track := range tracks {
 		p.queue = append(p.queue, track)
 	}
 
-	var embed api.EmbedBuilder
+	var embed dapi.EmbedBuilder
 	if p.player.Track() == nil {
-		var track dapi.Track
+		var track api.Track
 		track, p.queue = p.queue[len(p.queue)-1], p.queue[:len(p.queue)-1]
 		p.player.Play(track)
 		message := fmt.Sprintf("▶ ️playing [%s](%s)", track.Info().Title(), *track.Info().URI())
@@ -41,36 +44,36 @@ func (p *MusicPlayer) Queue(event events.CommandEvent, tracks ...dapi.Track) {
 		embed.SetDescriptionf("queued %d tracks", len(tracks))
 	}
 	embed.SetFooter("executed by "+event.Interaction.Member.EffectiveName(), event.Interaction.Member.User.AvatarURL(1024))
-	if _, err := event.EditOriginal(api.NewMessageUpdateBuilder().SetEmbeds(embed.Build()).Build()); err != nil {
-		logger.Errorf("error while edit original: %s", err)
+	if _, err := event.EditOriginal(dapi.NewMessageUpdateBuilder().SetEmbeds(embed.Build()).Build()); err != nil {
+		log.Errorf("error while edit original: %s", err)
 	}
 }
 
-func (p *MusicPlayer) OnPlayerPause(player dapi.Player) {
+func (p *MusicPlayer) OnPlayerPause(player api.Player) {
 
 }
-func (p *MusicPlayer) OnPlayerResume(player dapi.Player) {
+func (p *MusicPlayer) OnPlayerResume(player api.Player) {
 
 }
-func (p *MusicPlayer) OnPlayerUpdate(player dapi.Player, state dapi.State) {
+func (p *MusicPlayer) OnPlayerUpdate(player api.Player, state api.State) {
+	log.Infof("player update: %+v", state)
+}
+func (p *MusicPlayer) OnTrackStart(player api.Player, track api.Track) {
 
 }
-func (p *MusicPlayer) OnTrackStart(player dapi.Player, track dapi.Track) {
-
-}
-func (p *MusicPlayer) OnTrackEnd(player dapi.Player, track dapi.Track, endReason dapi.EndReason) {
+func (p *MusicPlayer) OnTrackEnd(player api.Player, track api.Track, endReason api.EndReason) {
 	if endReason.MayStartNext() && len(p.queue) > 0 {
-		var newTrack dapi.Track
+		var newTrack api.Track
 		newTrack, p.queue = p.queue[len(p.queue)-1], p.queue[:len(p.queue)-1]
-		p.player.Play(newTrack)
+		player.Play(newTrack)
 	}
 }
-func (p *MusicPlayer) OnTrackException(player dapi.Player, track dapi.Track, exception dapi.Exception) {
-
+func (p *MusicPlayer) OnTrackException(player api.Player, track api.Track, exception api.Exception) {
+	_, _ = p.textChannel.SendMessage(dapi.NewMessageCreateBuilder().SetContentf("Track exception: `%s`, `%s`, `%+v`", track.Info().Title(), exception).Build())
 }
-func (p *MusicPlayer) OnTrackStuck(player dapi.Player, track dapi.Track, thresholdMs int) {
-
+func (p *MusicPlayer) OnTrackStuck(player api.Player, track api.Track, thresholdMs int) {
+	_, _ = p.textChannel.SendMessage(dapi.NewMessageCreateBuilder().SetContentf("track stuck: `%s`, %d", track.Info().Title(), thresholdMs).Build())
 }
-func (p *MusicPlayer) OnWebSocketClosed(player dapi.Player, code int, reason string, byRemote bool) {
-
+func (p *MusicPlayer) OnWebSocketClosed(player api.Player, code int, reason string, byRemote bool) {
+	_, _ = p.textChannel.SendMessage(dapi.NewMessageCreateBuilder().SetContentf("websocket closed: `%d`, `%s`, `%t`", code, reason, byRemote).Build())
 }

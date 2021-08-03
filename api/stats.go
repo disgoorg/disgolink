@@ -35,7 +35,7 @@ type Memory struct {
 }
 
 type CPU struct {
-	Cores        int `json:"cores"`
+	Cores        int     `json:"cores"`
 	SystemLoad   float64 `json:"systemLoad"`
 	LavalinkLoad float64 `json:"lavalinkLoad"`
 }

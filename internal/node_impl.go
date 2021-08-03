@@ -3,7 +3,6 @@ package internal
 import (
 	"encoding/json"
 	"fmt"
-	"log"
 	"net/http"
 	"net/url"
 	"time"
@@ -51,7 +50,7 @@ func (n *NodeImpl) Name() string {
 func (n *NodeImpl) Send(d interface{}) {
 	err := n.conn.WriteJSON(d)
 	if err != nil {
-		log.Println(err)
+		n.lavalink.Logger().Errorf("error while sending to lavalink websocket: %s", err)
 	}
 }
 
@@ -185,6 +184,7 @@ func (n *NodeImpl) onTrackEvent(data []byte) {
 		p.EmitEvent(func(listener api.PlayerEventListener) {
 			listener.OnTrackStart(p, track)
 		})
+
 	case api.WebsocketEventTrackEnd:
 		var trackEndEvent api.TrackEndEvent
 		if err = json.Unmarshal(data, &trackEndEvent); err != nil {
@@ -194,6 +194,7 @@ func (n *NodeImpl) onTrackEvent(data []byte) {
 		p.EmitEvent(func(listener api.PlayerEventListener) {
 			listener.OnTrackEnd(p, trackEndEvent.Track(), trackEndEvent.EndReason)
 		})
+
 	case api.WebsocketEventTrackException:
 		var trackExceptionEvent api.TrackExceptionEvent
 		if err = json.Unmarshal(data, &trackExceptionEvent); err != nil {
@@ -203,6 +204,7 @@ func (n *NodeImpl) onTrackEvent(data []byte) {
 		p.EmitEvent(func(listener api.PlayerEventListener) {
 			listener.OnTrackException(p, trackExceptionEvent.Track(), trackExceptionEvent.Exception)
 		})
+
 	case api.WebsocketEventTrackStuck:
 		var trackStuckEvent api.TrackStuckEvent
 		if err = json.Unmarshal(data, &trackStuckEvent); err != nil {
@@ -212,6 +214,7 @@ func (n *NodeImpl) onTrackEvent(data []byte) {
 		p.EmitEvent(func(listener api.PlayerEventListener) {
 			listener.OnTrackStuck(p, trackStuckEvent.Track(), trackStuckEvent.ThresholdMs)
 		})
+
 	case api.WebSocketEventClosed:
 		var websocketClosedEvent api.WebSocketClosedEvent
 		if err = json.Unmarshal(data, &websocketClosedEvent); err != nil {
@@ -221,6 +224,7 @@ func (n *NodeImpl) onTrackEvent(data []byte) {
 		p.EmitEvent(func(listener api.PlayerEventListener) {
 			listener.OnWebSocketClosed(p, websocketClosedEvent.Code, websocketClosedEvent.Reason, websocketClosedEvent.ByRemote)
 		})
+
 	default:
 		n.lavalink.Logger().Warnf("unexpected event received: %s", string(data))
 		return
@@ -244,7 +248,7 @@ func (n *NodeImpl) Open() error {
 	}
 	header := http.Header{}
 	header.Add("Authorization", n.options.Password)
-	header.Add("User-Id", n.lavalink.UserID())
+	header.Add("User-Id", n.lavalink.UserID().String())
 	header.Add("Client-Name", n.lavalink.ClientName())
 	u := url.URL{
 		Scheme: scheme,

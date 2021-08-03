@@ -7,13 +7,13 @@ import (
 	"github.com/DisgoOrg/log"
 )
 
-func NewLavalink(logger log.Logger, userID string) api.Lavalink {
+func NewLavalink(logger log.Logger, userID dapi.Snowflake) api.Lavalink {
 	return internal.NewLavalinkImpl(logger, userID)
 }
 
 func NewDisgolinkByUserID(logger log.Logger, userID dapi.Snowflake) api.Disgolink {
 	return &internal.DisgolinkImpl{
-		Lavalink: internal.NewLavalinkImpl(logger, string(userID)),
+		Lavalink: internal.NewLavalinkImpl(logger, userID),
 	}
 }
 
