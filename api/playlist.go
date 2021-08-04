@@ -3,7 +3,7 @@ package api
 func NewPlaylist(result *LoadResult) *Playlist {
 	return &Playlist{
 		Info:   result.PlaylistInfo,
-		Tracks: DefaultTracksToTracks(result.Tracks),
+		Tracks: result.Tracks,
 	}
 }
 

@@ -24,7 +24,7 @@ func (c *RestClientImpl) SearchItem(searchType api.SearchType, query string) ([]
 		return nil, result.Exception
 	}
 
-	return api.DefaultTracksToTracks(result.Tracks), nil
+	return result.Tracks, nil
 }
 
 func (c *RestClientImpl) LoadItem(identifier string) *api.LoadResult {
@@ -45,7 +45,7 @@ func (c *RestClientImpl) LoadItemHandler(identifier string, audioLoaderResultHan
 	case api.LoadTypePlaylistLoaded:
 		audioLoaderResultHandler.PlaylistLoaded(api.NewPlaylist(result))
 	case api.LoadTypeSearchResult:
-		audioLoaderResultHandler.SearchResultLoaded(api.DefaultTracksToTracks(result.Tracks))
+		audioLoaderResultHandler.SearchResultLoaded(result.Tracks)
 	case api.LoadTypeNoMatches:
 		audioLoaderResultHandler.NoMatches()
 	case api.LoadTypeLoadFailed:
