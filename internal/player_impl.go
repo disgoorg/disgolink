@@ -47,16 +47,26 @@ func (p *PlayerImpl) SetTrack(track api.Track) {
 }
 
 func (p *PlayerImpl) Play(track api.Track) {
+	t := track.Track()
+	if track == nil {
+		p.Node().Lavalink().Logger().Errorf("error while playing track: track base64 is nil")
+		return
+	}
 	p.Node().Send(&api.PlayPlayerCommand{
 		PlayerCommand: api.NewPlayerCommand(api.OpPlay, p),
-		Track:         *track.Track(),
+		Track:         *t,
 	})
 }
 
 func (p *PlayerImpl) PlayAt(track api.Track, start int, end int) {
+	t := track.Track()
+	if track == nil {
+		p.Node().Lavalink().Logger().Errorf("error while playing track: track base64 is nil")
+		return
+	}
 	p.Node().Send(&api.PlayPlayerCommand{
 		PlayerCommand: api.NewPlayerCommand(api.OpPlay, p),
-		Track:         *track.Track(),
+		Track:         *t,
 		StartTime:     &start,
 		EndTime:       &end,
 	})
