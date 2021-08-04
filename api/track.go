@@ -8,8 +8,6 @@ var ErrEmptyTrackInfo = errors.New("trackinfo is empty")
 type Track interface {
 	Track() *string
 	Info() TrackInfo
-	EncodeInfo() error
-	DecodeInfo() error
 }
 
 type TrackInfo interface {
