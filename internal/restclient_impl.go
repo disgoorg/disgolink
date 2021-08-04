@@ -19,10 +19,7 @@ type RestClientImpl struct {
 }
 
 func (c *RestClientImpl) SearchItem(searchType api.SearchType, query string) ([]api.Track, *api.Exception) {
-	result, err := c.LoadItem(string(searchType) + query)
-	if err != nil {
-		return nil, api.NewExceptionFromErr(err)
-	}
+	result := c.LoadItem(string(searchType) + query)
 	if result.Exception != nil {
 		return nil, result.Exception
 	}
@@ -30,21 +27,17 @@ func (c *RestClientImpl) SearchItem(searchType api.SearchType, query string) ([]
 	return api.DefaultTracksToTracks(result.Tracks), nil
 }
 
-func (c *RestClientImpl) LoadItem(identifier string) (*api.LoadResult, error) {
+func (c *RestClientImpl) LoadItem(identifier string) *api.LoadResult {
 	var result *api.LoadResult
 	err := c.get(c.node.RestURL()+"/loadtracks?identifier="+url.QueryEscape(identifier), &result)
 	if err != nil {
-		return nil, err
+		return &api.LoadResult{LoadType: api.LoadTypeLoadFailed, Exception: api.NewExceptionFromErr(err)}
 	}
-	return result, nil
+	return result
 }
 
 func (c *RestClientImpl) LoadItemHandler(identifier string, audioLoaderResultHandler api.AudioLoaderResultHandler) {
-	result, err := c.LoadItem(identifier)
-	if err != nil {
-		audioLoaderResultHandler.LoadFailed(api.NewExceptionFromErr(err))
-		return
-	}
+	result := c.LoadItem(identifier)
 
 	switch result.LoadType {
 	case api.LoadTypeTrackLoaded:

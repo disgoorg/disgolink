@@ -1,5 +1,7 @@
 package api
 
+import "encoding/json"
+
 type LoadType string
 
 const (
@@ -19,10 +21,28 @@ const (
 )
 
 type LoadResult struct {
-	LoadType     LoadType        `json:"loadType"`
-	PlaylistInfo *PlaylistInfo   `json:"playlistInfo"`
-	Tracks       []*DefaultTrack `json:"tracks"`
-	Exception    *Exception      `json:"exception"`
+	LoadType     LoadType      `json:"loadType"`
+	PlaylistInfo *PlaylistInfo `json:"playlistInfo"`
+	Tracks       []Track       `json:"tracks"`
+	Exception    *Exception    `json:"exception"`
+}
+
+func (r *LoadResult) UnmarshalJSON(data []byte) error {
+	var result *struct {
+		LoadType     LoadType        `json:"loadType"`
+		PlaylistInfo *PlaylistInfo   `json:"playlistInfo"`
+		Tracks       []*DefaultTrack `json:"tracks"`
+		Exception    *Exception      `json:"exception"`
+	}
+	if err := json.Unmarshal(data, result); err != nil {
+		return err
+	}
+
+	r.LoadType = result.LoadType
+	r.PlaylistInfo = result.PlaylistInfo
+	r.Tracks = DefaultTracksToTracks(result.Tracks)
+	r.Exception = result.Exception
+	return nil
 }
 
 type AudioLoaderResultHandler interface {
