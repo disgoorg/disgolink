@@ -17,16 +17,16 @@ type DisgolinkImpl struct {
 func (l *DisgolinkImpl) OnVoiceServerUpdate(voiceServerUpdate *dapi.VoiceServerUpdateEvent) {
 	l.Lavalink.VoiceServerUpdate(&api.VoiceServerUpdate{
 		Token:    voiceServerUpdate.Token,
-		GuildID:  voiceServerUpdate.GuildID.String(),
+		GuildID:  voiceServerUpdate.GuildID,
 		Endpoint: voiceServerUpdate.Endpoint,
 	})
 }
 
 func (l *DisgolinkImpl) OnVoiceStateUpdate(voiceStateUpdate *dapi.VoiceStateUpdateEvent) {
 	l.Lavalink.VoiceStateUpdate(&api.VoiceStateUpdate{
-		GuildID:   voiceStateUpdate.GuildID.String(),
-		ChannelID: (*string)(voiceStateUpdate.ChannelID),
-		UserID:    voiceStateUpdate.UserID.String(),
+		GuildID:   voiceStateUpdate.GuildID,
+		ChannelID: voiceStateUpdate.ChannelID,
+		UserID:    voiceStateUpdate.UserID,
 		SessionID: voiceStateUpdate.SessionID,
 	})
 }
@@ -34,4 +34,3 @@ func (l *DisgolinkImpl) OnVoiceStateUpdate(voiceStateUpdate *dapi.VoiceStateUpda
 func (l *DisgolinkImpl) OnEvent(event interface{}) {
 
 }
-

@@ -1,6 +1,9 @@
 package api
 
-import "log"
+import (
+	dapi "github.com/DisgoOrg/disgo/api"
+	"log"
+)
 
 type WebsocketEvent string
 
@@ -14,8 +17,8 @@ const (
 
 type PlayerUpdateEvent struct {
 	GenericOp
-	GuildID string `json:"guildId"`
-	State   State  `json:"state"`
+	GuildID dapi.Snowflake `json:"guildId"`
+	State   State          `json:"state"`
 }
 
 type StatsEvent struct {
@@ -30,7 +33,7 @@ type GenericWebsocketEvent struct {
 
 type GenericPlayerEvent struct {
 	GenericWebsocketEvent
-	GuildID string `json:"guildId"`
+	GuildID dapi.Snowflake `json:"guildId"`
 }
 
 type GenericTrackEvent struct {
@@ -38,10 +41,11 @@ type GenericTrackEvent struct {
 	RawTrack string `json:"track"`
 }
 
-func (e GenericTrackEvent) Track() Track {
+func (e *GenericTrackEvent) Track() Track {
 	track := &DefaultTrack{Track_: &e.RawTrack}
 	err := track.DecodeInfo()
 	if err != nil {
+		// TODO access normal logger
 		log.Printf("error while unpacking track info: %s", err)
 	}
 	return track

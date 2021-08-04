@@ -1,6 +1,7 @@
 package api
 
 import (
+	dapi "github.com/DisgoOrg/disgo/api"
 	"github.com/DisgoOrg/disgolink/api/filters"
 )
 
@@ -20,9 +21,9 @@ type Player interface {
 	Filters() *filters.Filters
 	SetFilters(filters *filters.Filters)
 
-	GuildID() string
-	ChannelID() *string
-	SetChannelID(channelID *string)
+	GuildID() dapi.Snowflake
+	ChannelID() *dapi.Snowflake
+	SetChannelID(channelID *dapi.Snowflake)
 	LastSessionID() *string
 	SetLastSessionID(sessionID string)
 

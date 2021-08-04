@@ -1,6 +1,7 @@
 package internal
 
 import (
+	dapi "github.com/DisgoOrg/disgo/api"
 	"net/http"
 	"time"
 
@@ -8,23 +9,31 @@ import (
 	"github.com/DisgoOrg/log"
 )
 
-func NewLavalinkImpl(logger log.Logger, userID string) api.Lavalink {
+var _ api.Lavalink = (*LavalinkImpl)(nil)
+
+func NewLavalinkImpl(logger log.Logger, httpClient *http.Client, userID dapi.Snowflake) api.Lavalink {
+	if logger == nil {
+		logger = log.Default()
+	}
+	if httpClient == nil {
+		httpClient = http.DefaultClient
+	}
 	lavalink := &LavalinkImpl{
 		logger:     logger,
 		userID:     userID,
-		httpClient: &http.Client{},
+		httpClient: httpClient,
 		nodes:      map[string]api.Node{},
-		players:    map[string]api.Player{},
+		players:    map[dapi.Snowflake]api.Player{},
 	}
 	return lavalink
 }
 
 type LavalinkImpl struct {
 	logger     log.Logger
-	userID     string
+	userID     dapi.Snowflake
 	httpClient *http.Client
 	nodes      map[string]api.Node
-	players    map[string]api.Player
+	players    map[dapi.Snowflake]api.Player
 }
 
 func (l *LavalinkImpl) Logger() log.Logger {
@@ -78,7 +87,7 @@ func (l LavalinkImpl) RestClient() api.RestClient {
 	return l.BestNode().RestClient()
 }
 
-func (l *LavalinkImpl) Player(guildID string) api.Player {
+func (l *LavalinkImpl) Player(guildID dapi.Snowflake) api.Player {
 	if player, ok := l.players[guildID]; ok {
 		return player
 	}
@@ -87,19 +96,19 @@ func (l *LavalinkImpl) Player(guildID string) api.Player {
 	return player
 }
 
-func (l *LavalinkImpl) ExistingPlayer(guildID string) api.Player {
+func (l *LavalinkImpl) ExistingPlayer(guildID dapi.Snowflake) api.Player {
 	return l.players[guildID]
 }
 
-func (l *LavalinkImpl) Players() map[string]api.Player {
+func (l *LavalinkImpl) Players() map[dapi.Snowflake]api.Player {
 	return l.players
 }
 
-func (l *LavalinkImpl) UserID() string {
+func (l *LavalinkImpl) UserID() dapi.Snowflake {
 	return l.userID
 }
 
-func (l *LavalinkImpl) SetUserID(userID string) {
+func (l *LavalinkImpl) SetUserID(userID dapi.Snowflake) {
 	l.userID = userID
 }
 

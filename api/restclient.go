@@ -15,6 +15,6 @@ func (t SearchType) Apply(searchString string) string {
 
 type RestClient interface {
 	SearchItem(searchType SearchType, query string) ([]Track, *Exception)
-	LoadItemAsync(identifier string, audioLoaderResultHandler AudioLoaderResultHandler)
 	LoadItem(identifier string) (*LoadResult, error)
+	LoadItemHandler(identifier string, audioLoaderResultHandler AudioLoaderResultHandler)
 }

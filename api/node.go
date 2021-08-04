@@ -15,7 +15,7 @@ type Node interface {
 type NodeOptions struct {
 	Name     string
 	Host     string
-	Port     int
+	Port     string
 	Password string
 	Secure   bool
 }

@@ -31,10 +31,10 @@ func EncodeToString(info TrackInfo) (str *string, err error) {
 	if err = writeBool(w, info.IsStream()); err != nil {
 		return
 	}
-	if err = writeBool(w, info.URI != nil); err != nil {
+	if err = writeBool(w, info.URI() != nil); err != nil {
 		return
 	}
-	if info.URI != nil {
+	if info.URI() != nil {
 		if err = writeStr(w, *info.URI()); err != nil {
 			return
 		}

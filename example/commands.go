@@ -1,8 +1,16 @@
 package main
 
-import "github.com/DisgoOrg/disgo/api"
+import dapi "github.com/DisgoOrg/disgo/api"
 
-var commands = []api.CommandCreate{
+var commands = []dapi.CommandCreate{
+	{
+		Name:        "shuffle",
+		Description: "shuffles the current queue",
+	},
+	{
+		Name:        "filter",
+		Description: "applies some filters",
+	},
 	{
 		Name:        "pause",
 		Description: "pauses the music",
@@ -14,18 +22,18 @@ var commands = []api.CommandCreate{
 	{
 		Name:        "play",
 		Description: "plays some music",
-		Options: []api.CommandOption{
+		Options: []dapi.CommandOption{
 			{
-				Type:        api.CommandOptionTypeString,
+				Type:        dapi.CommandOptionTypeString,
 				Name:        "query",
 				Description: "what to play",
 				Required:    true,
 			},
 			{
-				Type:        api.CommandOptionTypeString,
+				Type:        dapi.CommandOptionTypeString,
 				Name:        "search-provider",
 				Description: "where to search",
-				Choices: []api.OptionChoice{
+				Choices: []dapi.OptionChoice{
 					{Name: "YouTube", Value: "yt"},
 					{Name: "YouTube Music", Value: "ytm"},
 					{Name: "SoundCloud", Value: "sc"},

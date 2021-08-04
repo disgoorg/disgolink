@@ -1,11 +1,12 @@
 package internal
 
 import (
+	dapi "github.com/DisgoOrg/disgo/api"
 	"github.com/DisgoOrg/disgolink/api"
 	"github.com/DisgoOrg/disgolink/api/filters"
 )
 
-func NewPlayer(node api.Node, guildID string) api.Player {
+func NewPlayer(node api.Node, guildID dapi.Snowflake) api.Player {
 	return &PlayerImpl{
 		guildID:       guildID,
 		channelID:     nil,
@@ -23,8 +24,8 @@ func NewPlayer(node api.Node, guildID string) api.Player {
 }
 
 type PlayerImpl struct {
-	guildID       string
-	channelID     *string
+	guildID       dapi.Snowflake
+	channelID     *dapi.Snowflake
 	lastSessionID *string
 	track         api.Track
 	volume        int
@@ -141,15 +142,15 @@ func (p *PlayerImpl) SetFilters(filters *filters.Filters) {
 	p.filters = filters
 }
 
-func (p *PlayerImpl) GuildID() string {
+func (p *PlayerImpl) GuildID() dapi.Snowflake {
 	return p.guildID
 }
 
-func (p *PlayerImpl) ChannelID() *string {
+func (p *PlayerImpl) ChannelID() *dapi.Snowflake {
 	return p.channelID
 }
 
-func (p *PlayerImpl) SetChannelID(channelID *string) {
+func (p *PlayerImpl) SetChannelID(channelID *dapi.Snowflake) {
 	p.channelID = channelID
 }
 

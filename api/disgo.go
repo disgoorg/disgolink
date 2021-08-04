@@ -9,4 +9,3 @@ type Disgolink interface {
 	dapi.VoiceDispatchInterceptor
 	dapi.EventListener
 }
-
