@@ -18,7 +18,7 @@ const (
 type PlayerUpdateEvent struct {
 	GenericOp
 	GuildID dapi.Snowflake `json:"guildId"`
-	State   State         `json:"state"`
+	State   State          `json:"state"`
 }
 
 type StatsEvent struct {

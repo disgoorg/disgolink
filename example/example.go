@@ -40,7 +40,7 @@ func main() {
 		return
 	}
 
-	dgolink = disgolink.NewDisgolink(nil, dgo)
+	dgolink = disgolink.NewDisgolink(dgo)
 	registerNodes()
 
 	defer dgolink.Close()
@@ -74,12 +74,11 @@ func connect(event *events.CommandEvent, voiceState *dapi.VoiceState) bool {
 }
 
 func registerNodes() {
-	port, _ := strconv.Atoi(os.Getenv("lavalink_port"))
 	secure, _ := strconv.ParseBool(os.Getenv("lavalink_secure"))
 	dgolink.AddNode(&api.NodeOptions{
 		Name:     "test",
 		Host:     os.Getenv("lavalink_host"),
-		Port:     port,
+		Port:     os.Getenv("lavalink_port"),
 		Password: os.Getenv("lavalink_password"),
 		Secure:   secure,
 	})

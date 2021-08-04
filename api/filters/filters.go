@@ -1,5 +1,7 @@
 package filters
 
+// TODO add constructor func for all filters with default values
+
 var DefaultVolume Volume = 1
 
 func NewFilters(commitFunc func(filters *Filters)) *Filters {

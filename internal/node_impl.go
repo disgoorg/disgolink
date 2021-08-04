@@ -28,7 +28,7 @@ func (n NodeImpl) RestURL() string {
 		scheme += "s"
 	}
 
-	return fmt.Sprintf("%s://%s:%d", scheme, n.options.Host, n.options.Port)
+	return fmt.Sprintf("%s://%s:%s", scheme, n.options.Host, n.options.Port)
 }
 
 func (n *NodeImpl) Lavalink() api.Lavalink {

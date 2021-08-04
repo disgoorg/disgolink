@@ -11,14 +11,17 @@ import (
 
 var _ api.Lavalink = (*LavalinkImpl)(nil)
 
-func NewLavalinkImpl(logger log.Logger, userID dapi.Snowflake) api.Lavalink {
+func NewLavalinkImpl(logger log.Logger, httpClient *http.Client, userID dapi.Snowflake) api.Lavalink {
 	if logger == nil {
 		logger = log.Default()
+	}
+	if httpClient == nil {
+		httpClient = http.DefaultClient
 	}
 	lavalink := &LavalinkImpl{
 		logger:     logger,
 		userID:     userID,
-		httpClient: &http.Client{},
+		httpClient: httpClient,
 		nodes:      map[string]api.Node{},
 		players:    map[dapi.Snowflake]api.Player{},
 	}
