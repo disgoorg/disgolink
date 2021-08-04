@@ -138,7 +138,7 @@ func commandListener(event *events.CommandEvent) {
 					_, _ = event.EditOriginal(dapi.NewMessageUpdateBuilder().SetContent("no tracks found").Build())
 				},
 				func(e *api.Exception) {
-					_, _ = event.EditOriginal(dapi.NewMessageUpdateBuilder().SetContent("error while loading:\n" + e.Error()).Build())
+					_, _ = event.EditOriginal(dapi.NewMessageUpdateBuilder().SetContent("error while loading track:\n" + e.Error()).Build())
 				},
 			))
 		}()

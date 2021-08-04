@@ -34,7 +34,7 @@ func (r *LoadResult) UnmarshalJSON(data []byte) error {
 		Tracks       []*DefaultTrack `json:"tracks"`
 		Exception    *Exception      `json:"exception"`
 	}
-	if err := json.Unmarshal(data, result); err != nil {
+	if err := json.Unmarshal(data, &result); err != nil {
 		return err
 	}
 
