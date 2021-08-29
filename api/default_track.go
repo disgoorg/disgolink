@@ -1,90 +1,90 @@
 package api
 
 type DefaultTrack struct {
-	Track_ *string           `json:"track"`
-	Info_  *DefaultTrackInfo `json:"info"`
+	Base64Track *string   `json:"track"`
+	TrackInfo   TrackInfo `json:"info"`
 }
 
 func (t *DefaultTrack) Track() *string {
-	if t.Track_ == nil {
+	if t.Base64Track == nil {
 		if err := t.EncodeInfo(); err != nil {
 			return nil
 		}
 	}
-	return t.Track_
+	return t.Base64Track
 }
 
 func (t *DefaultTrack) Info() TrackInfo {
-	if t.Info_ == nil {
+	if t.TrackInfo == nil {
 		if err := t.DecodeInfo(); err != nil {
 			return nil
 		}
 	}
-	return t.Info_
+	return t.TrackInfo
 }
 
 func (t *DefaultTrack) EncodeInfo() (err error) {
-	if t.Info_ == nil {
+	if t.TrackInfo == nil {
 		err = ErrEmptyTrackInfo
 		return
 	}
-	t.Track_, err = EncodeToString(t.Info_)
+	t.Base64Track, err = EncodeToString(t.TrackInfo)
 	return
 }
 
 func (t *DefaultTrack) DecodeInfo() (err error) {
-	if t.Track_ == nil {
+	if t.Base64Track == nil {
 		err = ErrEmptyTrack
 		return
 	}
-	t.Info_, err = DecodeString(*t.Track_)
+	t.TrackInfo, err = DecodeString(*t.Base64Track)
 	return
 }
 
 type DefaultTrackInfo struct {
-	Identifier_ string  `json:"identifier"`
-	IsSeekable_ bool    `json:"isSeekable"`
-	Author_     string  `json:"author"`
-	Length_     int     `json:"length"`
-	IsStream_   bool    `json:"isStream"`
-	Position_   int     `json:"position"`
-	Title_      string  `json:"title"`
-	URI_        *string `json:"uri"`
-	SourceName_ string  `json:"sourceName"`
+	TrackIdentifier string  `json:"identifier"`
+	TrackIsSeekable bool    `json:"isSeekable"`
+	TrackAuthor     string  `json:"author"`
+	TrackLength     int     `json:"length"`
+	TrackIsStream   bool    `json:"isStream"`
+	TrackPosition   int     `json:"position"`
+	TrackTitle      string  `json:"title"`
+	TrackURI        *string `json:"uri"`
+	TrackSourceName string  `json:"sourceName"`
 }
 
 func (i *DefaultTrackInfo) Identifier() string {
-	return i.Identifier_
+	return i.TrackIdentifier
 }
 
 func (i *DefaultTrackInfo) IsSeekable() bool {
-	return i.IsSeekable_
+	return i.TrackIsSeekable
 }
 
 func (i *DefaultTrackInfo) Author() string {
-	return i.Author_
+	return i.TrackAuthor
 }
 
 func (i *DefaultTrackInfo) Length() int {
-	return i.Length_
+	return i.TrackLength
 }
 
 func (i *DefaultTrackInfo) IsStream() bool {
-	return i.IsStream_
+	return i.TrackIsStream
 }
 
 func (i *DefaultTrackInfo) Position() int {
-	return i.Position_
+	return i.TrackPosition
 }
 
 func (i *DefaultTrackInfo) Title() string {
-	return i.Title_
+	return i.TrackTitle
 }
 
 func (i *DefaultTrackInfo) URI() *string {
-	return i.URI_
+	return i.TrackURI
 }
 
 func (i *DefaultTrackInfo) SourceName() string {
-	return i.SourceName_
+	return i.TrackSourceName
 }

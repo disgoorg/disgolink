@@ -9,6 +9,7 @@ import (
 	"github.com/DisgoOrg/log"
 	"os"
 	"os/signal"
+	"regexp"
 	"strconv"
 	"syscall"
 
@@ -16,6 +17,8 @@ import (
 )
 
 var (
+	URLPattern = regexp.MustCompile("^https?://[-a-zA-Z0-9+&@#/%?=~_|!:,.;]*[-a-zA-Z0-9+&@#/%=~_|]?")
+
 	token        = os.Getenv("disgolink_token")
 	guildID      = discord.Snowflake(os.Getenv("guild_id"))
 	disgo        core.Disgo

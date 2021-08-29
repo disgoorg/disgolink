@@ -86,7 +86,7 @@ func writeBool(w io.Writer, bool bool) (err error) {
 }
 
 // DecodeString thx to https://github.com/foxbot/gavalink/blob/master/decoder.go
-func DecodeString(str string) (info *DefaultTrackInfo, err error) {
+func DecodeString(str string) (info TrackInfo, err error) {
 
 	var data []byte
 	data, err = base64.StdEncoding.DecodeString(str)
@@ -123,12 +123,12 @@ func DecodeString(str string) (info *DefaultTrackInfo, err error) {
 		return nil, err
 	}
 
-	trackInfo.Title_, err = readStr(r)
+	trackInfo.TrackTitle, err = readStr(r)
 	if err != nil {
 		return
 	}
 
-	trackInfo.Author_, err = readStr(r)
+	trackInfo.TrackAuthor, err = readStr(r)
 	if err != nil {
 		return
 	}
@@ -137,9 +137,9 @@ func DecodeString(str string) (info *DefaultTrackInfo, err error) {
 	if err = binary.Read(r, binary.BigEndian, &length); err != nil {
 		return
 	}
-	trackInfo.Length_ = int(length)
+	trackInfo.TrackLength = int(length)
 
-	trackInfo.Identifier_, err = readStr(r)
+	trackInfo.TrackIdentifier, err = readStr(r)
 	if err != nil {
 		return nil, err
 	}
@@ -148,8 +148,8 @@ func DecodeString(str string) (info *DefaultTrackInfo, err error) {
 	if err = binary.Read(r, binary.LittleEndian, &isStream); err != nil {
 		return
 	}
-	trackInfo.IsStream_ = isStream == 1
-	trackInfo.IsSeekable_ = !trackInfo.IsStream()
+	trackInfo.TrackIsStream = isStream == 1
+	trackInfo.TrackIsSeekable = !trackInfo.IsStream()
 
 	var hasURI uint8
 	if err = binary.Read(r, binary.LittleEndian, &hasURI); err != nil {
@@ -159,19 +159,19 @@ func DecodeString(str string) (info *DefaultTrackInfo, err error) {
 	if hasURI == 1 {
 		var uri string
 		uri, err = readStr(r)
-		trackInfo.URI_ = &uri
+		trackInfo.TrackURI = &uri
 		if err != nil {
 			return
 		}
 	} else {
-		trackInfo.URI_ = nil
+		trackInfo.TrackURI = nil
 		_, err = readStr(r)
 		if err != nil {
 			return
 		}
 	}
 
-	trackInfo.SourceName_, err = readStr(r)
+	trackInfo.TrackSourceName, err = readStr(r)
 	if err != nil {
 		return
 	}
@@ -180,7 +180,7 @@ func DecodeString(str string) (info *DefaultTrackInfo, err error) {
 	if err = binary.Read(r, binary.BigEndian, &position); err != nil {
 		return
 	}
-	trackInfo.Position_ = int(position)
+	trackInfo.TrackPosition = int(position)
 
 	info = trackInfo
 	return

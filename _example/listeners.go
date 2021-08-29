@@ -10,6 +10,7 @@ import (
 	"time"
 )
 
+
 func checkMusicPlayer(event *events.SlashCommandEvent) *MusicPlayer {
 	musicPlayer, ok := musicPlayers[*event.Interaction.GuildID]
 	if !ok {
@@ -106,7 +107,7 @@ func onSlashCommand(event *events.SlashCommandEvent) {
 					query = api.SearchTypeSoundCloud.Apply(query)
 				}
 			} else {
-				if !api.URLPattern.MatchString(query) {
+				if !URLPattern.MatchString(query) {
 					query = string(api.SearchTypeYoutube) + query
 				}
 			}

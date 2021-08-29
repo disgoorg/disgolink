@@ -42,7 +42,7 @@ type GenericTrackEvent struct {
 }
 
 func (e *GenericTrackEvent) Track() Track {
-	track := &DefaultTrack{Track_: &e.RawTrack}
+	track := &DefaultTrack{Base64Track: &e.RawTrack}
 	err := track.DecodeInfo()
 	if err != nil {
 		// TODO access normal logger

@@ -10,17 +10,17 @@ var uri = "https://www.youtube.com/watch?v=jdWhJcrrjQs"
 
 var encodedTrack = "QAAAfwIAFkFyY2hpdGVjdHMgLSAiQW5pbWFscyIAD0VwaXRhcGggUmVjb3JkcwAAAAAAA70IAAtqZFdoSmNycmpRcwABACtodHRwczovL3d3dy55b3V0dWJlLmNvbS93YXRjaD92PWpkV2hKY3JyalFzAAd5b3V0dWJlAAAAAAADuiQ="
 var testTrack = &DefaultTrack{
-	Track_: &encodedTrack,
-	Info_: &DefaultTrackInfo{
-		Identifier_: "jdWhJcrrjQs",
-		IsSeekable_: true,
-		Author_:     "Epitaph Records",
-		Length_:     245000,
-		IsStream_:   false,
-		Position_:   244260,
-		Title_:      "Architects - \"Animals\"",
-		URI_:        &uri,
-		SourceName_: "youtube",
+	Base64Track: &encodedTrack,
+	TrackInfo: &DefaultTrackInfo{
+		TrackIdentifier: "jdWhJcrrjQs",
+		TrackIsSeekable: true,
+		TrackAuthor:     "Epitaph Records",
+		TrackLength:     245000,
+		TrackIsStream:   false,
+		TrackPosition:   244260,
+		TrackTitle:      "Architects - \"Animals\"",
+		TrackURI:        &uri,
+		TrackSourceName: "youtube",
 	},
 }
 
