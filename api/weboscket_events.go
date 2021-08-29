@@ -1,7 +1,7 @@
 package api
 
 import (
-	dapi "github.com/DisgoOrg/disgo/api"
+	"github.com/DisgoOrg/disgo/discord"
 	"log"
 )
 
@@ -17,8 +17,8 @@ const (
 
 type PlayerUpdateEvent struct {
 	GenericOp
-	GuildID dapi.Snowflake `json:"guildId"`
-	State   State          `json:"state"`
+	GuildID discord.Snowflake `json:"guildId"`
+	State   State             `json:"state"`
 }
 
 type StatsEvent struct {
@@ -33,7 +33,7 @@ type GenericWebsocketEvent struct {
 
 type GenericPlayerEvent struct {
 	GenericWebsocketEvent
-	GuildID dapi.Snowflake `json:"guildId"`
+	GuildID discord.Snowflake `json:"guildId"`
 }
 
 type GenericTrackEvent struct {

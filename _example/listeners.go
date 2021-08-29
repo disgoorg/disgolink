@@ -2,24 +2,24 @@ package main
 
 import (
 	"fmt"
-	dapi "github.com/DisgoOrg/disgo/api"
-	"github.com/DisgoOrg/disgo/api/events"
+	"github.com/DisgoOrg/disgo/core"
+	"github.com/DisgoOrg/disgo/core/events"
 	"github.com/DisgoOrg/disgolink/api"
 	"github.com/DisgoOrg/disgolink/api/filters"
 	"math/rand"
 	"time"
 )
 
-func checkMusicPlayer(event *events.CommandEvent) *MusicPlayer {
+func checkMusicPlayer(event *events.SlashCommandEvent) *MusicPlayer {
 	musicPlayer, ok := musicPlayers[*event.Interaction.GuildID]
 	if !ok {
-		_ = event.Reply(dapi.NewMessageCreateBuilder().SetEphemeral(true).SetContent("No MusicPlayer found for this guild").Build())
+		_ = event.Create(core.NewMessageCreateBuilder().SetEphemeral(true).SetContent("No MusicPlayer found for this guild").Build())
 		return nil
 	}
 	return musicPlayer
 }
 
-func commandListener(event *events.CommandEvent) {
+func onSlashCommand(event *events.SlashCommandEvent) {
 	switch event.CommandName() {
 	case "shuffle":
 		musicPlayer := checkMusicPlayer(event)
@@ -28,14 +28,14 @@ func commandListener(event *events.CommandEvent) {
 		}
 
 		if len(musicPlayer.queue) == 0 {
-			_ = event.Reply(dapi.NewMessageCreateBuilder().SetContent("Queue is empty").Build())
+			_ = event.Create(core.NewMessageCreateBuilder().SetContent("Queue is empty").Build())
 			return
 		}
 		rand.Seed(time.Now().UnixNano())
 		rand.Shuffle(len(musicPlayer.queue), func(i, j int) {
 			musicPlayer.queue[i], musicPlayer.queue[j] = musicPlayer.queue[j], musicPlayer.queue[i]
 		})
-		_ = event.Reply(dapi.NewMessageCreateBuilder().SetContent("Queue shuffled").Build())
+		_ = event.Create(core.NewMessageCreateBuilder().SetContent("Queue shuffled").Build())
 
 	case "filter":
 		musicPlayer := checkMusicPlayer(event)
@@ -58,13 +58,13 @@ func commandListener(event *events.CommandEvent) {
 		}
 
 		if len(musicPlayer.queue) == 0 {
-			_ = event.Reply(dapi.NewMessageCreateBuilder().SetContent("No songs in queue").Build())
+			_ = event.Create(core.NewMessageCreateBuilder().SetContent("No songs in queue").Build())
 		}
 		tracks := ""
 		for i, track := range musicPlayer.queue {
 			tracks += fmt.Sprintf("%d. [%s](%s)\n", i+1, track.Info().Title(), *track.Info().URI())
 		}
-		_ = event.Reply(dapi.NewMessageCreateBuilder().SetEmbeds(dapi.NewEmbedBuilder().
+		_ = event.Create(core.NewMessageCreateBuilder().SetEmbeds(core.NewEmbedBuilder().
 			SetTitle("Queue:").
 			SetDescription(tracks).
 			Build(),
@@ -82,17 +82,17 @@ func commandListener(event *events.CommandEvent) {
 		if !pause {
 			message = "resumed"
 		}
-		_ = event.Reply(dapi.NewMessageCreateBuilder().SetContent(message + " music").Build())
+		_ = event.Create(core.NewMessageCreateBuilder().SetContent(message + " music").Build())
 
 	case "play":
 		voiceState := event.Interaction.Member.VoiceState()
 
 		if voiceState == nil || voiceState.ChannelID == nil {
-			_ = event.Reply(dapi.NewMessageCreateBuilder().SetEphemeral(true).SetContent("Please join a VoiceChannel to use this command").Build())
+			_ = event.Create(core.NewMessageCreateBuilder().SetEphemeral(true).SetContent("Please join a VoiceChannel to use this command").Build())
 			return
 		}
 		go func() {
-			_ = event.DeferReply(false)
+			_ = event.DeferCreate(false)
 
 			query := event.Option("query").String()
 			searchProvider := event.Option("search-provider")
@@ -135,10 +135,10 @@ func commandListener(event *events.CommandEvent) {
 					musicPlayer.Queue(event, tracks[0])
 				},
 				func() {
-					_, _ = event.EditOriginal(dapi.NewMessageUpdateBuilder().SetContent("no tracks found").Build())
+					_, _ = event.UpdateOriginal(core.NewMessageUpdateBuilder().SetContent("no tracks found").Build())
 				},
 				func(e *api.Exception) {
-					_, _ = event.EditOriginal(dapi.NewMessageUpdateBuilder().SetContent("error while loading track:\n" + e.Error()).Build())
+					_, _ = event.UpdateOriginal(core.NewMessageUpdateBuilder().SetContent("error while loading track:\n" + e.Error()).Build())
 				},
 			))
 		}()

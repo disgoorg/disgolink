@@ -1,7 +1,7 @@
 package api
 
 import (
-	dapi "github.com/DisgoOrg/disgo/api"
+	"github.com/DisgoOrg/disgo/discord"
 	"github.com/DisgoOrg/disgolink/api/filters"
 )
 
@@ -13,12 +13,12 @@ type EventCommand struct {
 	GenericOp
 	SessionID string         `json:"sessionId"`
 	Event     interface{}    `json:"event"`
-	GuildID   dapi.Snowflake `json:"guildId"`
+	GuildID   discord.Snowflake `json:"guildId"`
 }
 
 type PlayerCommand struct {
 	GenericOp
-	GuildID dapi.Snowflake `json:"guildId"`
+	GuildID discord.Snowflake `json:"guildId"`
 }
 
 func NewPlayerCommand(op Op, p Player) PlayerCommand {

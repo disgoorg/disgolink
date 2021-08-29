@@ -1,6 +1,10 @@
 package main
 
 import (
+	"github.com/DisgoOrg/disgo/core"
+	"github.com/DisgoOrg/disgo/core/events"
+	"github.com/DisgoOrg/disgo/discord"
+	"github.com/DisgoOrg/disgo/gateway"
 	"github.com/DisgoOrg/disgolink"
 	"github.com/DisgoOrg/log"
 	"os"
@@ -8,31 +12,32 @@ import (
 	"strconv"
 	"syscall"
 
-	"github.com/DisgoOrg/disgo"
-	dapi "github.com/DisgoOrg/disgo/api"
-	"github.com/DisgoOrg/disgo/api/events"
 	"github.com/DisgoOrg/disgolink/api"
 )
 
 var (
 	token        = os.Getenv("disgolink_token")
-	guildID      = dapi.Snowflake(os.Getenv("guild_id"))
-	dgo          dapi.Disgo
+	guildID      = discord.Snowflake(os.Getenv("guild_id"))
+	disgo        core.Disgo
 	dgolink      api.Disgolink
-	musicPlayers = map[dapi.Snowflake]*MusicPlayer{}
+	musicPlayers = map[discord.Snowflake]*MusicPlayer{}
 )
 
 func main() {
 	log.SetLevel(log.LevelDebug)
-	log.Info("starting example...")
+	log.Info("starting _example...")
 
 	var err error
-	dgo, err = disgo.NewBuilder(token).
-		SetGatewayIntents(dapi.GatewayIntentsNonPrivileged).
-		SetCacheFlags(dapi.CacheFlagsDefault | dapi.CacheFlagVoiceState).
-		SetMemberCachePolicy(dapi.MemberCachePolicyNone).
+	disgo, err = core.NewBuilder(token).
+		SetGatewayConfig(gateway.Config{
+			GatewayIntents: discord.GatewayIntentsNonPrivileged,
+		}).
+		SetCacheConfig(core.CacheConfig{
+			CacheFlags:        core.CacheFlagsDefault | core.CacheFlagVoiceState,
+			MemberCachePolicy: core.MemberCachePolicyNone,
+		}).
 		AddEventListeners(&events.ListenerAdapter{
-			OnCommand: commandListener,
+			OnSlashCommand: onSlashCommand,
 		}).
 		Build()
 	if err != nil {
@@ -40,33 +45,33 @@ func main() {
 		return
 	}
 
-	dgolink = disgolink.NewDisgolink(dgo)
+	defer disgo.Close()
+
+	dgolink = disgolink.NewDisgolink(disgo)
 	registerNodes()
 
 	defer dgolink.Close()
 
-	_, err = dgo.RestClient().SetGuildCommands(dgo.ApplicationID(), guildID, commands...)
+	_, err = disgo.SetGuildCommands(guildID, commands)
 	if err != nil {
 		log.Errorf("error while registering guild commands: %s", err)
 	}
 
-	defer dgo.Close()
-
-	err = dgo.Connect()
+	err = disgo.Connect()
 	if err != nil {
 		log.Fatalf("error while connecting to discord: %s", err)
 	}
 
-	log.Infof("example is now running. Press CTRL-C to exit.")
+	log.Infof("_example is now running. Press CTRL-C to exit.")
 	s := make(chan os.Signal, 1)
 	signal.Notify(s, syscall.SIGINT, syscall.SIGTERM, os.Interrupt, os.Kill)
 	<-s
 }
 
-func connect(event *events.CommandEvent, voiceState *dapi.VoiceState) bool {
+func connect(event *events.SlashCommandEvent, voiceState *core.VoiceState) bool {
 	err := voiceState.VoiceChannel().Connect()
 	if err != nil {
-		_, _ = event.EditOriginal(dapi.NewMessageUpdateBuilder().SetContent("error while connecting to channel:\n" + err.Error()).Build())
+		_, _ = event.UpdateOriginal(core.NewMessageUpdateBuilder().SetContent("error while connecting to channel:\n" + err.Error()).Build())
 		log.Errorf("error while connecting to channel: %s", err)
 		return false
 	}

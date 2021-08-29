@@ -1,7 +1,7 @@
 package internal
 
 import (
-	dapi "github.com/DisgoOrg/disgo/api"
+	"github.com/DisgoOrg/disgo/discord"
 	"net/http"
 	"time"
 
@@ -11,7 +11,7 @@ import (
 
 var _ api.Lavalink = (*LavalinkImpl)(nil)
 
-func NewLavalinkImpl(logger log.Logger, httpClient *http.Client, userID dapi.Snowflake) api.Lavalink {
+func NewLavalinkImpl(logger log.Logger, httpClient *http.Client, userID discord.Snowflake) api.Lavalink {
 	if logger == nil {
 		logger = log.Default()
 	}
@@ -23,17 +23,17 @@ func NewLavalinkImpl(logger log.Logger, httpClient *http.Client, userID dapi.Sno
 		userID:     userID,
 		httpClient: httpClient,
 		nodes:      map[string]api.Node{},
-		players:    map[dapi.Snowflake]api.Player{},
+		players:    map[discord.Snowflake]api.Player{},
 	}
 	return lavalink
 }
 
 type LavalinkImpl struct {
 	logger     log.Logger
-	userID     dapi.Snowflake
+	userID     discord.Snowflake
 	httpClient *http.Client
 	nodes      map[string]api.Node
-	players    map[dapi.Snowflake]api.Player
+	players    map[discord.Snowflake]api.Player
 }
 
 func (l *LavalinkImpl) Logger() log.Logger {
@@ -87,7 +87,7 @@ func (l LavalinkImpl) RestClient() api.RestClient {
 	return l.BestNode().RestClient()
 }
 
-func (l *LavalinkImpl) Player(guildID dapi.Snowflake) api.Player {
+func (l *LavalinkImpl) Player(guildID discord.Snowflake) api.Player {
 	if player, ok := l.players[guildID]; ok {
 		return player
 	}
@@ -96,19 +96,19 @@ func (l *LavalinkImpl) Player(guildID dapi.Snowflake) api.Player {
 	return player
 }
 
-func (l *LavalinkImpl) ExistingPlayer(guildID dapi.Snowflake) api.Player {
+func (l *LavalinkImpl) ExistingPlayer(guildID discord.Snowflake) api.Player {
 	return l.players[guildID]
 }
 
-func (l *LavalinkImpl) Players() map[dapi.Snowflake]api.Player {
+func (l *LavalinkImpl) Players() map[discord.Snowflake]api.Player {
 	return l.players
 }
 
-func (l *LavalinkImpl) UserID() dapi.Snowflake {
+func (l *LavalinkImpl) UserID() discord.Snowflake {
 	return l.userID
 }
 
-func (l *LavalinkImpl) SetUserID(userID dapi.Snowflake) {
+func (l *LavalinkImpl) SetUserID(userID discord.Snowflake) {
 	l.userID = userID
 }
 

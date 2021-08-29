@@ -1,6 +1,10 @@
 module github.com/DisgoOrg/disgolink
 
-go 1.16
+go 1.17
+
+replace (
+	github.com/DisgoOrg/disgo => ../disgo
+)
 
 require (
 	github.com/DisgoOrg/disgo v0.5.7

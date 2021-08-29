@@ -1,12 +1,12 @@
 package internal
 
 import (
-	dapi "github.com/DisgoOrg/disgo/api"
+	"github.com/DisgoOrg/disgo/discord"
 	"github.com/DisgoOrg/disgolink/api"
 	"github.com/DisgoOrg/disgolink/api/filters"
 )
 
-func NewPlayer(node api.Node, guildID dapi.Snowflake) api.Player {
+func NewPlayer(node api.Node, guildID discord.Snowflake) api.Player {
 	return &PlayerImpl{
 		guildID:       guildID,
 		channelID:     nil,
@@ -24,8 +24,8 @@ func NewPlayer(node api.Node, guildID dapi.Snowflake) api.Player {
 }
 
 type PlayerImpl struct {
-	guildID       dapi.Snowflake
-	channelID     *dapi.Snowflake
+	guildID       discord.Snowflake
+	channelID     *discord.Snowflake
 	lastSessionID *string
 	track         api.Track
 	volume        int
@@ -152,15 +152,15 @@ func (p *PlayerImpl) SetFilters(filters *filters.Filters) {
 	p.filters = filters
 }
 
-func (p *PlayerImpl) GuildID() dapi.Snowflake {
+func (p *PlayerImpl) GuildID() discord.Snowflake {
 	return p.guildID
 }
 
-func (p *PlayerImpl) ChannelID() *dapi.Snowflake {
+func (p *PlayerImpl) ChannelID() *discord.Snowflake {
 	return p.channelID
 }
 
-func (p *PlayerImpl) SetChannelID(channelID *dapi.Snowflake) {
+func (p *PlayerImpl) SetChannelID(channelID *discord.Snowflake) {
 	p.channelID = channelID
 }
 

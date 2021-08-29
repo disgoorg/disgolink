@@ -1,8 +1,8 @@
 package main
 
-import dapi "github.com/DisgoOrg/disgo/api"
+import "github.com/DisgoOrg/disgo/discord"
 
-var commands = []dapi.CommandCreate{
+var commands = []discord.ApplicationCommandCreate{
 	{
 		Name:        "shuffle",
 		Description: "shuffles the current queue",
@@ -22,18 +22,18 @@ var commands = []dapi.CommandCreate{
 	{
 		Name:        "play",
 		Description: "plays some music",
-		Options: []dapi.CommandOption{
+		Options: []discord.ApplicationCommandOption{
 			{
-				Type:        dapi.CommandOptionTypeString,
+				Type:        discord.CommandOptionTypeString,
 				Name:        "query",
 				Description: "what to play",
 				Required:    true,
 			},
 			{
-				Type:        dapi.CommandOptionTypeString,
+				Type:        discord.CommandOptionTypeString,
 				Name:        "search-provider",
 				Description: "where to search",
-				Choices: []dapi.OptionChoice{
+				Choices: []discord.ApplicationCommandOptionChoice{
 					{Name: "YouTube", Value: "yt"},
 					{Name: "YouTube Music", Value: "ytm"},
 					{Name: "SoundCloud", Value: "sc"},

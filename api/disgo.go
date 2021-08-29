@@ -1,11 +1,11 @@
 package api
 
 import (
-	dapi "github.com/DisgoOrg/disgo/api"
+	"github.com/DisgoOrg/disgo/core"
 )
 
 type Disgolink interface {
 	Lavalink
-	dapi.VoiceDispatchInterceptor
-	dapi.EventListener
+	core.VoiceDispatchInterceptor
+	core.EventListener
 }

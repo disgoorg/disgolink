@@ -1,20 +1,20 @@
 package internal
 
 import (
-	dapi "github.com/DisgoOrg/disgo/api"
+	"github.com/DisgoOrg/disgo/core"
 	"github.com/DisgoOrg/disgolink/api"
 )
 
 var _ api.Disgolink = (*DisgolinkImpl)(nil)
 var _ api.Lavalink = (*DisgolinkImpl)(nil)
-var _ dapi.VoiceDispatchInterceptor = (*DisgolinkImpl)(nil)
-var _ dapi.EventListener = (*DisgolinkImpl)(nil)
+var _ core.VoiceDispatchInterceptor = (*DisgolinkImpl)(nil)
+var _ core.EventListener = (*DisgolinkImpl)(nil)
 
 type DisgolinkImpl struct {
 	api.Lavalink
 }
 
-func (l *DisgolinkImpl) OnVoiceServerUpdate(voiceServerUpdate *dapi.VoiceServerUpdateEvent) {
+func (l *DisgolinkImpl) OnVoiceServerUpdate(voiceServerUpdate *core.VoiceServerUpdateEvent) {
 	l.Lavalink.VoiceServerUpdate(&api.VoiceServerUpdate{
 		Token:    voiceServerUpdate.Token,
 		GuildID:  voiceServerUpdate.GuildID,
@@ -22,7 +22,7 @@ func (l *DisgolinkImpl) OnVoiceServerUpdate(voiceServerUpdate *dapi.VoiceServerU
 	})
 }
 
-func (l *DisgolinkImpl) OnVoiceStateUpdate(voiceStateUpdate *dapi.VoiceStateUpdateEvent) {
+func (l *DisgolinkImpl) OnVoiceStateUpdate(voiceStateUpdate *core.VoiceStateUpdateEvent) {
 	l.Lavalink.VoiceStateUpdate(&api.VoiceStateUpdate{
 		GuildID:   voiceStateUpdate.GuildID,
 		ChannelID: voiceStateUpdate.ChannelID,
