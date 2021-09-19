@@ -1,6 +1,6 @@
 package api
 
-func NewPlaylist(result *LoadResult) *Playlist {
+func NewPlaylist(result LoadResult) *Playlist {
 	return &Playlist{
 		Info:   result.PlaylistInfo,
 		Tracks: result.Tracks,

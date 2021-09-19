@@ -19,7 +19,7 @@ type RestClientImpl struct {
 }
 
 func (c *RestClientImpl) SearchItem(searchType api.SearchType, query string) ([]api.Track, *api.Exception) {
-	result := c.LoadItem(string(searchType) + query)
+	result := c.LoadItem(searchType.Apply(query))
 	if result.Exception != nil {
 		return nil, result.Exception
 	}
@@ -27,11 +27,11 @@ func (c *RestClientImpl) SearchItem(searchType api.SearchType, query string) ([]
 	return result.Tracks, nil
 }
 
-func (c *RestClientImpl) LoadItem(identifier string) *api.LoadResult {
-	var result *api.LoadResult
+func (c *RestClientImpl) LoadItem(identifier string) api.LoadResult {
+	var result api.LoadResult
 	err := c.get(c.node.RestURL()+"/loadtracks?identifier="+url.QueryEscape(identifier), &result)
 	if err != nil {
-		return &api.LoadResult{LoadType: api.LoadTypeLoadFailed, Exception: api.NewExceptionFromErr(err)}
+		return api.LoadResult{LoadType: api.LoadTypeLoadFailed, Exception: api.NewExceptionFromErr(err)}
 	}
 	return result
 }
