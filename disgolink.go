@@ -19,9 +19,9 @@ func NewDisgolinkByUserID(logger log.Logger, httpClient *http.Client, userID dis
 	}
 }
 
-func NewDisgolink(disgo core.Disgo) api.Disgolink {
-	dgolink := NewDisgolinkByUserID(disgo.Logger(), disgo.RestServices().RestClient().HTTPClient(), disgo.ApplicationID())
-	disgo.EventManager().AddEventListeners(dgolink)
-	disgo.SetVoiceDispatchInterceptor(dgolink)
+func NewDisgolink(disgo *core.Bot) api.Disgolink {
+	dgolink := NewDisgolinkByUserID(disgo.Logger, disgo.RestServices.RestClient().HTTPClient(), disgo.ApplicationID)
+	disgo.EventManager.AddEventListeners(dgolink)
+	disgo.VoiceDispatchInterceptor = dgolink
 	return dgolink
 }
