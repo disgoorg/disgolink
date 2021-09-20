@@ -10,7 +10,7 @@ import (
 const trackInfoVersioned int = 1
 const trackInfoVersion int8 = 2
 
-func EncodeToString(info TrackInfo) (str *string, err error) {
+func EncodeToString(info TrackInfo) (str string, err error) {
 	w := new(bytes.Buffer)
 
 	if err = binary.Write(w, binary.BigEndian, trackInfoVersion); err != nil {
@@ -54,8 +54,7 @@ func EncodeToString(info TrackInfo) (str *string, err error) {
 	}
 	buf.Write(w.Bytes())
 
-	str2 := base64.StdEncoding.EncodeToString(buf.Bytes())
-	str = &str2
+	str = base64.StdEncoding.EncodeToString(buf.Bytes())
 	return
 }
 

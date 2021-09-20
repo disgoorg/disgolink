@@ -5,13 +5,13 @@ type DefaultTrack struct {
 	TrackInfo   TrackInfo `json:"info"`
 }
 
-func (t *DefaultTrack) Track() *string {
+func (t *DefaultTrack) Track() string {
 	if t.Base64Track == nil {
 		if err := t.EncodeInfo(); err != nil {
-			return nil
+			return ""
 		}
 	}
-	return t.Base64Track
+	return *t.Base64Track
 }
 
 func (t *DefaultTrack) Info() TrackInfo {
@@ -23,22 +23,28 @@ func (t *DefaultTrack) Info() TrackInfo {
 	return t.TrackInfo
 }
 
-func (t *DefaultTrack) EncodeInfo() (err error) {
+func (t *DefaultTrack) EncodeInfo() error {
 	if t.TrackInfo == nil {
-		err = ErrEmptyTrackInfo
-		return
+		return ErrEmptyTrackInfo
 	}
-	t.Base64Track, err = EncodeToString(t.TrackInfo)
-	return
+	track, err := EncodeToString(t.TrackInfo)
+	if err != nil {
+		return err
+	}
+	t.Base64Track = &track
+	return nil
 }
 
-func (t *DefaultTrack) DecodeInfo() (err error) {
+func (t *DefaultTrack) DecodeInfo() error {
 	if t.Base64Track == nil {
-		err = ErrEmptyTrack
-		return
+		return ErrEmptyTrack
 	}
+	var err error
 	t.TrackInfo, err = DecodeString(*t.Base64Track)
-	return
+	if err != nil {
+		return err
+	}
+	return nil
 }
 
 type DefaultTrackInfo struct {

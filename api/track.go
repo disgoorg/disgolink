@@ -6,7 +6,7 @@ var ErrEmptyTrack = errors.New("track is empty")
 var ErrEmptyTrackInfo = errors.New("trackinfo is empty")
 
 type Track interface {
-	Track() *string
+	Track() string
 	Info() TrackInfo
 }
 
