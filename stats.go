@@ -1,4 +1,4 @@
-package api
+package disgolink
 
 type Stats struct {
 	Players        int         `json:"players"`

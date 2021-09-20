@@ -1,4 +1,4 @@
-package api
+package disgolink
 
 type SearchType string
 

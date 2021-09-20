@@ -1,8 +1,24 @@
-package api
+package disgolink
+
+import "encoding/json"
 
 type DefaultTrack struct {
 	Base64Track *string   `json:"track"`
 	TrackInfo   TrackInfo `json:"info"`
+}
+
+func (t *DefaultTrack) UnmarshalJSON(data []byte) error {
+	var v struct {
+		Base64Track *string           `json:"track"`
+		TrackInfo   *DefaultTrackInfo `json:"info"`
+	}
+	err := json.Unmarshal(data, &v)
+	if err != nil {
+		return err
+	}
+	t.Base64Track = v.Base64Track
+	t.TrackInfo = v.TrackInfo
+	return nil
 }
 
 func (t *DefaultTrack) Track() string {

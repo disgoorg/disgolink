@@ -1,8 +1,8 @@
-package api
+package disgolink
 
 import (
 	"github.com/DisgoOrg/disgo/discord"
-	"github.com/DisgoOrg/disgolink/api/filters"
+	"github.com/DisgoOrg/disgolink/filters"
 )
 
 type GenericOp struct {

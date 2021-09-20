@@ -1,8 +1,8 @@
-package api
+package disgolink
 
 type Node interface {
 	Lavalink() Lavalink
-	Send(d interface{})
+	Send(d interface{}) error
 	Open() error
 	Close()
 	Name() string

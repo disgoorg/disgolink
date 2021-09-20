@@ -1,4 +1,4 @@
-package api
+package disgolink
 
 import (
 	"github.com/DisgoOrg/disgo/core"

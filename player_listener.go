@@ -1,4 +1,4 @@
-package api
+package disgolink
 
 type PlayerEventListener interface {
 	OnPlayerPause(player Player)

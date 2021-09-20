@@ -1,23 +1,23 @@
-package api
+package disgolink
 
 import (
 	"github.com/DisgoOrg/disgo/discord"
-	"github.com/DisgoOrg/disgolink/api/filters"
+	"github.com/DisgoOrg/disgolink/filters"
 )
 
 type Player interface {
 	Track() Track
 	SetTrack(track Track)
-	Play(track Track)
-	PlayAt(track Track, start int, end int)
-	Stop()
-	Destroy()
-	Pause(paused bool)
+	Play(track Track) error
+	PlayAt(track Track, start int, end int) error
+	Stop() error
+	Destroy() error
+	Pause(paused bool) error
 	Paused() bool
 	Position() int
-	Seek(position int)
+	Seek(position int) error
 	Volume() int
-	SetVolume(volume int)
+	SetVolume(volume int) error
 	Filters() *filters.Filters
 	SetFilters(filters *filters.Filters)
 

@@ -4,7 +4,7 @@ package filters
 
 var DefaultVolume Volume = 1
 
-func NewFilters(commitFunc func(filters *Filters)) *Filters {
+func NewFilters(commitFunc func(filters *Filters) error) *Filters {
 	return &Filters{commitFunc: commitFunc}
 }
 
@@ -17,7 +17,7 @@ type Filters struct {
 	Rotation   *Rotation   `json:"rotation,omitempty"`
 	Karaoke    *Karaoke    `json:"karaoke,omitempty"`
 	Distortion *Distortion `json:"distortion,omitempty"`
-	commitFunc func(filters *Filters)
+	commitFunc func(filters *Filters) error
 }
 
 func (f *Filters) Clear() *Filters {
@@ -32,6 +32,6 @@ func (f *Filters) Clear() *Filters {
 	return f
 }
 
-func (f *Filters) Commit() {
-	f.commitFunc(f)
+func (f *Filters) Commit() error {
+	return f.commitFunc(f)
 }

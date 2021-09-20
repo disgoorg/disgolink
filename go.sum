@@ -1,5 +1,11 @@
 github.com/DisgoOrg/disgo v0.5.12-0.20210918181853-f7cd2b5ba91e h1:dfO8d30FsUjqleXD7P3aWK4sEvw3YxUEhkkZkcS7TXc=
 github.com/DisgoOrg/disgo v0.5.12-0.20210918181853-f7cd2b5ba91e/go.mod h1:no2sZaFMgy+EohEuTeQA+08Rvfu+VsiY5wsC7FMIcmE=
+github.com/DisgoOrg/disgo v0.5.12-0.20210920171700-d18bf12ff45b h1:s96Zk5zydGZhtTlY6YzvaOOsfCmG3NlxLEmXhrQ2NcQ=
+github.com/DisgoOrg/disgo v0.5.12-0.20210920171700-d18bf12ff45b/go.mod h1:no2sZaFMgy+EohEuTeQA+08Rvfu+VsiY5wsC7FMIcmE=
+github.com/DisgoOrg/disgo v0.5.12-0.20210920173136-cd84458c333b h1:6Rfv4bqMDTtg+IRh7iHmOH/mRagiedACSrjsjro2dng=
+github.com/DisgoOrg/disgo v0.5.12-0.20210920173136-cd84458c333b/go.mod h1:no2sZaFMgy+EohEuTeQA+08Rvfu+VsiY5wsC7FMIcmE=
+github.com/DisgoOrg/disgo v0.5.12-0.20210920174831-3033f7f639dd h1:fcaPzvD9OYNIkfso6Dn0q4E6V2J7D5ylze58wWubJwU=
+github.com/DisgoOrg/disgo v0.5.12-0.20210920174831-3033f7f639dd/go.mod h1:no2sZaFMgy+EohEuTeQA+08Rvfu+VsiY5wsC7FMIcmE=
 github.com/DisgoOrg/log v1.1.2 h1:tGJS4jaH1PyjPRHybHp8WpYJ/4fR3fYWT4Mv1PoDGBM=
 github.com/DisgoOrg/log v1.1.2/go.mod h1:tSMofXaNhQNvzLRoL4tAiCG9yGY1ES5DLvduh7e9GRU=
 github.com/davecgh/go-spew v1.1.0 h1:ZDRjVQ15GmhC3fiQ8ni8+OwkZQO4DARzQgrnXU1Liz8=

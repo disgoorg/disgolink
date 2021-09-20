@@ -1,51 +1,50 @@
-package internal
+package disgolink
 
 import (
 	"github.com/DisgoOrg/disgo/discord"
 	"net/http"
 	"time"
 
-	"github.com/DisgoOrg/disgolink/api"
 	"github.com/DisgoOrg/log"
 )
 
-var _ api.Lavalink = (*LavalinkImpl)(nil)
+var _ Lavalink = (*defaultLavalink)(nil)
 
-func NewLavalinkImpl(logger log.Logger, httpClient *http.Client, userID discord.Snowflake) api.Lavalink {
+func newDefaultLavalink(logger log.Logger, httpClient *http.Client, userID discord.Snowflake) Lavalink {
 	if logger == nil {
 		logger = log.Default()
 	}
 	if httpClient == nil {
 		httpClient = http.DefaultClient
 	}
-	lavalink := &LavalinkImpl{
+	lavalink := &defaultLavalink{
 		logger:     logger,
 		userID:     userID,
 		httpClient: httpClient,
-		nodes:      map[string]api.Node{},
-		players:    map[discord.Snowflake]api.Player{},
+		nodes:      map[string]Node{},
+		players:    map[discord.Snowflake]Player{},
 	}
 	return lavalink
 }
 
-type LavalinkImpl struct {
+type defaultLavalink struct {
 	logger     log.Logger
 	userID     discord.Snowflake
 	httpClient *http.Client
-	nodes      map[string]api.Node
-	players    map[discord.Snowflake]api.Player
+	nodes      map[string]Node
+	players    map[discord.Snowflake]Player
 }
 
-func (l *LavalinkImpl) Logger() log.Logger {
+func (l *defaultLavalink) Logger() log.Logger {
 	return l.logger
 }
 
-func (l *LavalinkImpl) AddNode(options *api.NodeOptions) {
-	node := &NodeImpl{
+func (l *defaultLavalink) AddNode(options *NodeOptions) {
+	node := &defaultNode{
 		options:  options,
 		lavalink: l,
 	}
-	node.restClient = newRestClientImpl(node, l.httpClient)
+	node.restClient = newDefaultRestClient(node, l.httpClient)
 
 	l.nodes[options.Name] = node
 	go func() {
@@ -62,12 +61,12 @@ func (l *LavalinkImpl) AddNode(options *api.NodeOptions) {
 	}()
 }
 
-func (l *LavalinkImpl) Node(name string) api.Node {
+func (l *defaultLavalink) Node(name string) Node {
 	return l.nodes[name]
 }
 
-func (l *LavalinkImpl) BestNode() api.Node {
-	var bestNode api.Node
+func (l *defaultLavalink) BestNode() Node {
+	var bestNode Node
 	for _, node := range l.nodes {
 		if bestNode == nil || node.Stats().Better(bestNode.Stats()) {
 			bestNode = node
@@ -76,18 +75,18 @@ func (l *LavalinkImpl) BestNode() api.Node {
 	return bestNode
 }
 
-func (l *LavalinkImpl) RemoveNode(name string) {
+func (l *defaultLavalink) RemoveNode(name string) {
 	delete(l.nodes, name)
 }
 
-func (l LavalinkImpl) RestClient() api.RestClient {
+func (l defaultLavalink) RestClient() RestClient {
 	if len(l.nodes) == 0 {
 		return nil
 	}
 	return l.BestNode().RestClient()
 }
 
-func (l *LavalinkImpl) Player(guildID discord.Snowflake) api.Player {
+func (l *defaultLavalink) Player(guildID discord.Snowflake) Player {
 	if player, ok := l.players[guildID]; ok {
 		return player
 	}
@@ -96,40 +95,40 @@ func (l *LavalinkImpl) Player(guildID discord.Snowflake) api.Player {
 	return player
 }
 
-func (l *LavalinkImpl) ExistingPlayer(guildID discord.Snowflake) api.Player {
+func (l *defaultLavalink) ExistingPlayer(guildID discord.Snowflake) Player {
 	return l.players[guildID]
 }
 
-func (l *LavalinkImpl) Players() map[discord.Snowflake]api.Player {
+func (l *defaultLavalink) Players() map[discord.Snowflake]Player {
 	return l.players
 }
 
-func (l *LavalinkImpl) UserID() discord.Snowflake {
+func (l *defaultLavalink) UserID() discord.Snowflake {
 	return l.userID
 }
 
-func (l *LavalinkImpl) SetUserID(userID discord.Snowflake) {
+func (l *defaultLavalink) SetUserID(userID discord.Snowflake) {
 	l.userID = userID
 }
 
-func (l *LavalinkImpl) ClientName() string {
+func (l *defaultLavalink) ClientName() string {
 	return "disgolink"
 }
 
-func (l *LavalinkImpl) Close() {
+func (l *defaultLavalink) Close() {
 	for _, node := range l.nodes {
 		node.Close()
 	}
 }
 
-func (l *LavalinkImpl) VoiceServerUpdate(voiceServerUpdate *api.VoiceServerUpdate) {
+func (l *defaultLavalink) VoiceServerUpdate(voiceServerUpdate *VoiceServerUpdate) {
 	player := l.players[voiceServerUpdate.GuildID]
 	if player == nil {
 		return
 	}
-	player.Node().Send(api.EventCommand{
-		GenericOp: api.GenericOp{
-			Op: api.OpVoiceUpdate,
+	player.Node().Send(EventCommand{
+		GenericOp: GenericOp{
+			Op: OpVoiceUpdate,
 		},
 		GuildID:   voiceServerUpdate.GuildID,
 		SessionID: *player.LastSessionID(),
@@ -137,7 +136,7 @@ func (l *LavalinkImpl) VoiceServerUpdate(voiceServerUpdate *api.VoiceServerUpdat
 	})
 }
 
-func (l *LavalinkImpl) VoiceStateUpdate(voiceStateUpdate *api.VoiceStateUpdate) {
+func (l *defaultLavalink) VoiceStateUpdate(voiceStateUpdate *VoiceStateUpdate) {
 	player := l.players[voiceStateUpdate.GuildID]
 	if player == nil {
 		return

@@ -1,4 +1,4 @@
-package api
+package disgolink
 
 func NewPlaylist(result LoadResult) *Playlist {
 	return &Playlist{

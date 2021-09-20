@@ -1,24 +1,22 @@
-package internal
+package disgolink
 
 import (
 	"encoding/json"
 	"io/ioutil"
 	"net/http"
 	"net/url"
-
-	"github.com/DisgoOrg/disgolink/api"
 )
 
-func newRestClientImpl(node api.Node, httpClient *http.Client) api.RestClient {
-	return &RestClientImpl{node: node, httpClient: httpClient}
+func newDefaultRestClient(node Node, httpClient *http.Client) RestClient {
+	return &defaultRestClient{node: node, httpClient: httpClient}
 }
 
-type RestClientImpl struct {
-	node       api.Node
+type defaultRestClient struct {
+	node       Node
 	httpClient *http.Client
 }
 
-func (c *RestClientImpl) SearchItem(searchType api.SearchType, query string) ([]api.Track, *api.Exception) {
+func (c *defaultRestClient) SearchItem(searchType SearchType, query string) ([]Track, *Exception) {
 	result := c.LoadItem(searchType.Apply(query))
 	if result.Exception != nil {
 		return nil, result.Exception
@@ -27,33 +25,33 @@ func (c *RestClientImpl) SearchItem(searchType api.SearchType, query string) ([]
 	return result.Tracks, nil
 }
 
-func (c *RestClientImpl) LoadItem(identifier string) api.LoadResult {
-	var result api.LoadResult
+func (c *defaultRestClient) LoadItem(identifier string) LoadResult {
+	var result LoadResult
 	err := c.get(c.node.RestURL()+"/loadtracks?identifier="+url.QueryEscape(identifier), &result)
 	if err != nil {
-		return api.LoadResult{LoadType: api.LoadTypeLoadFailed, Exception: api.NewExceptionFromErr(err)}
+		return LoadResult{LoadType: LoadTypeLoadFailed, Exception: NewExceptionFromErr(err)}
 	}
 	return result
 }
 
-func (c *RestClientImpl) LoadItemHandler(identifier string, audioLoaderResultHandler api.AudioLoaderResultHandler) {
+func (c *defaultRestClient) LoadItemHandler(identifier string, audioLoaderResultHandler AudioLoaderResultHandler) {
 	result := c.LoadItem(identifier)
 
 	switch result.LoadType {
-	case api.LoadTypeTrackLoaded:
+	case LoadTypeTrackLoaded:
 		audioLoaderResultHandler.TrackLoaded(result.Tracks[0])
-	case api.LoadTypePlaylistLoaded:
-		audioLoaderResultHandler.PlaylistLoaded(api.NewPlaylist(result))
-	case api.LoadTypeSearchResult:
+	case LoadTypePlaylistLoaded:
+		audioLoaderResultHandler.PlaylistLoaded(NewPlaylist(result))
+	case LoadTypeSearchResult:
 		audioLoaderResultHandler.SearchResultLoaded(result.Tracks)
-	case api.LoadTypeNoMatches:
+	case LoadTypeNoMatches:
 		audioLoaderResultHandler.NoMatches()
-	case api.LoadTypeLoadFailed:
+	case LoadTypeLoadFailed:
 		audioLoaderResultHandler.LoadFailed(result.Exception)
 	}
 }
 
-func (c *RestClientImpl) get(url string, v interface{}) error {
+func (c *defaultRestClient) get(url string, v interface{}) error {
 	rq, err := http.NewRequest("GET", url, nil)
 	if err != nil {
 		return err

@@ -2,7 +2,6 @@ package main
 
 import (
 	"github.com/DisgoOrg/disgo/core"
-	"github.com/DisgoOrg/disgo/core/events"
 	"github.com/DisgoOrg/disgo/discord"
 	"github.com/DisgoOrg/disgo/gateway"
 	"github.com/DisgoOrg/disgolink"
@@ -12,8 +11,6 @@ import (
 	"regexp"
 	"strconv"
 	"syscall"
-
-	"github.com/DisgoOrg/disgolink/api"
 )
 
 var (
@@ -21,8 +18,8 @@ var (
 
 	token        = os.Getenv("disgolink_token")
 	guildID      = discord.Snowflake(os.Getenv("guild_id"))
-	disgo        core.Disgo
-	dgolink      api.Disgolink
+	disgo        *core.Bot
+	dgolink      disgolink.Disgolink
 	musicPlayers = map[discord.Snowflake]*MusicPlayer{}
 )
 
@@ -31,15 +28,15 @@ func main() {
 	log.Info("starting _example...")
 
 	var err error
-	disgo, err = core.NewBuilder(token).
+	disgo, err = core.NewBotBuilder(token).
 		SetGatewayConfig(gateway.Config{
 			GatewayIntents: discord.GatewayIntentsNonPrivileged,
 		}).
 		SetCacheConfig(core.CacheConfig{
-			CacheFlags:        core.CacheFlagsDefault | core.CacheFlagVoiceState,
-			MemberCachePolicy: core.MemberCachePolicyNone,
+			CacheFlags:        core.CacheFlagsDefault,
+			MemberCachePolicy: core.MemberCachePolicyVoice,
 		}).
-		AddEventListeners(&events.ListenerAdapter{
+		AddEventListeners(&core.ListenerAdapter{
 			OnSlashCommand: onSlashCommand,
 		}).
 		Build()
@@ -71,8 +68,9 @@ func main() {
 	<-s
 }
 
-func connect(event *events.SlashCommandEvent, voiceState *core.VoiceState) bool {
-	err := voiceState.VoiceChannel().Connect()
+func connect(event *core.SlashCommandEvent, voiceState *core.VoiceState) bool {
+	channel := voiceState.Channel()
+	err := channel.Connect()
 	if err != nil {
 		_, _ = event.UpdateOriginal(core.NewMessageUpdateBuilder().SetContent("error while connecting to channel:\n" + err.Error()).Build())
 		log.Errorf("error while connecting to channel: %s", err)
@@ -83,7 +81,7 @@ func connect(event *events.SlashCommandEvent, voiceState *core.VoiceState) bool 
 
 func registerNodes() {
 	secure, _ := strconv.ParseBool(os.Getenv("lavalink_secure"))
-	dgolink.AddNode(&api.NodeOptions{
+	dgolink.AddNode(&disgolink.NodeOptions{
 		Name:     "test",
 		Host:     os.Getenv("lavalink_host"),
 		Port:     os.Getenv("lavalink_port"),

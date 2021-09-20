@@ -1,4 +1,4 @@
-package api
+package disgolink
 
 var _ error = (*Exception)(nil)
 

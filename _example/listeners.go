@@ -3,16 +3,14 @@ package main
 import (
 	"fmt"
 	"github.com/DisgoOrg/disgo/core"
-	"github.com/DisgoOrg/disgo/core/events"
-	"github.com/DisgoOrg/disgolink/api"
-	"github.com/DisgoOrg/disgolink/api/filters"
+	"github.com/DisgoOrg/disgolink"
+	"github.com/DisgoOrg/disgolink/filters"
 	"math/rand"
 	"time"
 )
 
-
-func checkMusicPlayer(event *events.SlashCommandEvent) *MusicPlayer {
-	musicPlayer, ok := musicPlayers[*event.Interaction.GuildID]
+func checkMusicPlayer(event *core.SlashCommandEvent) *MusicPlayer {
+	musicPlayer, ok := musicPlayers[*event.GuildID]
 	if !ok {
 		_ = event.Create(core.NewMessageCreateBuilder().SetEphemeral(true).SetContent("No MusicPlayer found for this guild").Build())
 		return nil
@@ -20,8 +18,8 @@ func checkMusicPlayer(event *events.SlashCommandEvent) *MusicPlayer {
 	return musicPlayer
 }
 
-func onSlashCommand(event *events.SlashCommandEvent) {
-	switch event.CommandName() {
+func onSlashCommand(event *core.SlashCommandEvent) {
+	switch event.CommandName {
 	case "shuffle":
 		musicPlayer := checkMusicPlayer(event)
 		if musicPlayers == nil {
@@ -50,7 +48,7 @@ func onSlashCommand(event *events.SlashCommandEvent) {
 		} else {
 			flts.Timescale = nil
 		}
-		flts.Commit()
+		_ = flts.Commit()
 
 	case "queue":
 		musicPlayer := checkMusicPlayer(event)
@@ -78,7 +76,7 @@ func onSlashCommand(event *events.SlashCommandEvent) {
 		}
 
 		pause := !musicPlayer.player.Paused()
-		musicPlayer.player.Pause(pause)
+		_ = musicPlayer.player.Pause(pause)
 		message := "paused"
 		if !pause {
 			message = "resumed"
@@ -86,7 +84,7 @@ func onSlashCommand(event *events.SlashCommandEvent) {
 		_ = event.Create(core.NewMessageCreateBuilder().SetContent(message + " music").Build())
 
 	case "play":
-		voiceState := event.Interaction.Member.VoiceState()
+		voiceState := event.Member.VoiceState()
 
 		if voiceState == nil || voiceState.ChannelID == nil {
 			_ = event.Create(core.NewMessageCreateBuilder().SetEphemeral(true).SetContent("Please join a VoiceChannel to use this command").Build())
@@ -95,41 +93,41 @@ func onSlashCommand(event *events.SlashCommandEvent) {
 		go func() {
 			_ = event.DeferCreate(false)
 
-			query := event.Option("query").String()
-			searchProvider := event.Option("search-provider")
-			if searchProvider != nil {
+			query := event.Options["query"].String()
+			if searchProvider, ok := event.Options["search-provider"]; ok {
 				switch searchProvider.String() {
 				case "yt":
-					query = api.SearchTypeYoutube.Apply(query)
+					query = disgolink.SearchTypeYoutube.Apply(query)
 				case "ytm":
-					query = api.SearchTypeYoutubeMusic.Apply(query)
+					query = disgolink.SearchTypeYoutubeMusic.Apply(query)
 				case "sc":
-					query = api.SearchTypeSoundCloud.Apply(query)
+					query = disgolink.SearchTypeSoundCloud.Apply(query)
 				}
 			} else {
 				if !URLPattern.MatchString(query) {
-					query = string(api.SearchTypeYoutube) + query
+					query = disgolink.SearchTypeYoutube.Apply(query)
 				}
 			}
-			musicPlayer, ok := musicPlayers[*event.Interaction.GuildID]
+			musicPlayer, ok := musicPlayers[*event.GuildID]
 			if !ok {
-				musicPlayer = NewMusicPlayer(*event.Interaction.GuildID)
-				musicPlayers[*event.Interaction.GuildID] = musicPlayer
+				musicPlayer = NewMusicPlayer(*event.GuildID)
+				musicPlayers[*event.GuildID] = musicPlayer
 			}
-			dgolink.RestClient().LoadItemHandler(query, api.NewResultHandler(
-				func(track api.Track) {
+
+			dgolink.RestClient().LoadItemHandler(query, disgolink.NewResultHandler(
+				func(track disgolink.Track) {
 					if ok = connect(event, voiceState); !ok {
 						return
 					}
 					musicPlayer.Queue(event, track)
 				},
-				func(playlist *api.Playlist) {
+				func(playlist *disgolink.Playlist) {
 					if ok = connect(event, voiceState); !ok {
 						return
 					}
 					musicPlayer.Queue(event, playlist.Tracks...)
 				},
-				func(tracks []api.Track) {
+				func(tracks []disgolink.Track) {
 					if ok = connect(event, voiceState); !ok {
 						return
 					}
@@ -138,7 +136,7 @@ func onSlashCommand(event *events.SlashCommandEvent) {
 				func() {
 					_, _ = event.UpdateOriginal(core.NewMessageUpdateBuilder().SetContent("no tracks found").Build())
 				},
-				func(e *api.Exception) {
+				func(e *disgolink.Exception) {
 					_, _ = event.UpdateOriginal(core.NewMessageUpdateBuilder().SetContent("error while loading track:\n" + e.Error()).Build())
 				},
 			))
