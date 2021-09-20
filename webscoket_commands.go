@@ -11,8 +11,8 @@ type GenericOp struct {
 
 type EventCommand struct {
 	GenericOp
-	SessionID string         `json:"sessionId"`
-	Event     interface{}    `json:"event"`
+	SessionID string            `json:"sessionId"`
+	Event     interface{}       `json:"event"`
 	GuildID   discord.Snowflake `json:"guildId"`
 }
 
