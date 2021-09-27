@@ -57,7 +57,7 @@ func main() {
 		log.Errorf("error while registering guild commands: %s", err)
 	}
 
-	err = disgo.Connect()
+	err = disgo.ConnectGateway()
 	if err != nil {
 		log.Fatalf("error while connecting to discord: %s", err)
 	}

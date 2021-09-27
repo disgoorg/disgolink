@@ -27,18 +27,18 @@ var commands = []discord.ApplicationCommandCreate{
 		Name:              "play",
 		Description:       "plays some music",
 		DefaultPermission: true,
-		Options: []discord.SlashCommandOption{
+		Options: []discord.ApplicationCommandOption{
 			{
-				Type:        discord.CommandOptionTypeString,
+				Type:        discord.ApplicationCommandOptionTypeString,
 				Name:        "query",
 				Description: "what to play",
 				Required:    true,
 			},
 			{
-				Type:        discord.CommandOptionTypeString,
+				Type:        discord.ApplicationCommandOptionTypeString,
 				Name:        "search-provider",
 				Description: "where to search",
-				Choices: []discord.SlashCommandOptionChoice{
+				Choices: []discord.ApplicationCommandOptionChoice{
 					{Name: "YouTube", Value: "yt"},
 					{Name: "YouTube Music", Value: "ytm"},
 					{Name: "SoundCloud", Value: "sc"},

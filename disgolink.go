@@ -20,6 +20,6 @@ func NewDisgolinkByUserID(logger log.Logger, httpClient *http.Client, userID dis
 func NewDisgolink(disgo *core.Bot) Disgolink {
 	dgolink := NewDisgolinkByUserID(disgo.Logger, disgo.RestServices.HTTPClient(), disgo.ApplicationID)
 	disgo.EventManager.AddEventListeners(dgolink)
-	disgo.VoiceDispatchInterceptor = dgolink
+	disgo.EventManager.SetVoiceDispatchInterceptor(dgolink)
 	return dgolink
 }
