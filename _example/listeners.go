@@ -3,13 +3,14 @@ package main
 import (
 	"fmt"
 	"github.com/DisgoOrg/disgo/core"
+	"github.com/DisgoOrg/disgo/events"
 	"github.com/DisgoOrg/disgolink"
 	"github.com/DisgoOrg/disgolink/filters"
 	"math/rand"
 	"time"
 )
 
-func checkMusicPlayer(event *core.SlashCommandEvent) *MusicPlayer {
+func checkMusicPlayer(event *events.SlashCommandEvent) *MusicPlayer {
 	musicPlayer, ok := musicPlayers[*event.GuildID]
 	if !ok {
 		_ = event.Create(core.NewMessageCreateBuilder().SetEphemeral(true).SetContent("No MusicPlayer found for this guild").Build())
@@ -18,7 +19,7 @@ func checkMusicPlayer(event *core.SlashCommandEvent) *MusicPlayer {
 	return musicPlayer
 }
 
-func onSlashCommand(event *core.SlashCommandEvent) {
+func onSlashCommand(event *events.SlashCommandEvent) {
 	switch event.CommandName {
 	case "shuffle":
 		musicPlayer := checkMusicPlayer(event)

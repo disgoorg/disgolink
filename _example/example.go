@@ -1,8 +1,10 @@
 package main
 
 import (
+	"github.com/DisgoOrg/disgo/bot"
 	"github.com/DisgoOrg/disgo/core"
 	"github.com/DisgoOrg/disgo/discord"
+	"github.com/DisgoOrg/disgo/events"
 	"github.com/DisgoOrg/disgo/gateway"
 	"github.com/DisgoOrg/disgolink"
 	"github.com/DisgoOrg/log"
@@ -28,18 +30,13 @@ func main() {
 	log.Info("starting _example...")
 
 	var err error
-	disgo, err = core.NewBotBuilder(token).
-		SetGatewayConfig(gateway.Config{
-			GatewayIntents: discord.GatewayIntentsNonPrivileged,
-		}).
-		SetCacheConfig(core.CacheConfig{
-			CacheFlags:        core.CacheFlagsDefault,
-			MemberCachePolicy: core.MemberCachePolicyVoice,
-		}).
-		AddEventListeners(&core.ListenerAdapter{
+	disgo, err = bot.New(token,
+		bot.WithGatewayOpts(gateway.WithGatewayIntents(discord.GatewayIntentGuilds)),
+		bot.WithCacheOpts(core.WithCacheFlags(core.CacheFlagsDefault)),
+		bot.WithEventListeners(&events.ListenerAdapter{
 			OnSlashCommand: onSlashCommand,
-		}).
-		Build()
+		}),
+	)
 	if err != nil {
 		log.Fatalf("error while building disgo instance: %s", err)
 		return
@@ -68,7 +65,7 @@ func main() {
 	<-s
 }
 
-func connect(event *core.SlashCommandEvent, voiceState *core.VoiceState) bool {
+func connect(event *events.SlashCommandEvent, voiceState *core.VoiceState) bool {
 	channel := voiceState.Channel()
 	err := channel.Connect()
 	if err != nil {
