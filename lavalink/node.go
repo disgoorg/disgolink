@@ -1,18 +1,41 @@
-package disgolink
+package lavalink
 
 import (
-	"encoding/json"
+	"context"
 	"fmt"
+	"github.com/DisgoOrg/disgo/json"
+	"github.com/DisgoOrg/disgolink/info"
+	"github.com/gorilla/websocket"
 	"github.com/pkg/errors"
 	"net/http"
-	"net/url"
 	"time"
-
-	"github.com/gorilla/websocket"
 )
 
-type defaultNode struct {
-	options    *NodeOptions
+type Node interface {
+	Lavalink() Lavalink
+	Send(d interface{}) error
+
+	Open(ctx context.Context) error
+	ReOpen(ctx context.Context) error
+	Close(ctx context.Context)
+
+	Name() string
+	RestClient() RestClient
+	RestURL() string
+	Config() NodeConfig
+	Stats() *Stats
+}
+
+type NodeConfig struct {
+	Name     string
+	Host     string
+	Port     string
+	Password string
+	Secure   bool
+}
+
+type nodeImpl struct {
+	config     NodeConfig
 	lavalink   Lavalink
 	conn       *websocket.Conn
 	quit       chan interface{}
@@ -22,32 +45,32 @@ type defaultNode struct {
 	restClient RestClient
 }
 
-func (n defaultNode) RestURL() string {
+func (n *nodeImpl) RestURL() string {
 	scheme := "http"
-	if n.options.Secure {
+	if n.config.Secure {
 		scheme += "s"
 	}
 
-	return fmt.Sprintf("%s://%s:%s", scheme, n.options.Host, n.options.Port)
+	return fmt.Sprintf("%s://%s:%s", scheme, n.config.Host, n.config.Port)
 }
 
-func (n *defaultNode) Lavalink() Lavalink {
+func (n *nodeImpl) Lavalink() Lavalink {
 	return n.lavalink
 }
 
-func (n *defaultNode) Options() *NodeOptions {
-	return n.options
+func (n *nodeImpl) Config() NodeConfig {
+	return n.config
 }
 
-func (n *defaultNode) RestClient() RestClient {
+func (n *nodeImpl) RestClient() RestClient {
 	return n.restClient
 }
 
-func (n *defaultNode) Name() string {
-	return n.options.Name
+func (n *nodeImpl) Name() string {
+	return n.config.Name
 }
 
-func (n *defaultNode) Send(d interface{}) error {
+func (n *nodeImpl) Send(d interface{}) error {
 	err := n.conn.WriteJSON(d)
 	if err != nil {
 		return errors.Wrap(err, "error while sending to lavalink websocket")
@@ -55,15 +78,15 @@ func (n *defaultNode) Send(d interface{}) error {
 	return nil
 }
 
-func (n *defaultNode) Status() NodeStatus {
+func (n *nodeImpl) Status() NodeStatus {
 	return n.status
 }
 
-func (n *defaultNode) Stats() *Stats {
+func (n *nodeImpl) Stats() *Stats {
 	return n.stats
 }
 
-func (n *defaultNode) reconnect(delay time.Duration) {
+func (n *nodeImpl) reconnect(delay time.Duration) {
 	go func() {
 		time.Sleep(delay)
 
@@ -80,22 +103,7 @@ func (n *defaultNode) reconnect(delay time.Duration) {
 	}()
 }
 
-func (n *defaultNode) Close() {
-	n.status = Disconnected
-	if n.quit != nil {
-		n.lavalink.Logger().Info("closing ws goroutines...")
-		close(n.quit)
-		n.quit = nil
-		n.lavalink.Logger().Info("closed ws goroutines")
-	}
-	if n.conn != nil {
-		if err := n.conn.Close(); err != nil {
-			n.lavalink.Logger().Errorf("error while closing wsconn: %s", err)
-		}
-	}
-}
-
-func (n *defaultNode) listen() {
+func (n *nodeImpl) listen() {
 	defer func() {
 		n.lavalink.Logger().Info("shut down listen goroutine")
 	}()
@@ -134,7 +142,7 @@ func (n *defaultNode) listen() {
 	}
 }
 
-func (n *defaultNode) getOp(mt int, data []byte) (*Op, error) {
+func (n *nodeImpl) getOp(mt int, data []byte) (*OpType, error) {
 	if mt != websocket.TextMessage {
 		return nil, fmt.Errorf("recieved unexpected mt type: %d", mt)
 	}
@@ -146,7 +154,7 @@ func (n *defaultNode) getOp(mt int, data []byte) (*Op, error) {
 	return &op.Op, nil
 }
 
-func (n *defaultNode) onPlayerUpdate(data []byte) {
+func (n *nodeImpl) onPlayerUpdate(data []byte) {
 	var playerUpdate PlayerUpdateEvent
 	err := json.Unmarshal(data, &playerUpdate)
 	if err != nil {
@@ -161,7 +169,7 @@ func (n *defaultNode) onPlayerUpdate(data []byte) {
 	}
 }
 
-func (n *defaultNode) onTrackEvent(data []byte) {
+func (n *nodeImpl) onTrackEvent(data []byte) {
 	var event GenericPlayerEvent
 	err := json.Unmarshal(data, &event)
 	if err != nil {
@@ -174,7 +182,7 @@ func (n *defaultNode) onTrackEvent(data []byte) {
 	}
 
 	switch event.Type {
-	case WebsocketEventTrackStart:
+	case OpEventTrackStart:
 		var trackStartEvent TrackStartEvent
 		if err = json.Unmarshal(data, &trackStartEvent); err != nil {
 			n.lavalink.Logger().Errorf("error unmarshalling TrackStartEvent: %s", err)
@@ -232,7 +240,7 @@ func (n *defaultNode) onTrackEvent(data []byte) {
 	}
 }
 
-func (n *defaultNode) onStatsEvent(data []byte) {
+func (n *nodeImpl) onStatsEvent(data []byte) {
 	var event StatsEvent
 	err := json.Unmarshal(data, &event)
 	if err != nil {
@@ -242,24 +250,39 @@ func (n *defaultNode) onStatsEvent(data []byte) {
 	n.stats = event.Stats
 }
 
-func (n *defaultNode) Open() error {
+func (n *nodeImpl) Open(ctx context.Context) error {
 	scheme := "ws"
-	if n.options.Secure {
+	if n.config.Secure {
 		scheme += "s"
 	}
 	header := http.Header{}
-	header.Add("Authorization", n.options.Password)
+	header.Add("Authorization", n.config.Password)
 	header.Add("User-Id", n.lavalink.UserID().String())
-	header.Add("Client-Name", n.lavalink.ClientName())
-	u := url.URL{
-		Scheme: scheme,
-		Host:   fmt.Sprintf("%v:%v", n.options.Host, n.options.Port),
-	}
+	header.Add("Client-Name", fmt.Sprintf("%s/%s", info.Name, info.Version))
 
 	var err error
-	n.conn, _, err = websocket.DefaultDialer.Dial(u.String(), header)
+	n.conn, _, err = websocket.DefaultDialer.Dial(fmt.Sprintf("%s://%s:%s", scheme, n.config.Host, n.config.Port), header)
 
 	go n.listen()
 
 	return err
+}
+
+func (n *nodeImpl) ReOpen(ctx context.Context) error {
+
+}
+
+func (n *nodeImpl) Close() {
+	n.status = Disconnected
+	if n.quit != nil {
+		n.lavalink.Logger().Info("closing ws goroutines...")
+		close(n.quit)
+		n.quit = nil
+		n.lavalink.Logger().Info("closed ws goroutines")
+	}
+	if n.conn != nil {
+		if err := n.conn.Close(); err != nil {
+			n.lavalink.Logger().Errorf("error while closing wsconn: %s", err)
+		}
+	}
 }

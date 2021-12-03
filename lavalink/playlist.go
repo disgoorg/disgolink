@@ -1,4 +1,4 @@
-package disgolink
+package lavalink
 
 func NewPlaylist(result LoadResult) *Playlist {
 	return &Playlist{

@@ -1,6 +1,6 @@
 package filters
 
-import "encoding/json"
+import "github.com/DisgoOrg/disgo/json"
 
 type Equalizer map[int]float32
 

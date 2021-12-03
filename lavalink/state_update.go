@@ -1,4 +1,4 @@
-package disgolink
+package lavalink
 
 import (
 	"github.com/DisgoOrg/disgo/discord"

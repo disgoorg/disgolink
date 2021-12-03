@@ -1,6 +1,6 @@
-package disgolink
+package lavalink
 
-import "encoding/json"
+import "github.com/DisgoOrg/disgo/json"
 
 type DefaultTrack struct {
 	Base64Track *string   `json:"track"`

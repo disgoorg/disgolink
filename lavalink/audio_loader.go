@@ -1,6 +1,6 @@
-package disgolink
+package lavalink
 
-import "encoding/json"
+import "github.com/DisgoOrg/disgo/json"
 
 type LoadType string
 
@@ -19,6 +19,14 @@ const (
 	SeveritySuspicious Severity = "SUSPICIOUS"
 	SeverityFault      Severity = "FAULT"
 )
+
+type AudioLoaderResultHandler interface {
+	TrackLoaded(track Track)
+	PlaylistLoaded(playlist *Playlist)
+	SearchResultLoaded(tracks []Track)
+	NoMatches()
+	LoadFailed(e *Exception)
+}
 
 type LoadResult struct {
 	LoadType     LoadType      `json:"loadType"`
@@ -43,14 +51,6 @@ func (r *LoadResult) UnmarshalJSON(data []byte) error {
 	r.Tracks = DefaultTracksToTracks(result.Tracks)
 	r.Exception = result.Exception
 	return nil
-}
-
-type AudioLoaderResultHandler interface {
-	TrackLoaded(track Track)
-	PlaylistLoaded(playlist *Playlist)
-	SearchResultLoaded(tracks []Track)
-	NoMatches()
-	LoadFailed(e *Exception)
 }
 
 var _ AudioLoaderResultHandler = (*FunctionalResultHandler)(nil)

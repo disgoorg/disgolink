@@ -3,7 +3,7 @@ package main
 import (
 	"fmt"
 	"github.com/DisgoOrg/disgo/discord"
-	"github.com/DisgoOrg/disgolink"
+	"github.com/DisgoOrg/disgolink/lavalink"
 	"github.com/DisgoOrg/log"
 
 	"github.com/DisgoOrg/disgo/core"
@@ -19,12 +19,12 @@ func NewMusicPlayer(guildID discord.Snowflake) *MusicPlayer {
 }
 
 type MusicPlayer struct {
-	player  disgolink.Player
-	queue   []disgolink.Track
+	player  lavalink.Player
+	queue   []lavalink.Track
 	channel *core.Channel
 }
 
-func (p *MusicPlayer) Queue(event *core.SlashCommandEvent, tracks ...disgolink.Track) {
+func (p *MusicPlayer) Queue(event *core.SlashCommandEvent, tracks ...lavalink.Track) {
 	p.channel = event.Channel()
 	for _, track := range tracks {
 		p.queue = append(p.queue, track)
@@ -32,7 +32,7 @@ func (p *MusicPlayer) Queue(event *core.SlashCommandEvent, tracks ...disgolink.T
 
 	var embed core.EmbedBuilder
 	if p.player.Track() == nil {
-		var track disgolink.Track
+		var track lavalink.Track
 		track, p.queue = p.queue[len(p.queue)-1], p.queue[:len(p.queue)-1]
 		_ = p.player.Play(track)
 		message := fmt.Sprintf("▶ ️playing [%s](%s)", track.Info().Title(), *track.Info().URI())
@@ -49,31 +49,31 @@ func (p *MusicPlayer) Queue(event *core.SlashCommandEvent, tracks ...disgolink.T
 	}
 }
 
-func (p *MusicPlayer) OnPlayerPause(player disgolink.Player) {
+func (p *MusicPlayer) OnPlayerPause(player lavalink.Player) {
 
 }
-func (p *MusicPlayer) OnPlayerResume(player disgolink.Player) {
+func (p *MusicPlayer) OnPlayerResume(player lavalink.Player) {
 
 }
-func (p *MusicPlayer) OnPlayerUpdate(player disgolink.Player, state disgolink.State) {
+func (p *MusicPlayer) OnPlayerUpdate(player lavalink.Player, state lavalink.State) {
 	log.Infof("player update: %+v", state)
 }
-func (p *MusicPlayer) OnTrackStart(player disgolink.Player, track disgolink.Track) {
+func (p *MusicPlayer) OnTrackStart(player lavalink.Player, track lavalink.Track) {
 
 }
-func (p *MusicPlayer) OnTrackEnd(player disgolink.Player, track disgolink.Track, endReason disgolink.EndReason) {
+func (p *MusicPlayer) OnTrackEnd(player lavalink.Player, track lavalink.Track, endReason lavalink.EndReason) {
 	if endReason.MayStartNext() && len(p.queue) > 0 {
-		var newTrack disgolink.Track
+		var newTrack lavalink.Track
 		newTrack, p.queue = p.queue[len(p.queue)-1], p.queue[:len(p.queue)-1]
 		_ = player.Play(newTrack)
 	}
 }
-func (p *MusicPlayer) OnTrackException(player disgolink.Player, track disgolink.Track, exception disgolink.Exception) {
+func (p *MusicPlayer) OnTrackException(player lavalink.Player, track lavalink.Track, exception lavalink.Exception) {
 	_, _ = p.channel.CreateMessage(core.NewMessageCreateBuilder().SetContentf("Track exception: `%s`, `%s`, `%+v`", track.Info().Title(), exception).Build())
 }
-func (p *MusicPlayer) OnTrackStuck(player disgolink.Player, track disgolink.Track, thresholdMs int) {
+func (p *MusicPlayer) OnTrackStuck(player lavalink.Player, track lavalink.Track, thresholdMs int) {
 	_, _ = p.channel.CreateMessage(core.NewMessageCreateBuilder().SetContentf("track stuck: `%s`, %d", track.Info().Title(), thresholdMs).Build())
 }
-func (p *MusicPlayer) OnWebSocketClosed(player disgolink.Player, code int, reason string, byRemote bool) {
+func (p *MusicPlayer) OnWebSocketClosed(player lavalink.Player, code int, reason string, byRemote bool) {
 	_, _ = p.channel.CreateMessage(core.NewMessageCreateBuilder().SetContentf("websocket closed: `%d`, `%s`, `%t`", code, reason, byRemote).Build())
 }

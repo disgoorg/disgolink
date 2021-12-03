@@ -1,4 +1,4 @@
-package disgolink
+package lavalink
 
 type EndReason string
 

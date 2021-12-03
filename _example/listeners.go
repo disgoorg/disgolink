@@ -4,8 +4,8 @@ import (
 	"fmt"
 	"github.com/DisgoOrg/disgo/core"
 	"github.com/DisgoOrg/disgo/events"
-	"github.com/DisgoOrg/disgolink"
 	"github.com/DisgoOrg/disgolink/filters"
+	"github.com/DisgoOrg/disgolink/lavalink"
 	"math/rand"
 	"time"
 )
@@ -98,15 +98,15 @@ func onSlashCommand(event *events.SlashCommandEvent) {
 			if searchProvider, ok := event.Options["search-provider"]; ok {
 				switch searchProvider.String() {
 				case "yt":
-					query = disgolink.SearchTypeYoutube.Apply(query)
+					query = lavalink.SearchTypeYoutube.Apply(query)
 				case "ytm":
-					query = disgolink.SearchTypeYoutubeMusic.Apply(query)
+					query = lavalink.SearchTypeYoutubeMusic.Apply(query)
 				case "sc":
-					query = disgolink.SearchTypeSoundCloud.Apply(query)
+					query = lavalink.SearchTypeSoundCloud.Apply(query)
 				}
 			} else {
 				if !URLPattern.MatchString(query) {
-					query = disgolink.SearchTypeYoutube.Apply(query)
+					query = lavalink.SearchTypeYoutube.Apply(query)
 				}
 			}
 			musicPlayer, ok := musicPlayers[*event.GuildID]
@@ -115,20 +115,20 @@ func onSlashCommand(event *events.SlashCommandEvent) {
 				musicPlayers[*event.GuildID] = musicPlayer
 			}
 
-			dgolink.RestClient().LoadItemHandler(query, disgolink.NewResultHandler(
-				func(track disgolink.Track) {
+			dgolink.RestClient().LoadItemHandler(query, lavalink.NewResultHandler(
+				func(track lavalink.Track) {
 					if ok = connect(event, voiceState); !ok {
 						return
 					}
 					musicPlayer.Queue(event, track)
 				},
-				func(playlist *disgolink.Playlist) {
+				func(playlist *lavalink.Playlist) {
 					if ok = connect(event, voiceState); !ok {
 						return
 					}
 					musicPlayer.Queue(event, playlist.Tracks...)
 				},
-				func(tracks []disgolink.Track) {
+				func(tracks []lavalink.Track) {
 					if ok = connect(event, voiceState); !ok {
 						return
 					}
@@ -137,7 +137,7 @@ func onSlashCommand(event *events.SlashCommandEvent) {
 				func() {
 					_, _ = event.UpdateOriginal(core.NewMessageUpdateBuilder().SetContent("no tracks found").Build())
 				},
-				func(e *disgolink.Exception) {
+				func(e *lavalink.Exception) {
 					_, _ = event.UpdateOriginal(core.NewMessageUpdateBuilder().SetContent("error while loading track:\n" + e.Error()).Build())
 				},
 			))

@@ -1,4 +1,4 @@
-package disgolink
+package lavalink
 
 var _ error = (*Exception)(nil)
 

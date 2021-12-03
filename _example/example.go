@@ -6,7 +6,7 @@ import (
 	"github.com/DisgoOrg/disgo/discord"
 	"github.com/DisgoOrg/disgo/events"
 	"github.com/DisgoOrg/disgo/gateway"
-	"github.com/DisgoOrg/disgolink"
+	"github.com/DisgoOrg/disgolink/lavalink"
 	"github.com/DisgoOrg/log"
 	"os"
 	"os/signal"
@@ -21,7 +21,7 @@ var (
 	token        = os.Getenv("disgolink_token")
 	guildID      = discord.Snowflake(os.Getenv("guild_id"))
 	disgo        *core.Bot
-	dgolink      disgolink.Disgolink
+	dgolink      lavalink.Disgolink
 	musicPlayers = map[discord.Snowflake]*MusicPlayer{}
 )
 
@@ -44,7 +44,7 @@ func main() {
 
 	defer disgo.Close()
 
-	dgolink = disgolink.NewDisgolink(disgo)
+	dgolink = lavalink.NewDisgolink(disgo)
 	registerNodes()
 
 	defer dgolink.Close()
@@ -78,7 +78,7 @@ func connect(event *events.SlashCommandEvent, voiceState *core.VoiceState) bool 
 
 func registerNodes() {
 	secure, _ := strconv.ParseBool(os.Getenv("lavalink_secure"))
-	dgolink.AddNode(&disgolink.NodeOptions{
+	dgolink.AddNode(&lavalink.NodeConfig{
 		Name:     "test",
 		Host:     os.Getenv("lavalink_host"),
 		Port:     os.Getenv("lavalink_port"),

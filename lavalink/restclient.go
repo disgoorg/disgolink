@@ -1,22 +1,41 @@
-package disgolink
+package lavalink
 
 import (
-	"encoding/json"
+	"github.com/DisgoOrg/disgo/json"
 	"io/ioutil"
 	"net/http"
 	"net/url"
 )
 
-func newDefaultRestClient(node Node, httpClient *http.Client) RestClient {
-	return &defaultRestClient{node: node, httpClient: httpClient}
+type SearchType string
+
+// search prefixes
+const (
+	SearchTypeYoutube      SearchType = "ytsearch"
+	SearchTypeYoutubeMusic SearchType = "ytmsearch"
+	SearchTypeSoundCloud   SearchType = "scsearch"
+)
+
+func (t SearchType) Apply(searchString string) string {
+	return string(t) + ":" + searchString
 }
 
-type defaultRestClient struct {
+type RestClient interface {
+	SearchItem(searchType SearchType, query string) ([]Track, *Exception)
+	LoadItem(identifier string) LoadResult
+	LoadItemHandler(identifier string, audioLoaderResultHandler AudioLoaderResultHandler)
+}
+
+func newRestClientImpl(node Node, httpClient *http.Client) RestClient {
+	return &restClientImpl{node: node, httpClient: httpClient}
+}
+
+type restClientImpl struct {
 	node       Node
 	httpClient *http.Client
 }
 
-func (c *defaultRestClient) SearchItem(searchType SearchType, query string) ([]Track, *Exception) {
+func (c *restClientImpl) SearchItem(searchType SearchType, query string) ([]Track, *Exception) {
 	result := c.LoadItem(searchType.Apply(query))
 	if result.Exception != nil {
 		return nil, result.Exception
@@ -25,7 +44,7 @@ func (c *defaultRestClient) SearchItem(searchType SearchType, query string) ([]T
 	return result.Tracks, nil
 }
 
-func (c *defaultRestClient) LoadItem(identifier string) LoadResult {
+func (c *restClientImpl) LoadItem(identifier string) LoadResult {
 	var result LoadResult
 	err := c.get(c.node.RestURL()+"/loadtracks?identifier="+url.QueryEscape(identifier), &result)
 	if err != nil {
@@ -34,7 +53,7 @@ func (c *defaultRestClient) LoadItem(identifier string) LoadResult {
 	return result
 }
 
-func (c *defaultRestClient) LoadItemHandler(identifier string, audioLoaderResultHandler AudioLoaderResultHandler) {
+func (c *restClientImpl) LoadItemHandler(identifier string, audioLoaderResultHandler AudioLoaderResultHandler) {
 	result := c.LoadItem(identifier)
 
 	switch result.LoadType {
@@ -51,12 +70,12 @@ func (c *defaultRestClient) LoadItemHandler(identifier string, audioLoaderResult
 	}
 }
 
-func (c *defaultRestClient) get(url string, v interface{}) error {
+func (c *restClientImpl) get(url string, v interface{}) error {
 	rq, err := http.NewRequest("GET", url, nil)
 	if err != nil {
 		return err
 	}
-	rq.Header.Set("Authorization", c.node.Options().Password)
+	rq.Header.Set("Authorization", c.node.Config().Password)
 	rq.Header.Set("Content-Type", "application/json")
 
 	rs, err := c.httpClient.Do(rq)
