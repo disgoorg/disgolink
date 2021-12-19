@@ -1,18 +1,18 @@
 package lavalink
 
-type EndReason string
+type TrackEndReason string
 
 const (
-	Finished   EndReason = "FINISHED"
-	LoadFailed EndReason = "LOAD_FAILED"
-	Stopped    EndReason = "STOPPED"
-	Replaced   EndReason = "REPLACED"
-	Cleanup    EndReason = "CLEANUP"
+	TrackEndReasonFinished   TrackEndReason = "FINISHED"
+	TrackEndReasonLoadFailed TrackEndReason = "LOAD_FAILED"
+	TrackEndReasonStopped    TrackEndReason = "STOPPED"
+	TrackEndReasonReplaced   TrackEndReason = "REPLACED"
+	TrackEndReasonCleanup    TrackEndReason = "CLEANUP"
 )
 
-func (e EndReason) MayStartNext() bool {
+func (e TrackEndReason) MayStartNext() bool {
 	switch e {
-	case Finished, LoadFailed:
+	case TrackEndReasonFinished, TrackEndReasonLoadFailed:
 		return true
 	default:
 		return false

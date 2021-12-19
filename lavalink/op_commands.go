@@ -6,19 +6,13 @@ import (
 	"github.com/DisgoOrg/disgolink/filters"
 )
 
-type OpCommand interface {
-	Op() OpType
-	opCommand()
-}
-
 type PlayCommand struct {
 	GuildID   discord.Snowflake `json:"guildId"`
 	Track     string            `json:"track"`
-	StartTime *int              `json:"startTime,omitempty"`
-	EndTime   *int              `json:"endTime,omitempty"`
-	Volume    *int              `json:"volume,omitempty"`
-	NoReplace *bool             `json:"noReplace,omitempty"`
-	Pause     *bool             `json:"pause,omitempty"`
+	StartTime int               `json:"startTime,omitempty"`
+	EndTime   int               `json:"endTime,omitempty"`
+	NoReplace bool              `json:"noReplace,omitempty"`
+	Pause     bool              `json:"pause,omitempty"`
 }
 
 func (c PlayCommand) MarshalJSON() ([]byte, error) {
@@ -123,7 +117,9 @@ func (VolumeCommand) Op() OpType { return OpTypeVolume }
 func (VolumeCommand) opCommand() {}
 
 type VoiceUpdateCommand struct {
-	GuildID discord.Snowflake `json:"guildId"`
+	GuildID   discord.Snowflake `json:"guildId"`
+	SessionID string            `json:"sessionId"`
+	Event     VoiceServerUpdate `json:"event"`
 }
 
 func (c VoiceUpdateCommand) MarshalJSON() ([]byte, error) {

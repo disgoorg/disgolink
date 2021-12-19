@@ -2,8 +2,8 @@ package main
 
 import (
 	"fmt"
-	"github.com/DisgoOrg/disgo/core"
-	"github.com/DisgoOrg/disgo/events"
+	"github.com/DisgoOrg/disgo/core/events"
+	"github.com/DisgoOrg/disgo/discord"
 	"github.com/DisgoOrg/disgolink/filters"
 	"github.com/DisgoOrg/disgolink/lavalink"
 	"math/rand"
@@ -13,14 +13,14 @@ import (
 func checkMusicPlayer(event *events.SlashCommandEvent) *MusicPlayer {
 	musicPlayer, ok := musicPlayers[*event.GuildID]
 	if !ok {
-		_ = event.Create(core.NewMessageCreateBuilder().SetEphemeral(true).SetContent("No MusicPlayer found for this guild").Build())
+		_ = event.Create(discord.NewMessageCreateBuilder().SetEphemeral(true).SetContent("No MusicPlayer found for this guild").Build())
 		return nil
 	}
 	return musicPlayer
 }
 
 func onSlashCommand(event *events.SlashCommandEvent) {
-	switch event.CommandName {
+	switch event.Data.CommandName {
 	case "shuffle":
 		musicPlayer := checkMusicPlayer(event)
 		if musicPlayers == nil {
@@ -28,14 +28,14 @@ func onSlashCommand(event *events.SlashCommandEvent) {
 		}
 
 		if len(musicPlayer.queue) == 0 {
-			_ = event.Create(core.NewMessageCreateBuilder().SetContent("Queue is empty").Build())
+			_ = event.Create(discord.NewMessageCreateBuilder().SetContent("Queue is empty").Build())
 			return
 		}
 		rand.Seed(time.Now().UnixNano())
 		rand.Shuffle(len(musicPlayer.queue), func(i, j int) {
 			musicPlayer.queue[i], musicPlayer.queue[j] = musicPlayer.queue[j], musicPlayer.queue[i]
 		})
-		_ = event.Create(core.NewMessageCreateBuilder().SetContent("Queue shuffled").Build())
+		_ = event.Create(discord.NewMessageCreateBuilder().SetContent("Queue shuffled").Build())
 
 	case "filter":
 		musicPlayer := checkMusicPlayer(event)
@@ -43,7 +43,7 @@ func onSlashCommand(event *events.SlashCommandEvent) {
 			return
 		}
 
-		flts := musicPlayer.player.Filters()
+		flts := musicPlayer.Filters()
 		if flts.Timescale == nil {
 			flts.Timescale = &filters.Timescale{Speed: 2}
 		} else {
@@ -58,13 +58,13 @@ func onSlashCommand(event *events.SlashCommandEvent) {
 		}
 
 		if len(musicPlayer.queue) == 0 {
-			_ = event.Create(core.NewMessageCreateBuilder().SetContent("No songs in queue").Build())
+			_ = event.Create(discord.NewMessageCreateBuilder().SetContent("No songs in queue").Build())
 		}
 		tracks := ""
 		for i, track := range musicPlayer.queue {
 			tracks += fmt.Sprintf("%d. [%s](%s)\n", i+1, track.Info().Title(), *track.Info().URI())
 		}
-		_ = event.Create(core.NewMessageCreateBuilder().SetEmbeds(core.NewEmbedBuilder().
+		_ = event.Create(discord.NewMessageCreateBuilder().SetEmbeds(discord.NewEmbedBuilder().
 			SetTitle("Queue:").
 			SetDescription(tracks).
 			Build(),
@@ -76,27 +76,27 @@ func onSlashCommand(event *events.SlashCommandEvent) {
 			return
 		}
 
-		pause := !musicPlayer.player.Paused()
-		_ = musicPlayer.player.Pause(pause)
+		pause := !musicPlayer.Paused()
+		_ = musicPlayer.Pause(pause)
 		message := "paused"
 		if !pause {
 			message = "resumed"
 		}
-		_ = event.Create(core.NewMessageCreateBuilder().SetContent(message + " music").Build())
+		_ = event.Create(discord.NewMessageCreateBuilder().SetContent(message + " music").Build())
 
 	case "play":
 		voiceState := event.Member.VoiceState()
 
 		if voiceState == nil || voiceState.ChannelID == nil {
-			_ = event.Create(core.NewMessageCreateBuilder().SetEphemeral(true).SetContent("Please join a VoiceChannel to use this command").Build())
+			_ = event.Create(discord.NewMessageCreateBuilder().SetEphemeral(true).SetContent("Please join a VoiceChannel to use this command").Build())
 			return
 		}
 		go func() {
 			_ = event.DeferCreate(false)
 
-			query := event.Options["query"].String()
-			if searchProvider, ok := event.Options["search-provider"]; ok {
-				switch searchProvider.String() {
+			query := *event.Data.Options.String("query")
+			if searchProvider := event.Data.Options.String("search-provider"); searchProvider != nil {
+				switch *searchProvider {
 				case "yt":
 					query = lavalink.SearchTypeYoutube.Apply(query)
 				case "ytm":
@@ -114,31 +114,35 @@ func onSlashCommand(event *events.SlashCommandEvent) {
 				musicPlayer = NewMusicPlayer(*event.GuildID)
 				musicPlayers[*event.GuildID] = musicPlayer
 			}
+			skipSegments := false
+			if option := event.Data.Options.Bool("skip-segments"); option != nil {
+				skipSegments = *option
+			}
 
-			dgolink.RestClient().LoadItemHandler(query, lavalink.NewResultHandler(
+			musicPlayer.Node().RestClient().LoadItemHandler(query, lavalink.NewResultHandler(
 				func(track lavalink.Track) {
 					if ok = connect(event, voiceState); !ok {
 						return
 					}
-					musicPlayer.Queue(event, track)
+					musicPlayer.Queue(event, skipSegments, track)
 				},
 				func(playlist *lavalink.Playlist) {
 					if ok = connect(event, voiceState); !ok {
 						return
 					}
-					musicPlayer.Queue(event, playlist.Tracks...)
+					musicPlayer.Queue(event, skipSegments, playlist.Tracks...)
 				},
 				func(tracks []lavalink.Track) {
 					if ok = connect(event, voiceState); !ok {
 						return
 					}
-					musicPlayer.Queue(event, tracks[0])
+					musicPlayer.Queue(event, skipSegments, tracks[0])
 				},
 				func() {
-					_, _ = event.UpdateOriginal(core.NewMessageUpdateBuilder().SetContent("no tracks found").Build())
+					_, _ = event.UpdateOriginal(discord.NewMessageUpdateBuilder().SetContent("no tracks found").Build())
 				},
 				func(e *lavalink.Exception) {
-					_, _ = event.UpdateOriginal(core.NewMessageUpdateBuilder().SetContent("error while loading track:\n" + e.Error()).Build())
+					_, _ = event.UpdateOriginal(discord.NewMessageUpdateBuilder().SetContent("error while loading track:\n" + e.Error()).Build())
 				},
 			))
 		}()

@@ -2,6 +2,7 @@ package lavalink
 
 import (
 	"github.com/DisgoOrg/disgo/core"
+	"github.com/DisgoOrg/disgo/core/events"
 )
 
 func NewDisgolink(disgo *core.Bot) Disgolink {
@@ -23,8 +24,8 @@ type Disgolink interface {
 }
 
 var (
-	_ Disgolink = (*disgolinkImpl)(nil)
-	_ Lavalink = (*disgolinkImpl)(nil)
+	_ Disgolink          = (*disgolinkImpl)(nil)
+	_ Lavalink           = (*disgolinkImpl)(nil)
 	_ core.EventListener = (*disgolinkImpl)(nil)
 )
 
@@ -33,7 +34,21 @@ type disgolinkImpl struct {
 }
 
 func (l *disgolinkImpl) OnEvent(event core.Event) {
-	switch _ := event.(type) {
-
+	switch e := event.(type) {
+	case events.VoiceServerUpdateEvent:
+		l.VoiceServerUpdate(VoiceServerUpdate{
+			Token:    e.VoiceServerUpdate.Token,
+			GuildID:  e.VoiceServerUpdate.GuildID,
+			Endpoint: e.VoiceServerUpdate.Endpoint,
+		})
+	case events.GuildVoiceStateUpdateEvent:
+		if e.VoiceState.UserID != l.UserID() {
+			return
+		}
+		l.VoiceStateUpdate(VoiceStateUpdate{
+			GuildID:   e.VoiceState.GuildID,
+			ChannelID: e.VoiceState.ChannelID,
+			SessionID: e.VoiceState.SessionID,
+		})
 	}
 }

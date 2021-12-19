@@ -67,11 +67,11 @@ func (l *lavalinkImpl) AddNode(config NodeConfig) {
 	}
 	node.restClient = newRestClientImpl(node, l.config.HTTPClient)
 
-	l.nodes[options.Name] = node
+	l.nodes[config.Name] = node
 	go func() {
 		delay := 500
 		for {
-			err := node.Open()
+			err := node.Open(context.TODO())
 			if err == nil {
 				break
 			}
@@ -140,13 +140,10 @@ func (l *lavalinkImpl) Close(ctx context.Context) {
 
 func (l *lavalinkImpl) VoiceServerUpdate(voiceServerUpdate VoiceServerUpdate) {
 	player := l.players[voiceServerUpdate.GuildID]
-	if player == nil {
+	if player == nil && player.LastSessionID() != nil {
 		return
 	}
-	_ = player.Node().Send(EventCommand{
-		GenericOp: GenericOp{
-			OpType: OpVoiceUpdate,
-		},
+	_ = player.Node().Send(VoiceUpdateCommand{
 		GuildID:   voiceServerUpdate.GuildID,
 		SessionID: *player.LastSessionID(),
 		Event:     voiceServerUpdate,

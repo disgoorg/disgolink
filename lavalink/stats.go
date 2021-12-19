@@ -9,13 +9,7 @@ type Stats struct {
 	FrameStats     *FrameStats `json:"frameStats"`
 }
 
-func (s *Stats) Better(stats *Stats) bool {
-	if s == nil {
-		return false
-	}
-	if stats == nil {
-		return true
-	}
+func (s Stats) Better(stats Stats) bool {
 	sLoad := 0
 	statsLoad := 0
 	if s.CPU != nil {

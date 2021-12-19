@@ -13,6 +13,5 @@ type VoiceServerUpdate struct {
 type VoiceStateUpdate struct {
 	GuildID   discord.Snowflake  `json:"guild_id"`
 	ChannelID *discord.Snowflake `json:"channel_id"`
-	UserID    discord.Snowflake  `json:"user_id"`
 	SessionID string             `json:"session_id"`
 }

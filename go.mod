@@ -3,7 +3,7 @@ module github.com/DisgoOrg/disgolink
 go 1.17
 
 require (
-	github.com/DisgoOrg/disgo v0.6.6
+	github.com/DisgoOrg/disgo v0.6.8-0.20211219114906-a0c04302e0ce
 	github.com/DisgoOrg/log v1.1.2
 	github.com/gorilla/websocket v1.4.2
 	github.com/pkg/errors v0.9.1
