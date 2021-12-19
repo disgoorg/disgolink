@@ -25,7 +25,7 @@ var testTrack = &DefaultTrack{
 }
 
 func TestDecodeString(t *testing.T) {
-	trackInfo, err := DecodeString(*testTrack.Track())
+	trackInfo, err := DecodeString(testTrack.Track())
 	assert.NoError(t, err)
 	assert.Equal(t, testTrack.Info, trackInfo)
 }
@@ -37,7 +37,7 @@ func TestEncodeTrackString(t *testing.T) {
 }
 
 func TestEncodeDecodeString(t *testing.T) {
-	trackInfo, err := DecodeString(*testTrack.Track())
+	trackInfo, err := DecodeString(testTrack.Track())
 	assert.NoError(t, err)
 	assert.Equal(t, testTrack.Info, trackInfo)
 

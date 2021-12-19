@@ -132,27 +132,18 @@ func (n *nodeImpl) listen() {
 			switch op := v.Op.(type) {
 			case PlayerUpdateOp:
 				n.onPlayerUpdate(op)
+
 			case OpEvent:
 				n.onEvent(op)
+
 			case StatsOp:
 				n.onStatsEvent(op)
+
 			default:
-				n.lavalink.Logger().Warnf("unexpected op received: %s", op)
+				n.lavalink.Logger().Warnf("unexpected op received: %T, data: ", op, string(data))
 			}
 		}
 	}
-}
-
-func (n *nodeImpl) getOp(mt int, data []byte) (OpType, error) {
-	if mt != websocket.TextMessage {
-		return "", fmt.Errorf("recieved unexpected mt type: %d", mt)
-	}
-
-	var op UnmarshalOpEvent
-	if err := json.Unmarshal(data, &op); err != nil {
-		return "", err
-	}
-	return op.Op(), nil
 }
 
 func (n *nodeImpl) onPlayerUpdate(playerUpdate PlayerUpdateOp) {
@@ -172,9 +163,10 @@ func (n *nodeImpl) onEvent(event OpEvent) {
 
 	switch e := event.(type) {
 	case TrackStartEvent:
-		p.SetTrack(e.Track)
+		track := NewTrack(e.Track)
+		p.SetTrack(track)
 		p.EmitEvent(func(listener PlayerEventListener) {
-			listener.OnTrackStart(p, e.Track)
+			listener.OnTrackStart(p, track)
 		})
 
 	case TrackEndEvent:
@@ -184,12 +176,12 @@ func (n *nodeImpl) onEvent(event OpEvent) {
 
 	case TrackExceptionEvent:
 		p.EmitEvent(func(listener PlayerEventListener) {
-			listener.OnTrackException(p, e.Track, e.Exception)
+			listener.OnTrackException(p, NewTrack(e.Track), e.Exception)
 		})
 
 	case TrackStuckEvent:
 		p.EmitEvent(func(listener PlayerEventListener) {
-			listener.OnTrackStuck(p, e.Track, e.ThresholdMs)
+			listener.OnTrackStuck(p, NewTrack(e.Track), e.ThresholdMs)
 		})
 
 	case WebsocketClosedEvent:

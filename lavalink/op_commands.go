@@ -26,7 +26,7 @@ func (c PlayCommand) MarshalJSON() ([]byte, error) {
 	})
 }
 func (PlayCommand) Op() OpType { return OpTypePlay }
-func (PlayCommand) opCommand() {}
+func (PlayCommand) OpCommand() {}
 
 type StopCommand struct {
 	GuildID discord.Snowflake `json:"guildId"`
@@ -43,7 +43,7 @@ func (c StopCommand) MarshalJSON() ([]byte, error) {
 	})
 }
 func (StopCommand) Op() OpType { return OpTypeStop }
-func (StopCommand) opCommand() {}
+func (StopCommand) OpCommand() {}
 
 type DestroyCommand struct {
 	GuildID discord.Snowflake `json:"guildId"`
@@ -60,7 +60,7 @@ func (c DestroyCommand) MarshalJSON() ([]byte, error) {
 	})
 }
 func (DestroyCommand) Op() OpType { return OpTypeDestroy }
-func (DestroyCommand) opCommand() {}
+func (DestroyCommand) OpCommand() {}
 
 type PauseCommand struct {
 	GuildID discord.Snowflake `json:"guildId"`
@@ -78,7 +78,7 @@ func (c PauseCommand) MarshalJSON() ([]byte, error) {
 	})
 }
 func (PauseCommand) Op() OpType { return OpTypePause }
-func (PauseCommand) opCommand() {}
+func (PauseCommand) OpCommand() {}
 
 type SeekCommand struct {
 	GuildID  discord.Snowflake `json:"guildId"`
@@ -96,7 +96,7 @@ func (c SeekCommand) MarshalJSON() ([]byte, error) {
 	})
 }
 func (SeekCommand) Op() OpType { return OpTypeSeek }
-func (SeekCommand) opCommand() {}
+func (SeekCommand) OpCommand() {}
 
 type VolumeCommand struct {
 	GuildID discord.Snowflake `json:"guildId"`
@@ -114,7 +114,7 @@ func (c VolumeCommand) MarshalJSON() ([]byte, error) {
 	})
 }
 func (VolumeCommand) Op() OpType { return OpTypeVolume }
-func (VolumeCommand) opCommand() {}
+func (VolumeCommand) OpCommand() {}
 
 type VoiceUpdateCommand struct {
 	GuildID   discord.Snowflake `json:"guildId"`
@@ -133,7 +133,7 @@ func (c VoiceUpdateCommand) MarshalJSON() ([]byte, error) {
 	})
 }
 func (VoiceUpdateCommand) Op() OpType { return OpTypeVoiceUpdate }
-func (VoiceUpdateCommand) opCommand() {}
+func (VoiceUpdateCommand) OpCommand() {}
 
 type ConfigureResumingCommand struct {
 	GuildID discord.Snowflake `json:"guildId"`
@@ -150,7 +150,7 @@ func (c ConfigureResumingCommand) MarshalJSON() ([]byte, error) {
 	})
 }
 func (ConfigureResumingCommand) Op() OpType { return OpTypeConfigureResuming }
-func (ConfigureResumingCommand) opCommand() {}
+func (ConfigureResumingCommand) OpCommand() {}
 
 type FiltersCommand struct {
 	GuildID discord.Snowflake `json:"guildId"`
@@ -168,4 +168,4 @@ func (c FiltersCommand) MarshalJSON() ([]byte, error) {
 	})
 }
 func (FiltersCommand) Op() OpType { return OpTypeFilters }
-func (FiltersCommand) opCommand() {}
+func (FiltersCommand) OpCommand() {}

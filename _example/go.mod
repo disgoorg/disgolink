@@ -5,7 +5,7 @@ go 1.17
 replace github.com/DisgoOrg/disgolink => ../
 
 require (
-	github.com/DisgoOrg/disgo v0.6.8-0.20211219114906-a0c04302e0ce
+	github.com/DisgoOrg/disgo v0.6.8-0.20211219183759-b6743184f0f8
 	github.com/DisgoOrg/disgolink v0.2.0
 	github.com/DisgoOrg/log v1.1.2
 )

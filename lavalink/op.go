@@ -40,21 +40,21 @@ type Op interface {
 type OpCommand interface {
 	json.Marshaler
 	Op
-	opCommand()
+	OpCommand()
 }
 
 type OpEvent interface {
 	Op
 	Event() EventType
 	GuildID() discord.Snowflake
-	opEvent()
+	OpEvent()
 }
 
 type UnmarshalOp struct {
 	Op
 }
 
-func (e *UnmarshalOp) UnmarshalEvent(data []byte) error {
+func (e *UnmarshalOp) UnmarshalJSON(data []byte) error {
 	var opType struct {
 		Op OpType `json:"op"`
 	}

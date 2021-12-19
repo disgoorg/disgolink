@@ -35,13 +35,14 @@ type disgolinkImpl struct {
 
 func (l *disgolinkImpl) OnEvent(event core.Event) {
 	switch e := event.(type) {
-	case events.VoiceServerUpdateEvent:
+	case *events.VoiceServerUpdateEvent:
 		l.VoiceServerUpdate(VoiceServerUpdate{
 			Token:    e.VoiceServerUpdate.Token,
 			GuildID:  e.VoiceServerUpdate.GuildID,
 			Endpoint: e.VoiceServerUpdate.Endpoint,
 		})
-	case events.GuildVoiceStateUpdateEvent:
+
+	case *events.GuildVoiceStateUpdateEvent:
 		if e.VoiceState.UserID != l.UserID() {
 			return
 		}

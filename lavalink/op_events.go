@@ -10,7 +10,7 @@ type UnmarshalOpEvent struct {
 	OpEvent
 }
 
-func (e *UnmarshalOpEvent) UnmarshalEvent(data []byte) error {
+func (e *UnmarshalOpEvent) UnmarshalJSON(data []byte) error {
 	var eType struct {
 		Type EventType `json:"type"`
 	}
@@ -63,27 +63,13 @@ func (e *UnmarshalOpEvent) UnmarshalEvent(data []byte) error {
 
 type TrackStartEvent struct {
 	GID   discord.Snowflake `json:"guildId"`
-	Track Track             `json:"track"`
-}
-
-func (e *TrackStartEvent) UnmarshalJSON(data []byte) error {
-	type event TrackStartEvent
-	var v struct {
-		Track *DefaultTrack `json:"track"`
-		event
-	}
-	if err := json.Unmarshal(data, &v); err != nil {
-		return err
-	}
-	*e = TrackStartEvent(v.event)
-	e.Track = v.Track
-	return nil
+	Track string            `json:"track"`
 }
 
 func (TrackStartEvent) Event() EventType             { return EventTypeTrackStart }
 func (TrackStartEvent) Op() OpType                   { return OpTypeEvent }
 func (e TrackStartEvent) GuildID() discord.Snowflake { return e.GID }
-func (TrackStartEvent) opEvent()                     {}
+func (TrackStartEvent) OpEvent()                     {}
 
 type TrackEndEvent struct {
 	GID    discord.Snowflake `json:"guildId"`
@@ -94,29 +80,29 @@ type TrackEndEvent struct {
 func (TrackEndEvent) Event() EventType             { return EventTypeTrackStart }
 func (TrackEndEvent) Op() OpType                   { return OpTypeEvent }
 func (e TrackEndEvent) GuildID() discord.Snowflake { return e.GID }
-func (TrackEndEvent) opEvent()                     {}
+func (TrackEndEvent) OpEvent()                     {}
 
 type TrackExceptionEvent struct {
 	GID       discord.Snowflake `json:"guildId"`
-	Track     Track             `json:"track"`
+	Track     string            `json:"track"`
 	Exception Exception         `json:"exception"`
 }
 
 func (TrackExceptionEvent) Event() EventType             { return EventTypeTrackStart }
 func (TrackExceptionEvent) Op() OpType                   { return OpTypeEvent }
 func (e TrackExceptionEvent) GuildID() discord.Snowflake { return e.GID }
-func (TrackExceptionEvent) opEvent()                     {}
+func (TrackExceptionEvent) OpEvent()                     {}
 
 type TrackStuckEvent struct {
 	GID         discord.Snowflake `json:"guildId"`
-	Track       Track             `json:"track"`
+	Track       string            `json:"track"`
 	ThresholdMs int               `json:"threasholdMs"`
 }
 
 func (TrackStuckEvent) Event() EventType             { return EventTypeTrackStuck }
 func (TrackStuckEvent) Op() OpType                   { return OpTypeEvent }
 func (e TrackStuckEvent) GuildID() discord.Snowflake { return e.GID }
-func (TrackStuckEvent) opEvent()                     {}
+func (TrackStuckEvent) OpEvent()                     {}
 
 type WebsocketClosedEvent struct {
 	GID      discord.Snowflake `json:"guildId"`
@@ -128,4 +114,4 @@ type WebsocketClosedEvent struct {
 func (WebsocketClosedEvent) Event() EventType             { return EventTypeWebSocketClosed }
 func (WebsocketClosedEvent) Op() OpType                   { return OpTypeEvent }
 func (e WebsocketClosedEvent) GuildID() discord.Snowflake { return e.GID }
-func (WebsocketClosedEvent) opEvent()                     {}
+func (WebsocketClosedEvent) OpEvent()                     {}
