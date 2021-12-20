@@ -86,6 +86,7 @@ func (c *restClientImpl) get(url string, v interface{}) error {
 	defer rs.Body.Close()
 
 	raw, err := ioutil.ReadAll(rs.Body)
+	c.node.Lavalink().Logger().Debugf("response from %s, code %d, body: %s", url, rs.StatusCode, string(raw))
 	if err != nil {
 		return err
 	}
