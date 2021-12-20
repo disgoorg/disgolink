@@ -27,4 +27,3 @@ func getVersion() string {
 	}
 	return "unknown"
 }
-

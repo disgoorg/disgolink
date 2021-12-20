@@ -73,7 +73,7 @@ func (TrackStartEvent) OpEvent()                     {}
 
 type TrackEndEvent struct {
 	GID    discord.Snowflake `json:"guildId"`
-	Track  Track             `json:"track"`
+	Track  string            `json:"track"`
 	Reason TrackEndReason    `json:"reason"`
 }
 

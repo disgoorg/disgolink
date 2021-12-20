@@ -171,7 +171,7 @@ func (n *nodeImpl) onEvent(event OpEvent) {
 
 	case TrackEndEvent:
 		p.EmitEvent(func(listener PlayerEventListener) {
-			listener.OnTrackEnd(p, e.Track, e.Reason)
+			listener.OnTrackEnd(p, NewTrack(e.Track), e.Reason)
 		})
 
 	case TrackExceptionEvent:
