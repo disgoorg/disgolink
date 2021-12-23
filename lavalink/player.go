@@ -19,8 +19,8 @@ type Player interface {
 	Seek(position int) error
 	Volume() int
 	SetVolume(volume int) error
-	Filters() *filters.Filters
-	SetFilters(filters *filters.Filters)
+	Filters() filters.Filters
+	SetFilters(filters filters.Filters)
 
 	GuildID() discord.Snowflake
 	ChannelID() *discord.Snowflake
@@ -61,7 +61,7 @@ type DefaultPlayer struct {
 	volume        int
 	paused        bool
 	state         PlayerState
-	filters       *filters.Filters
+	filters       filters.Filters
 	node          Node
 	listeners     []PlayerEventListener
 }
@@ -188,14 +188,14 @@ func (p *DefaultPlayer) SetVolume(volume int) error {
 	return nil
 }
 
-func (p *DefaultPlayer) Filters() *filters.Filters {
+func (p *DefaultPlayer) Filters() filters.Filters {
 	if p.filters == nil {
 		p.filters = filters.NewFilters(p.commitFilters)
 	}
 	return p.filters
 }
 
-func (p *DefaultPlayer) SetFilters(filters *filters.Filters) {
+func (p *DefaultPlayer) SetFilters(filters filters.Filters) {
 	p.filters = filters
 }
 
@@ -249,10 +249,10 @@ func (p *DefaultPlayer) RemoveListener(playerListener PlayerEventListener) {
 	}
 }
 
-func (p *DefaultPlayer) commitFilters(filters *filters.Filters) error {
+func (p *DefaultPlayer) commitFilters(filters filters.Filters) error {
 	if err := p.node.Send(FiltersCommand{
 		GuildID: p.guildID,
-		Filters: *filters,
+		Filters: filters,
 	}); err != nil {
 		return errors.Wrap(err, "error while setting filters of player")
 	}
