@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"github.com/DisgoOrg/disgo/core/events"
 	"github.com/DisgoOrg/disgo/discord"
-	"github.com/DisgoOrg/disgolink/filters"
 	"github.com/DisgoOrg/disgolink/lavalink"
 	"math/rand"
 	"time"
@@ -44,10 +43,10 @@ func onSlashCommand(event *events.SlashCommandEvent) {
 		}
 
 		flts := musicPlayer.Filters()
-		if flts.Timescale == nil {
-			flts.Timescale = &filters.Timescale{Speed: 2}
+		if flts.Timescale() == nil {
+			flts.Timescale().Speed = 2
 		} else {
-			flts.Timescale = nil
+			flts.SetTimescale(nil)
 		}
 		_ = flts.Commit()
 
@@ -126,7 +125,7 @@ func onSlashCommand(event *events.SlashCommandEvent) {
 					}
 					musicPlayer.Queue(event, skipSegments, track)
 				},
-				func(playlist *lavalink.Playlist) {
+				func(playlist lavalink.Playlist) {
 					if ok = connect(event, voiceState); !ok {
 						return
 					}
@@ -141,7 +140,7 @@ func onSlashCommand(event *events.SlashCommandEvent) {
 				func() {
 					_, _ = event.UpdateOriginal(discord.NewMessageUpdateBuilder().SetContent("no tracks found").Build())
 				},
-				func(e *lavalink.Exception) {
+				func(e lavalink.Exception) {
 					_, _ = event.UpdateOriginal(discord.NewMessageUpdateBuilder().SetContent("error while loading track:\n" + e.Error()).Build())
 				},
 			))
