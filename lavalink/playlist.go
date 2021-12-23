@@ -1,14 +1,14 @@
 package lavalink
 
-func NewPlaylist(result LoadResult) *Playlist {
-	return &Playlist{
-		Info:   result.PlaylistInfo,
+func NewPlaylist(result LoadResult) Playlist {
+	return Playlist{
+		Info:   *result.PlaylistInfo,
 		Tracks: result.Tracks,
 	}
 }
 
 type Playlist struct {
-	Info   *PlaylistInfo
+	Info   PlaylistInfo
 	Tracks []Track
 }
 

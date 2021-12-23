@@ -66,7 +66,7 @@ func (c *restClientImpl) LoadItemHandler(identifier string, audioLoaderResultHan
 	case LoadTypeNoMatches:
 		audioLoaderResultHandler.NoMatches()
 	case LoadTypeLoadFailed:
-		audioLoaderResultHandler.LoadFailed(result.Exception)
+		audioLoaderResultHandler.LoadFailed(*result.Exception)
 	}
 }
 

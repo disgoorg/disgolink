@@ -5,13 +5,12 @@ import (
 	"github.com/DisgoOrg/disgo/core/events"
 )
 
-func NewDisgolink(disgo *core.Bot) Disgolink {
+func NewDisgolink(disgo *core.Bot, opts ...ConfigOpt) Disgolink {
+	opts = append(opts, WithLogger(disgo.Logger),
+		WithHTTPClient(disgo.RestServices.HTTPClient()),
+		WithUserID(disgo.ApplicationID))
 	dgolink := &disgolinkImpl{
-		Lavalink: NewLavalink(
-			WithLogger(disgo.Logger),
-			WithHTTPClient(disgo.RestServices.HTTPClient()),
-			WithUserID(disgo.ApplicationID),
-		),
+		Lavalink: NewLavalink(opts...),
 	}
 
 	disgo.EventManager.AddEventListeners(dgolink)

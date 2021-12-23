@@ -3,7 +3,6 @@ package lavalink
 import (
 	"github.com/DisgoOrg/disgo/discord"
 	"github.com/DisgoOrg/disgo/json"
-	"github.com/pkg/errors"
 )
 
 type UnmarshalOpEvent struct {
@@ -50,7 +49,7 @@ func (e *UnmarshalOpEvent) UnmarshalJSON(data []byte) error {
 		opEvent = v
 
 	default:
-		return errors.Errorf("unknown event type: %s", eType.Type)
+		return nil
 	}
 
 	if err != nil {

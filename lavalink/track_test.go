@@ -14,34 +14,34 @@ var testTrack = &DefaultTrack{
 	TrackInfo: &DefaultTrackInfo{
 		TrackIdentifier: "jdWhJcrrjQs",
 		TrackIsSeekable: true,
-		TrackAuthor:     "Epitaph Records",
+		TrackAuthor:     "745v9648967vb489",
 		TrackLength:     245000,
 		TrackIsStream:   false,
 		TrackPosition:   244260,
-		TrackTitle:      "Architects - \"Animals\"",
+		TrackTitle:      "325346b456b56",
 		TrackURI:        &uri,
-		TrackSourceName: "youtube",
+		TrackSourceName: "spotify",
 	},
 }
 
 func TestDecodeString(t *testing.T) {
 	trackInfo, err := DecodeString(testTrack.Track())
 	assert.NoError(t, err)
-	assert.Equal(t, testTrack.Info, trackInfo)
+	assert.Equal(t, testTrack.Info(), trackInfo)
 }
 
 func TestEncodeTrackString(t *testing.T) {
 	track, err := EncodeToString(testTrack.Info())
 	assert.NoError(t, err)
-	assert.Equal(t, testTrack.Track, track)
+	assert.Equal(t, testTrack.Track(), track)
 }
 
 func TestEncodeDecodeString(t *testing.T) {
 	trackInfo, err := DecodeString(testTrack.Track())
 	assert.NoError(t, err)
-	assert.Equal(t, testTrack.Info, trackInfo)
+	assert.Equal(t, testTrack.Info(), trackInfo)
 
 	track, err := EncodeToString(trackInfo)
 	assert.NoError(t, err)
-	assert.Equal(t, testTrack.Track, track)
+	assert.Equal(t, testTrack.Track(), track)
 }

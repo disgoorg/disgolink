@@ -124,11 +124,26 @@ func (n *nodeImpl) listen() {
 				return
 			}
 
+			n.lavalink.Logger().Debugf("received: %s", string(data))
+
+			handled := false
+			for _, plugin := range n.lavalink.Plugins() {
+				if h, ok := plugin.(WebsocketMessageInHandler); ok {
+					if h.OnWebsocketMessageIn(n, data) {
+						handled = true
+					}
+				}
+			}
+			if handled {
+				continue
+			}
+
 			var v UnmarshalOp
 			if err = json.Unmarshal(data, &v); err != nil {
 				n.lavalink.Logger().Errorf("error while unmarshalling op. error: %s", err)
 				continue
 			}
+
 			switch op := v.Op.(type) {
 			case PlayerUpdateOp:
 				n.onPlayerUpdate(op)
@@ -190,7 +205,7 @@ func (n *nodeImpl) onEvent(event OpEvent) {
 		})
 
 	default:
-		n.lavalink.Logger().Warnf("unexpected event received: %T", event)
+		n.lavalink.Logger().Warnf("unexpected event received: %T, data: ", event)
 		return
 	}
 }
