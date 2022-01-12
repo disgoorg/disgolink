@@ -7,7 +7,7 @@ import (
 	"time"
 )
 
-func NewLavalink(opts ...ConfigOpt) Lavalink {
+func New(opts ...ConfigOpt) Lavalink {
 	config := &Config{}
 	config.Apply(opts)
 
@@ -27,10 +27,6 @@ func NewLavalink(opts ...ConfigOpt) Lavalink {
 
 type Lavalink interface {
 	Logger() log.Logger
-
-	AddPlugins(plugins ...interface{})
-	RemovePlugins(plugins ...interface{})
-	Plugins() []interface{}
 
 	AddNode(config NodeConfig)
 	Node(name string) Node
@@ -61,25 +57,6 @@ type lavalinkImpl struct {
 
 func (l *lavalinkImpl) Logger() log.Logger {
 	return l.config.Logger
-}
-
-func (l *lavalinkImpl) AddPlugins(plugins ...interface{}) {
-	l.config.Plugins = append(l.config.Plugins, plugins...)
-}
-
-func (l *lavalinkImpl) RemovePlugins(plugins ...interface{}) {
-	for _, pl := range plugins {
-		for i, p := range l.config.Plugins {
-			if p == pl {
-				l.config.Plugins = append(l.config.Plugins[:i], l.config.Plugins[i+1:]...)
-				break
-			}
-		}
-	}
-}
-
-func (l *lavalinkImpl) Plugins() []interface{} {
-	return l.config.Plugins
 }
 
 func (l *lavalinkImpl) AddNode(config NodeConfig) {

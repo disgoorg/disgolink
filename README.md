@@ -34,7 +34,7 @@ go get github.com/DisgoOrg/disgolink/dgolink
 ```go
 import "github.com/DisgoOrg/disgolink/lavalink"
 
-link := lavalink.NewLavalink(lavalink.WithUserID("user_id_here"))
+link := lavalink.New(lavalink.WithUserID("user_id_here"))
     
 ```
 #### disgolink
