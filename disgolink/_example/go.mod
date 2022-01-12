@@ -9,8 +9,8 @@ replace (
 
 require (
 	github.com/DisgoOrg/disgo v0.6.12
-	github.com/DisgoOrg/disgolink v0.2.5-0.20211223143548-152569508f50
-	github.com/DisgoOrg/disgolink/disgolink v0.0.0
+	github.com/DisgoOrg/disgolink v0.2.5-0.20220112205449-450f387bf713
+	github.com/DisgoOrg/disgolink/disgolink v0.2.5-0.20220112205449-450f387bf713
 	github.com/DisgoOrg/log v1.1.2
 )
 
