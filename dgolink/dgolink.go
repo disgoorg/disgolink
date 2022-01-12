@@ -27,7 +27,7 @@ func (l *Link) ReadyHandler(_ *discordgo.Session, ready *discordgo.Ready) {
 	l.SetUserID(ready.User.ID)
 }
 
-func (l *Link) VoiceStateUpdateHandler(_ *discordgo.Session, voiceStateUpdate discordgo.VoiceStateUpdate) {
+func (l *Link) VoiceStateUpdateHandler(_ *discordgo.Session, voiceStateUpdate *discordgo.VoiceStateUpdate) {
 	var channelID *string
 	if voiceStateUpdate.ChannelID != "" {
 		channelID = &voiceStateUpdate.ChannelID
