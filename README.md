@@ -8,3 +8,62 @@
 
 # disgolink
 
+disgolink is a [Lavalink](https://github.com/freyacodes/Lavalink) Client which supports the latest Lavalink 3.4 release
+
+## Getting Started
+
+### Installing
+
+There are 3 packages depending on which go lib you use get a different package
+#### lavalink(non specific implementation)
+```sh
+go get github.com/DisgoOrg/disgolink
+```
+#### disgolink([disgo](https://github.com/DisgoOrg/disgo) implementation)
+```sh
+go get github.com/DisgoOrg/disgolink/disgolink
+```
+#### dgolink([discordgo](https://github.com/bwmarrin/discordgo) implementation)
+```sh
+go get github.com/DisgoOrg/disgolink/dgolink
+```
+
+### Building a Lavalink instance
+
+#### lavalink
+```go
+import "github.com/DisgoOrg/disgolink/lavalink"
+
+link := lavalink.NewLavalink(lavalink.WithUserID("user_id_here"))
+    
+```
+#### disgolink
+```go
+import "github.com/DisgoOrg/disgolink/dgolink"
+
+link := dgolink.New(session)
+```
+#### dgolink
+```go
+import "github.com/DisgoOrg/disgolink/lavalink"
+
+link := disgolink.New(disgo)
+```
+
+## Examples
+
+You can find examples under [_examples](https://github.com/DisgoOrg/disgolink/tree/master/_examples), [_examples](https://github.com/DisgoOrg/disgolink/tree/master/disgolink/_examples), [_examples](https://github.com/DisgoOrg/disgolink/tree/master/dgolink/_examples)
+
+## Troubleshooting
+
+For help feel free to open an issues or reach out on [Discord](https://discord.gg/NFmvZYmZMF)
+
+## Contributing
+
+Contributions are welcomed but for bigger changes please first reach out via [Discord](https://discord.gg/NFmvZYmZMF) or create an issue to discuss your intentions and ideas.
+
+## License
+
+Distributed under the [![License](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](https://github.com/DisgoOrg/disgolink/blob/master/LICENSE)
+. See LICENSE for more information.
+
