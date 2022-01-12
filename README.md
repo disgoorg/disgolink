@@ -5,7 +5,6 @@
 [![Disgo Version](https://img.shields.io/github/v/tag/DisgoOrg/disgolink?label=release)](https://github.com/DisgoOrg/disgolink/releases/latest)
 [![Disgo Discord](https://discord.com/api/guilds/817327181659111454/widget.png)](https://discord.gg/NFmvZYmZMF)
 
-
 # disgolink
 
 disgolink is a [Lavalink](https://github.com/freyacodes/Lavalink) Client which supports the latest Lavalink 3.4 release
@@ -15,15 +14,21 @@ disgolink is a [Lavalink](https://github.com/freyacodes/Lavalink) Client which s
 ### Installing
 
 There are 3 packages depending on which go lib you use get a different package
+
 #### lavalink(non specific implementation)
+
 ```sh
 go get github.com/DisgoOrg/disgolink
 ```
+
 #### disgolink([disgo](https://github.com/DisgoOrg/disgo) implementation)
+
 ```sh
 go get github.com/DisgoOrg/disgolink/disgolink
 ```
+
 #### dgolink([discordgo](https://github.com/bwmarrin/discordgo) implementation)
+
 ```sh
 go get github.com/DisgoOrg/disgolink/dgolink
 ```
@@ -31,19 +36,23 @@ go get github.com/DisgoOrg/disgolink/dgolink
 ### Building a Lavalink instance
 
 #### lavalink
+
 ```go
 import "github.com/DisgoOrg/disgolink/lavalink"
 
 link := lavalink.New(lavalink.WithUserID("user_id_here"))
-    
 ```
+
 #### disgolink
+
 ```go
 import "github.com/DisgoOrg/disgolink/dgolink"
 
 link := dgolink.New(session)
 ```
+
 #### dgolink
+
 ```go
 import "github.com/DisgoOrg/disgolink/lavalink"
 
@@ -52,7 +61,10 @@ link := disgolink.New(disgo)
 
 ## Examples
 
-You can find examples under [_examples](https://github.com/DisgoOrg/disgolink/tree/master/_examples), [_examples](https://github.com/DisgoOrg/disgolink/tree/master/disgolink/_examples), [_examples](https://github.com/DisgoOrg/disgolink/tree/master/dgolink/_examples)
+You can find examples under 
+* lavalink:  [_example](https://github.com/DisgoOrg/disgolink/tree/master/_example)
+* disgolink: [_example](https://github.com/DisgoOrg/disgolink/tree/master/disgolink/_example)
+* dgolink:   [_examples](https://github.com/DisgoOrg/disgolink/tree/master/dgolink/_example)
 
 ## Troubleshooting
 
@@ -64,6 +76,5 @@ Contributions are welcomed but for bigger changes please first reach out via [Di
 
 ## License
 
-Distributed under the [![License](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](https://github.com/DisgoOrg/disgolink/blob/master/LICENSE)
-. See LICENSE for more information.
+Distributed under the [![License](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](https://github.com/DisgoOrg/disgolink/blob/master/LICENSE). See LICENSE for more information.
 
