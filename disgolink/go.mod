@@ -6,7 +6,7 @@ replace github.com/DisgoOrg/disgolink => ../
 
 require (
 	github.com/DisgoOrg/disgo v0.6.12
-	github.com/DisgoOrg/disgolink v0.2.5-0.20220112205449-450f387bf713
+	github.com/DisgoOrg/disgolink v1.0.1-0.20220113110532-5b6f72beb7fe
 )
 
 require (
