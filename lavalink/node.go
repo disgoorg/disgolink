@@ -71,8 +71,16 @@ func (n *nodeImpl) Name() string {
 }
 
 func (n *nodeImpl) Send(cmd OpCommand) error {
-	err := n.conn.WriteJSON(cmd)
+	data, err := json.Marshal(cmd)
 	if err != nil {
+		return err
+	}
+	for _, pl := range n.Lavalink().Plugins() {
+		if plugin, ok := pl.(PluginEventHandler); ok {
+			plugin.OnWebSocketMessageOut(n, data)
+		}
+	}
+	if err = n.conn.WriteMessage(websocket.TextMessage, data); err != nil {
 		return errors.Wrap(err, "error while sending to lavalink websocket")
 	}
 	return nil
@@ -126,6 +134,12 @@ func (n *nodeImpl) listen() {
 
 			n.lavalink.Logger().Debugf("received: %s", string(data))
 
+			for _, pl := range n.Lavalink().Plugins() {
+				if plugin, ok := pl.(PluginEventHandler); ok {
+					plugin.OnWebSocketMessageIn(n, data)
+				}
+			}
+
 			var v UnmarshalOp
 			if err = json.Unmarshal(data, &v); err != nil {
 				n.lavalink.Logger().Errorf("error while unmarshalling op. error: %s", err)
@@ -133,6 +147,13 @@ func (n *nodeImpl) listen() {
 			}
 
 			switch op := v.Op.(type) {
+			case UnknownOp:
+				for _, pl := range n.Lavalink().Plugins() {
+					if plugin, ok := pl.(OpExtension); ok {
+						plugin.OnOpInvocation(n, op.Data)
+					}
+				}
+
 			case PlayerUpdateOp:
 				n.onPlayerUpdate(op)
 
@@ -192,6 +213,13 @@ func (n *nodeImpl) onEvent(event OpEvent) {
 			listener.OnWebSocketClosed(p, e.Code, e.Reason, e.ByRemote)
 		})
 
+	case UnknownEvent:
+		for _, pl := range n.Lavalink().Plugins() {
+			if plugin, ok := pl.(EventExtension); ok {
+				plugin.OnEventInvocation(n, e.Data)
+			}
+		}
+
 	default:
 		n.lavalink.Logger().Warnf("unexpected event received: %T, data: ", event)
 		return
@@ -217,6 +245,12 @@ func (n *nodeImpl) Open(ctx context.Context) error {
 
 	go n.listen()
 
+	for _, pl := range n.Lavalink().Plugins() {
+		if plugin, ok := pl.(PluginEventHandler); ok {
+			plugin.OnWebSocketOpen(n)
+		}
+	}
+
 	return err
 }
 
@@ -225,6 +259,11 @@ func (n *nodeImpl) ReOpen(ctx context.Context) error {
 }
 
 func (n *nodeImpl) Close(ctx context.Context) {
+	for _, pl := range n.Lavalink().Plugins() {
+		if plugin, ok := pl.(PluginEventHandler); ok {
+			plugin.OnWebSocketDestroy(n)
+		}
+	}
 	n.status = Disconnected
 	if n.quit != nil {
 		n.lavalink.Logger().Info("closing ws goroutines...")

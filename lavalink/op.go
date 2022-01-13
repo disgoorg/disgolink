@@ -2,7 +2,6 @@ package lavalink
 
 import (
 	"encoding/json"
-	"github.com/pkg/errors"
 )
 
 type OpType string
@@ -83,7 +82,9 @@ func (e *UnmarshalOp) UnmarshalJSON(data []byte) error {
 		op = v
 
 	default:
-		return errors.Errorf("unknown op type %s received", opType.Op)
+		var v UnknownOp
+		err = json.Unmarshal(data, &v)
+		op = v
 	}
 
 	if err != nil {
@@ -106,3 +107,22 @@ type StatsOp struct {
 }
 
 func (StatsOp) Op() OpType { return OpTypeStats }
+
+type UnknownOp struct {
+	op   OpType
+	Data []byte `json:"-"`
+}
+
+func (o *UnknownOp) UnmarshalJSON(data []byte) error {
+	var v struct {
+		Op OpType `json:"op"`
+	}
+	if err := json.Unmarshal(data, &v); err != nil {
+		return err
+	}
+	o.op = v.Op
+	o.Data = data
+	return nil
+}
+
+func (o UnknownOp) Op() OpType { return o.op }

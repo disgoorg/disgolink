@@ -111,3 +111,28 @@ func (WebsocketClosedEvent) Event() EventType  { return EventTypeWebSocketClosed
 func (WebsocketClosedEvent) Op() OpType        { return OpTypeEvent }
 func (e WebsocketClosedEvent) GuildID() string { return e.GID }
 func (WebsocketClosedEvent) OpEvent()          {}
+
+type UnknownEvent struct {
+	event   EventType
+	guildID string
+	Data    []byte `json:"-"`
+}
+
+func (o *UnknownEvent) UnmarshalJSON(data []byte) error {
+	var v struct {
+		Event   EventType `json:"type"`
+		GuildID string    `json:"guildId"`
+	}
+	if err := json.Unmarshal(data, &v); err != nil {
+		return err
+	}
+	o.event = v.Event
+	o.guildID = v.GuildID
+	o.Data = data
+	return nil
+}
+
+func (e UnknownEvent) Event() EventType { return e.event }
+func (UnknownEvent) Op() OpType         { return OpTypeEvent }
+func (e UnknownEvent) GuildID() string  { return e.guildID }
+func (UnknownEvent) OpEvent()           {}

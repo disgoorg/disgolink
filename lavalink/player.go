@@ -137,6 +137,11 @@ func (p *DefaultPlayer) Destroy() error {
 	if err := p.Node().Send(DestroyCommand{GuildID: p.guildID}); err != nil {
 		return errors.Wrap(err, "error while destroying player")
 	}
+	for _, pl := range p.Node().Lavalink().Plugins() {
+		if plugin, ok := pl.(PluginEventHandler); ok {
+			plugin.OnDestroyPlayer(p)
+		}
+	}
 	return nil
 }
 

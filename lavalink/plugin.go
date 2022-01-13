@@ -7,14 +7,14 @@ type Plugin interface {
 	Version() string
 }
 
-type WebSocketExtension interface {
+type OpExtension interface {
 	Op() OpType
-	OnInvocation(node Node, data []byte)
+	OnOpInvocation(node Node, data []byte)
 }
 
 type EventExtension interface {
 	Event() EventType
-	OnInvocation(node Node, data []byte)
+	OnEventInvocation(node Node, data []byte)
 }
 
 type SourceExtension interface {
@@ -23,11 +23,57 @@ type SourceExtension interface {
 	Decode(trackInfo TrackInfo, r io.Reader) (Track, error)
 }
 
-type PluginEventHandler struct {
-	OnWebSocketOpen       func(node Node)
-	OnWebSocketDestroyed  func(node Node)
-	OnWebSocketMessageIn  func(node Node, data []byte)
-	OnWebSocketMessageOut func(node Node, data []byte)
-	OnNewPlayer           func(node Node, player Player)
-	OnDestroyPlayer       func(node Node, player Player)
+type PluginEventHandler interface {
+	OnWebSocketOpen(node Node)
+	OnWebSocketDestroy(node Node)
+	OnWebSocketMessageIn(node Node, data []byte)
+	OnWebSocketMessageOut(node Node, data []byte)
+	OnNewPlayer(player Player)
+	OnDestroyPlayer(player Player)
+}
+
+type PluginEventAdapter struct {
+	OnWebSocketOpenEvent       func(node Node)
+	OnWebSocketDestroyEvent    func(node Node)
+	OnWebSocketMessageInEvent  func(node Node, data []byte)
+	OnWebSocketMessageOutEvent func(node Node, data []byte)
+	OnNewPlayerEvent           func(player Player)
+	OnDestroyPlayerEvent       func(player Player)
+}
+
+func (a *PluginEventAdapter) OnWebSocketOpen(node Node) {
+	if a.OnWebSocketOpenEvent == nil {
+		return
+	}
+	a.OnWebSocketOpenEvent(node)
+}
+func (a *PluginEventAdapter) OnWebSocketDestroy(node Node) {
+	if a.OnWebSocketDestroyEvent == nil {
+		return
+	}
+	a.OnWebSocketDestroyEvent(node)
+}
+func (a *PluginEventAdapter) OnWebSocketMessageIn(node Node, data []byte) {
+	if a.OnWebSocketMessageInEvent == nil {
+		return
+	}
+	a.OnWebSocketMessageInEvent(node, data)
+}
+func (a *PluginEventAdapter) OnWebSocketMessageOut(node Node, data []byte) {
+	if a.OnWebSocketMessageOutEvent == nil {
+		return
+	}
+	a.OnWebSocketMessageOutEvent(node, data)
+}
+func (a *PluginEventAdapter) OnNewPlayer(player Player) {
+	if a.OnNewPlayerEvent == nil {
+		return
+	}
+	a.OnNewPlayerEvent(player)
+}
+func (a *PluginEventAdapter) OnDestroyPlayer(player Player) {
+	if a.OnDestroyPlayerEvent == nil {
+		return
+	}
+	a.OnDestroyPlayerEvent(player)
 }
