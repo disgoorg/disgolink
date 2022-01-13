@@ -34,6 +34,10 @@ type Lavalink interface {
 	BestRestClient() RestClient
 	RemoveNode(name string)
 
+	AddPlugins(plugins ...Plugin)
+	Plugins() []Plugin
+	RemovePlugins(plugins ...Plugin)
+
 	Player(guildID string) Player
 	ExistingPlayer(guildID string) Player
 	Players() map[string]Player
@@ -104,6 +108,27 @@ func (l lavalinkImpl) BestRestClient() RestClient {
 
 func (l *lavalinkImpl) RemoveNode(name string) {
 	delete(l.nodes, name)
+}
+
+func (l *lavalinkImpl) AddPlugins(plugins ...Plugin) {
+	for _, plugin := range plugins {
+		l.config.Plugins = append(l.config.Plugins, plugin)
+	}
+}
+
+func (l *lavalinkImpl) Plugins() []Plugin {
+	return l.config.Plugins
+}
+
+func (l *lavalinkImpl) RemovePlugins(plugins ...Plugin) {
+	for _, plugin := range plugins {
+		for i, p := range l.config.Plugins {
+			if p == plugin {
+				l.config.Plugins = append(l.config.Plugins[:i], l.config.Plugins[i+1:]...)
+				break
+			}
+		}
+	}
 }
 
 func (l *lavalinkImpl) Player(guildID string) Player {
