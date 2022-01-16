@@ -9,7 +9,7 @@ type Config struct {
 	Logger     log.Logger
 	HTTPClient *http.Client
 	UserID     string
-	Plugins    []Plugin
+	Plugins    []interface{}
 }
 
 type ConfigOpt func(config *Config)
@@ -43,7 +43,7 @@ func WithUserID(userID string) ConfigOpt {
 }
 
 //goland:noinspection GoUnusedExportedFunction
-func WithPlugins(plugins ...Plugin) ConfigOpt {
+func WithPlugins(plugins ...interface{}) ConfigOpt {
 	return func(config *Config) {
 		config.Plugins = append(config.Plugins, plugins...)
 	}

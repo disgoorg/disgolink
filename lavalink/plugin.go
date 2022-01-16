@@ -2,14 +2,17 @@ package lavalink
 
 import "io"
 
-type Plugin interface {
-	Name() string
-	Version() string
+type OpExtensions interface {
+	OpExtensions() []OpExtension
 }
 
 type OpExtension interface {
 	Op() OpType
 	OnOpInvocation(node Node, data []byte)
+}
+
+type EventExtensions interface {
+	EventExtensions() []EventExtension
 }
 
 type EventExtension interface {
@@ -24,56 +27,19 @@ type SourceExtension interface {
 }
 
 type PluginEventHandler interface {
-	OnWebSocketOpen(node Node)
-	OnWebSocketDestroy(node Node)
-	OnWebSocketMessageIn(node Node, data []byte)
-	OnWebSocketMessageOut(node Node, data []byte)
+	OnNodeOpen(node Node)
+	OnNodeDestroy(node Node)
+	OnNodeMessageIn(node Node, data []byte)
+	OnNodeMessageOut(node Node, data []byte)
 	OnNewPlayer(player Player)
 	OnDestroyPlayer(player Player)
 }
 
-type PluginEventAdapter struct {
-	OnWebSocketOpenEvent       func(node Node)
-	OnWebSocketDestroyEvent    func(node Node)
-	OnWebSocketMessageInEvent  func(node Node, data []byte)
-	OnWebSocketMessageOutEvent func(node Node, data []byte)
-	OnNewPlayerEvent           func(player Player)
-	OnDestroyPlayerEvent       func(player Player)
-}
+type PluginEventAdapter struct{}
 
-func (a *PluginEventAdapter) OnWebSocketOpen(node Node) {
-	if a.OnWebSocketOpenEvent == nil {
-		return
-	}
-	a.OnWebSocketOpenEvent(node)
-}
-func (a *PluginEventAdapter) OnWebSocketDestroy(node Node) {
-	if a.OnWebSocketDestroyEvent == nil {
-		return
-	}
-	a.OnWebSocketDestroyEvent(node)
-}
-func (a *PluginEventAdapter) OnWebSocketMessageIn(node Node, data []byte) {
-	if a.OnWebSocketMessageInEvent == nil {
-		return
-	}
-	a.OnWebSocketMessageInEvent(node, data)
-}
-func (a *PluginEventAdapter) OnWebSocketMessageOut(node Node, data []byte) {
-	if a.OnWebSocketMessageOutEvent == nil {
-		return
-	}
-	a.OnWebSocketMessageOutEvent(node, data)
-}
-func (a *PluginEventAdapter) OnNewPlayer(player Player) {
-	if a.OnNewPlayerEvent == nil {
-		return
-	}
-	a.OnNewPlayerEvent(player)
-}
-func (a *PluginEventAdapter) OnDestroyPlayer(player Player) {
-	if a.OnDestroyPlayerEvent == nil {
-		return
-	}
-	a.OnDestroyPlayerEvent(player)
-}
+func (a PluginEventAdapter) OnNodeOpen(node Node)                    {}
+func (a PluginEventAdapter) OnNodeDestroy(node Node)                 {}
+func (a PluginEventAdapter) OnNodeMessageIn(node Node, data []byte)  {}
+func (a PluginEventAdapter) OnNodeMessageOut(node Node, data []byte) {}
+func (a PluginEventAdapter) OnNewPlayer(player Player)               {}
+func (a PluginEventAdapter) OnDestroyPlayer(player Player)           {}

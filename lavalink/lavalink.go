@@ -18,9 +18,9 @@ type Lavalink interface {
 	BestRestClient() RestClient
 	RemoveNode(name string)
 
-	AddPlugins(plugins ...Plugin)
-	Plugins() []Plugin
-	RemovePlugins(plugins ...Plugin)
+	AddPlugins(plugins ...interface{})
+	Plugins() []interface{}
+	RemovePlugins(plugins ...interface{})
 
 	Player(guildID string) Player
 	ExistingPlayer(guildID string) Player
@@ -140,7 +140,7 @@ func (l *lavalinkImpl) RemoveNode(name string) {
 	delete(l.nodes, name)
 }
 
-func (l *lavalinkImpl) AddPlugins(plugins ...Plugin) {
+func (l *lavalinkImpl) AddPlugins(plugins ...interface{}) {
 	l.nodesMu.Lock()
 	defer l.nodesMu.Unlock()
 	for _, plugin := range plugins {
@@ -148,10 +148,10 @@ func (l *lavalinkImpl) AddPlugins(plugins ...Plugin) {
 	}
 }
 
-func (l *lavalinkImpl) Plugins() []Plugin {
+func (l *lavalinkImpl) Plugins() []interface{} {
 	l.nodesMu.Lock()
 	defer l.nodesMu.Unlock()
-	plugins := make([]Plugin, len(l.config.Plugins))
+	plugins := make([]interface{}, len(l.config.Plugins))
 	i := 0
 	for _, plugin := range l.config.Plugins {
 		plugins[i] = plugin
@@ -160,7 +160,7 @@ func (l *lavalinkImpl) Plugins() []Plugin {
 	return plugins
 }
 
-func (l *lavalinkImpl) RemovePlugins(plugins ...Plugin) {
+func (l *lavalinkImpl) RemovePlugins(plugins ...interface{}) {
 	l.nodesMu.Lock()
 	defer l.nodesMu.Unlock()
 	for _, plugin := range plugins {

@@ -77,7 +77,7 @@ func (n *nodeImpl) Send(cmd OpCommand) error {
 	}
 	for _, pl := range n.Lavalink().Plugins() {
 		if plugin, ok := pl.(PluginEventHandler); ok {
-			plugin.OnWebSocketMessageOut(n, data)
+			plugin.OnNodeMessageOut(n, data)
 		}
 	}
 	if err = n.conn.WriteMessage(websocket.TextMessage, data); err != nil {
@@ -136,7 +136,7 @@ func (n *nodeImpl) listen() {
 
 			for _, pl := range n.Lavalink().Plugins() {
 				if plugin, ok := pl.(PluginEventHandler); ok {
-					plugin.OnWebSocketMessageIn(n, data)
+					plugin.OnNodeMessageIn(n, data)
 				}
 			}
 
@@ -151,6 +151,13 @@ func (n *nodeImpl) listen() {
 				for _, pl := range n.Lavalink().Plugins() {
 					if plugin, ok := pl.(OpExtension); ok {
 						plugin.OnOpInvocation(n, op.Data)
+					}
+					if plugin, ok := pl.(OpExtensions); ok {
+						for _, ext := range plugin.OpExtensions() {
+							if ext.Op() == op.Op() {
+								ext.OnOpInvocation(n, op.Data)
+							}
+						}
 					}
 				}
 
@@ -218,6 +225,13 @@ func (n *nodeImpl) onEvent(event OpEvent) {
 			if plugin, ok := pl.(EventExtension); ok {
 				plugin.OnEventInvocation(n, e.Data)
 			}
+			if plugin, ok := pl.(EventExtensions); ok {
+				for _, ext := range plugin.EventExtensions() {
+					if ext.Event() == e.Event() {
+						ext.OnEventInvocation(n, e.Data)
+					}
+				}
+			}
 		}
 
 	default:
@@ -241,13 +255,13 @@ func (n *nodeImpl) Open(ctx context.Context) error {
 	header.Add("Client-Name", fmt.Sprintf("%s/%s", info.Name, info.Version))
 
 	var err error
-	n.conn, _, err = websocket.DefaultDialer.Dial(fmt.Sprintf("%s://%s:%s", scheme, n.config.Host, n.config.Port), header)
+	n.conn, _, err = websocket.DefaultDialer.DialContext(ctx, fmt.Sprintf("%s://%s:%s", scheme, n.config.Host, n.config.Port), header)
 
 	go n.listen()
 
 	for _, pl := range n.Lavalink().Plugins() {
 		if plugin, ok := pl.(PluginEventHandler); ok {
-			plugin.OnWebSocketOpen(n)
+			plugin.OnNodeOpen(n)
 		}
 	}
 
@@ -261,7 +275,7 @@ func (n *nodeImpl) ReOpen(ctx context.Context) error {
 func (n *nodeImpl) Close(ctx context.Context) {
 	for _, pl := range n.Lavalink().Plugins() {
 		if plugin, ok := pl.(PluginEventHandler); ok {
-			plugin.OnWebSocketDestroy(n)
+			plugin.OnNodeDestroy(n)
 		}
 	}
 	n.status = Disconnected
