@@ -11,7 +11,7 @@ func New(disgo *core.Bot, opts ...lavalink.ConfigOpt) Link {
 		lavalink.WithHTTPClient(disgo.RestServices.HTTPClient()),
 		lavalink.WithUserID(disgo.ApplicationID.String()))
 	dgolink := &linkImpl{
-		Lavalink: lavalink.NewLavalink(opts...),
+		Lavalink: lavalink.New(opts...),
 	}
 
 	disgo.EventManager.AddEventListeners(dgolink)
