@@ -180,44 +180,56 @@ func (n *nodeImpl) listen() {
 func (n *nodeImpl) onPlayerUpdate(playerUpdate PlayerUpdateOp) {
 	if player := n.lavalink.ExistingPlayer(playerUpdate.GuildID); player != nil {
 		player.PlayerUpdate(playerUpdate.State)
-		player.EmitEvent(func(listener PlayerEventListener) {
-			listener.OnPlayerUpdate(player, playerUpdate.State)
+		player.EmitEvent(func(l interface{}) {
+			if listener := l.(PlayerEventListener); listener != nil {
+				listener.OnPlayerUpdate(player, playerUpdate.State)
+			}
 		})
 	}
 }
 
 func (n *nodeImpl) onEvent(event OpEvent) {
-	p := n.lavalink.ExistingPlayer(event.GuildID())
-	if p == nil {
+	player := n.lavalink.ExistingPlayer(event.GuildID())
+	if player == nil {
 		return
 	}
 
 	switch e := event.(type) {
 	case TrackStartEvent:
 		track := NewTrack(e.Track)
-		p.SetTrack(track)
-		p.EmitEvent(func(listener PlayerEventListener) {
-			listener.OnTrackStart(p, track)
+		player.SetTrack(track)
+		player.EmitEvent(func(l interface{}) {
+			if listener := l.(PlayerEventListener); listener != nil {
+				listener.OnTrackStart(player, track)
+			}
 		})
 
 	case TrackEndEvent:
-		p.EmitEvent(func(listener PlayerEventListener) {
-			listener.OnTrackEnd(p, NewTrack(e.Track), e.Reason)
+		player.EmitEvent(func(l interface{}) {
+			if listener := l.(PlayerEventListener); listener != nil {
+				listener.OnTrackEnd(player, NewTrack(e.Track), e.Reason)
+			}
 		})
 
 	case TrackExceptionEvent:
-		p.EmitEvent(func(listener PlayerEventListener) {
-			listener.OnTrackException(p, NewTrack(e.Track), e.Exception)
+		player.EmitEvent(func(l interface{}) {
+			if listener := l.(PlayerEventListener); listener != nil {
+				listener.OnTrackException(player, NewTrack(e.Track), e.Exception)
+			}
 		})
 
 	case TrackStuckEvent:
-		p.EmitEvent(func(listener PlayerEventListener) {
-			listener.OnTrackStuck(p, NewTrack(e.Track), e.ThresholdMs)
+		player.EmitEvent(func(l interface{}) {
+			if listener := l.(PlayerEventListener); listener != nil {
+				listener.OnTrackStuck(player, NewTrack(e.Track), e.ThresholdMs)
+			}
 		})
 
 	case WebsocketClosedEvent:
-		p.EmitEvent(func(listener PlayerEventListener) {
-			listener.OnWebSocketClosed(p, e.Code, e.Reason, e.ByRemote)
+		player.EmitEvent(func(l interface{}) {
+			if listener := l.(PlayerEventListener); listener != nil {
+				listener.OnWebSocketClosed(player, e.Code, e.Reason, e.ByRemote)
+			}
 		})
 
 	case UnknownEvent:

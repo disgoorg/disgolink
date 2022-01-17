@@ -33,9 +33,9 @@ type Player interface {
 	ChangeNode(node Node)
 
 	PlayerUpdate(state PlayerState)
-	EmitEvent(listenerCaller func(listener PlayerEventListener))
-	AddListener(playerListener PlayerEventListener)
-	RemoveListener(playerListener PlayerEventListener)
+	EmitEvent(caller func(l interface{}))
+	AddListener(listener interface{})
+	RemoveListener(listener interface{})
 }
 
 type PlayerState struct {
@@ -79,7 +79,7 @@ type DefaultPlayer struct {
 	state         PlayerState
 	filters       filters.Filters
 	node          Node
-	listeners     []PlayerEventListener
+	listeners     []interface{}
 }
 
 func (p *DefaultPlayer) Track() Track {
@@ -159,12 +159,17 @@ func (p *DefaultPlayer) Pause(pause bool) error {
 
 	p.paused = pause
 	if pause {
-		p.EmitEvent(func(listener PlayerEventListener) {
-			listener.OnPlayerPause(p)
+		p.EmitEvent(func(l interface{}) {
+			if listener, ok := l.(PlayerEventListener); ok {
+				listener.OnPlayerPause(p)
+			}
+
 		})
 	} else {
-		p.EmitEvent(func(listener PlayerEventListener) {
-			listener.OnPlayerResume(p)
+		p.EmitEvent(func(l interface{}) {
+			if listener, ok := l.(PlayerEventListener); ok {
+				listener.OnPlayerResume(p)
+			}
 		})
 	}
 	return nil
@@ -262,19 +267,19 @@ func (p *DefaultPlayer) PlayerUpdate(state PlayerState) {
 	p.state = state
 }
 
-func (p *DefaultPlayer) EmitEvent(listenerCaller func(listener PlayerEventListener)) {
+func (p *DefaultPlayer) EmitEvent(caller func(l interface{})) {
 	for _, listener := range p.listeners {
-		listenerCaller(listener)
+		caller(listener)
 	}
 }
 
-func (p *DefaultPlayer) AddListener(playerListener PlayerEventListener) {
-	p.listeners = append(p.listeners, playerListener)
+func (p *DefaultPlayer) AddListener(listener interface{}) {
+	p.listeners = append(p.listeners, listener)
 }
 
-func (p *DefaultPlayer) RemoveListener(playerListener PlayerEventListener) {
-	for i, listener := range p.listeners {
-		if listener == playerListener {
+func (p *DefaultPlayer) RemoveListener(listener interface{}) {
+	for i, l := range p.listeners {
+		if l == listener {
 			p.listeners = append(p.listeners[:i], p.listeners[i+1:]...)
 		}
 	}
