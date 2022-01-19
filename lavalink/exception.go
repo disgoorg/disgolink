@@ -19,3 +19,12 @@ type Exception struct {
 func (e *Exception) Error() string {
 	return e.Message
 }
+
+type Severity string
+
+//goland:noinspection GoUnusedConst
+const (
+	SeverityCommon     Severity = "COMMON"
+	SeveritySuspicious Severity = "SUSPICIOUS"
+	SeverityFault      Severity = "FAULT"
+)

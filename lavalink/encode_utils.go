@@ -13,6 +13,10 @@ func WriteInt32(w io.Writer, i int32) error {
 	return binary.Write(w, binary.BigEndian, i)
 }
 
+func WriteUInt16(w io.Writer, i uint16) error {
+	return binary.Write(w, binary.BigEndian, i)
+}
+
 func WriteBool(w io.Writer, bool bool) (err error) {
 	var bInt uint8
 	if bool {
@@ -30,7 +34,7 @@ func WriteBool(w io.Writer, bool bool) (err error) {
 func WriteString(w io.Writer, str string) (err error) {
 	data := []byte(str)
 
-	if err = binary.Write(w, binary.BigEndian, uint16(len(data))); err != nil {
+	if err = WriteUInt16(w, uint16(len(data))); err != nil {
 		return
 	}
 	if err = binary.Write(w, binary.BigEndian, data); err != nil {
