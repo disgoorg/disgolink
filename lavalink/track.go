@@ -11,7 +11,7 @@ var ErrEmptyTrackInfo = errors.New("trackinfo is empty")
 
 type Track interface {
 	Track() string
-	Info() TrackInfo
+	TrackInfo
 }
 
 type TrackInfo interface {
@@ -26,7 +26,7 @@ type TrackInfo interface {
 
 func NewTrack(track string) Track {
 	return &DefaultTrack{
-		Base64Track: &track,
+		Base64Track: track,
 	}
 }
 
@@ -37,14 +37,14 @@ func NewTrackByInfo(trackInfo TrackInfo) Track {
 }
 
 type DefaultTrack struct {
-	Base64Track *string   `json:"track"`
-	TrackInfo   TrackInfo `json:"info"`
+	Base64Track string `json:"track"`
+	TrackInfo   `json:"info"`
 }
 
 func (t *DefaultTrack) UnmarshalJSON(data []byte) error {
 	var v struct {
-		Base64Track *string           `json:"track"`
-		TrackInfo   *DefaultTrackInfo `json:"info"`
+		Base64Track string           `json:"track"`
+		TrackInfo   DefaultTrackInfo `json:"info"`
 	}
 	err := json.Unmarshal(data, &v)
 	if err != nil {
@@ -56,12 +56,12 @@ func (t *DefaultTrack) UnmarshalJSON(data []byte) error {
 }
 
 func (t *DefaultTrack) Track() string {
-	if t.Base64Track == nil {
+	if t.Base64Track == "" {
 		if err := t.EncodeInfo(); err != nil {
 			return ""
 		}
 	}
-	return *t.Base64Track
+	return t.Base64Track
 }
 
 func (t *DefaultTrack) Info() TrackInfo {
@@ -77,24 +77,18 @@ func (t *DefaultTrack) EncodeInfo() error {
 	if t.TrackInfo == nil {
 		return ErrEmptyTrackInfo
 	}
-	track, err := EncodeToString(t.TrackInfo)
-	if err != nil {
-		return err
-	}
-	t.Base64Track = &track
-	return nil
+	var err error
+	t.Base64Track, err = EncodeToString(t.TrackInfo)
+	return err
 }
 
 func (t *DefaultTrack) DecodeInfo() error {
-	if t.Base64Track == nil {
+	if t.Base64Track == "" {
 		return ErrEmptyTrack
 	}
 	var err error
-	t.TrackInfo, err = DecodeString(*t.Base64Track)
-	if err != nil {
-		return err
-	}
-	return nil
+	t.TrackInfo, err = DecodeString(t.Base64Track)
+	return err
 }
 
 type DefaultTrackInfo struct {
@@ -121,41 +115,41 @@ func (i *DefaultTrackInfo) UnmarshalJSON(data []byte) error {
 	return nil
 }
 
-func (i *DefaultTrackInfo) MarshalJSON() ([]byte, error) {
+func (i DefaultTrackInfo) MarshalJSON() ([]byte, error) {
 	type defaultTrackInfo DefaultTrackInfo
 	return json.Marshal(struct {
 		TrackLength int64 `json:"length"`
 		defaultTrackInfo
 	}{
 		TrackLength:      int64(i.TrackLength / time.Millisecond),
-		defaultTrackInfo: defaultTrackInfo(*i),
+		defaultTrackInfo: defaultTrackInfo(i),
 	})
 }
 
-func (i *DefaultTrackInfo) Identifier() string {
+func (i DefaultTrackInfo) Identifier() string {
 	return i.TrackIdentifier
 }
 
-func (i *DefaultTrackInfo) Author() string {
+func (i DefaultTrackInfo) Author() string {
 	return i.TrackAuthor
 }
 
-func (i *DefaultTrackInfo) Length() time.Duration {
+func (i DefaultTrackInfo) Length() time.Duration {
 	return i.TrackLength
 }
 
-func (i *DefaultTrackInfo) IsStream() bool {
+func (i DefaultTrackInfo) IsStream() bool {
 	return i.TrackIsStream
 }
 
-func (i *DefaultTrackInfo) Title() string {
+func (i DefaultTrackInfo) Title() string {
 	return i.TrackTitle
 }
 
-func (i *DefaultTrackInfo) URI() *string {
+func (i DefaultTrackInfo) URI() *string {
 	return i.TrackURI
 }
 
-func (i *DefaultTrackInfo) SourceName() string {
+func (i DefaultTrackInfo) SourceName() string {
 	return i.TrackSourceName
 }
