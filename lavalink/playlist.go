@@ -9,10 +9,10 @@ func NewPlaylist(result LoadResult) Playlist {
 
 type Playlist struct {
 	Info   PlaylistInfo
-	Tracks []Track
+	Tracks []AudioTrack
 }
 
-func (p Playlist) SelectedTrack() Track {
+func (p Playlist) SelectedTrack() AudioTrack {
 	if p.Info.SelectedTrack == -1 {
 		return nil
 	}

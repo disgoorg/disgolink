@@ -8,10 +8,10 @@ import (
 )
 
 type Player interface {
-	Track() Track
-	SetTrack(track Track)
-	Play(track Track) error
-	PlayAt(track Track, start time.Duration, end time.Duration) error
+	Track() AudioTrack
+	SetTrack(track AudioTrack)
+	Play(track AudioTrack) error
+	PlayAt(track AudioTrack, start time.Duration, end time.Duration) error
 	Stop() error
 	Destroy() error
 	Pause(paused bool) error
@@ -73,7 +73,7 @@ type DefaultPlayer struct {
 	guildID       string
 	channelID     *string
 	lastSessionID *string
-	track         Track
+	track         AudioTrack
 	volume        int
 	paused        bool
 	state         PlayerState
@@ -82,15 +82,15 @@ type DefaultPlayer struct {
 	listeners     []interface{}
 }
 
-func (p *DefaultPlayer) Track() Track {
+func (p *DefaultPlayer) Track() AudioTrack {
 	return p.track
 }
 
-func (p *DefaultPlayer) SetTrack(track Track) {
+func (p *DefaultPlayer) SetTrack(track AudioTrack) {
 	p.track = track
 }
 
-func (p *DefaultPlayer) Play(track Track) error {
+func (p *DefaultPlayer) Play(track AudioTrack) error {
 	t := track.Track()
 	if t == "" {
 		return errors.New("can't play empty track")
@@ -105,7 +105,7 @@ func (p *DefaultPlayer) Play(track Track) error {
 	return nil
 }
 
-func (p *DefaultPlayer) PlayAt(track Track, start time.Duration, end time.Duration) error {
+func (p *DefaultPlayer) PlayAt(track AudioTrack, start time.Duration, end time.Duration) error {
 	t := track.Track()
 	if t == "" {
 		return errors.New("can't play empty track")
@@ -185,8 +185,8 @@ func (p *DefaultPlayer) Position() time.Duration {
 	}
 	if p.paused {
 		timeDiff := time.Since(p.state.Time)
-		if p.state.Position+timeDiff > p.track.Info().Length() {
-			return p.track.Info().Length()
+		if p.state.Position+timeDiff > p.track.Length() {
+			return p.track.Length()
 		}
 		return p.state.Position + timeDiff
 	}

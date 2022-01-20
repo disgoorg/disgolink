@@ -46,13 +46,13 @@ func (b *Bot) messageCreateHandler() {
 		query = "ytsearch:" + query
 	}
 	b.Link.BestRestClient().LoadItemHandler(query, lavalink.NewResultHandler(
-		func(track lavalink.Track) {
+		func(track lavalink.AudioTrack) {
 			b.Play(guildID, args[1], channelID, track)
 		},
 		func(playlist lavalink.Playlist) {
 			b.Play(guildID, args[1], channelID, playlist.Tracks[0])
 		},
-		func(tracks []lavalink.Track) {
+		func(tracks []lavalink.AudioTrack) {
 			b.Play(guildID, args[1], channelID, tracks[0])
 		},
 		func() {
@@ -64,7 +64,7 @@ func (b *Bot) messageCreateHandler() {
 	))
 }
 
-func (b *Bot) Play(guildID string, voiceChannelID string, channelID string, track lavalink.Track) {
+func (b *Bot) Play(guildID string, voiceChannelID string, channelID string, track lavalink.AudioTrack) {
 	// TODO: join voice channel
 
 	if err := b.Link.Player(guildID).Play(track); err != nil {

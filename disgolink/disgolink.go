@@ -7,11 +7,12 @@ import (
 )
 
 func New(disgo *core.Bot, opts ...lavalink.ConfigOpt) Link {
-	opts = append(opts, lavalink.WithLogger(disgo.Logger),
-		lavalink.WithHTTPClient(disgo.RestServices.HTTPClient()),
-		lavalink.WithUserID(disgo.ApplicationID.String()))
 	dgolink := &linkImpl{
-		Lavalink: lavalink.New(opts...),
+		Lavalink: lavalink.New(append([]lavalink.ConfigOpt{
+			lavalink.WithLogger(disgo.Logger),
+			lavalink.WithHTTPClient(disgo.RestServices.HTTPClient()),
+			lavalink.WithUserID(disgo.ApplicationID.String()),
+		}, opts...)...),
 	}
 
 	disgo.EventManager.AddEventListeners(dgolink)

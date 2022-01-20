@@ -59,13 +59,13 @@ func (b *Bot) messageCreateHandler(s *discordgo.Session, e *discordgo.MessageCre
 			query = "ytsearch:" + query
 		}
 		b.Link.BestRestClient().LoadItemHandler(query, lavalink.NewResultHandler(
-			func(track lavalink.Track) {
+			func(track lavalink.AudioTrack) {
 				play(s, b.Link, e.GuildID, args[1], e.ChannelID, track)
 			},
 			func(playlist lavalink.Playlist) {
 				play(s, b.Link, e.GuildID, args[1], e.ChannelID, playlist.Tracks[0])
 			},
-			func(tracks []lavalink.Track) {
+			func(tracks []lavalink.AudioTrack) {
 				play(s, b.Link, e.GuildID, args[1], e.ChannelID, tracks[0])
 			},
 			func() {
@@ -79,7 +79,7 @@ func (b *Bot) messageCreateHandler(s *discordgo.Session, e *discordgo.MessageCre
 	}
 }
 
-func play(s *discordgo.Session, link *dgolink.Link, guildID string, voiceChannelID string, channelID string, track lavalink.Track) {
+func play(s *discordgo.Session, link *dgolink.Link, guildID string, voiceChannelID string, channelID string, track lavalink.AudioTrack) {
 	if err := s.ChannelVoiceJoinManual(guildID, voiceChannelID, false, false); err != nil {
 		_, _ = s.ChannelMessageSend(channelID, "error while joining voice channel: "+err.Error())
 		return

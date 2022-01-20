@@ -62,7 +62,7 @@ func onApplicationCommand(event *events.ApplicationCommandInteractionEvent) {
 		}
 		tracks := ""
 		for i, track := range musicPlayer.queue {
-			tracks += fmt.Sprintf("%d. [%s](%s)\n", i+1, track.Info().Title(), *track.Info().URI())
+			tracks += fmt.Sprintf("%d. [%s](%s)\n", i+1, track.Title(), *track.URI())
 		}
 		_ = event.Create(discord.NewMessageCreateBuilder().SetEmbeds(discord.NewEmbedBuilder().
 			SetTitle("Queue:").
@@ -120,7 +120,7 @@ func onApplicationCommand(event *events.ApplicationCommandInteractionEvent) {
 			}
 
 			musicPlayer.Node().RestClient().LoadItemHandler(query, lavalink.NewResultHandler(
-				func(track lavalink.Track) {
+				func(track lavalink.AudioTrack) {
 					if ok = connect(event, voiceState); !ok {
 						return
 					}
@@ -132,7 +132,7 @@ func onApplicationCommand(event *events.ApplicationCommandInteractionEvent) {
 					}
 					musicPlayer.Queue(event, skipSegments, playlist.Tracks...)
 				},
-				func(tracks []lavalink.Track) {
+				func(tracks []lavalink.AudioTrack) {
 					if ok = connect(event, voiceState); !ok {
 						return
 					}

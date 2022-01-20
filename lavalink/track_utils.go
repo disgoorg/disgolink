@@ -9,7 +9,7 @@ import (
 const trackInfoVersioned int = 1
 const trackInfoVersion int32 = 2
 
-func EncodeToString(info TrackInfo) (str string, err error) {
+func EncodeToString(info AudioTrackInfo) (str string, err error) {
 	w := new(bytes.Buffer)
 
 	if err = WriteInt32(w, trackInfoVersion); err != nil {
@@ -46,7 +46,7 @@ func EncodeToString(info TrackInfo) (str string, err error) {
 	return base64.StdEncoding.EncodeToString(w.Bytes()), nil
 }
 
-func DecodeString(str string) (info TrackInfo, err error) {
+func DecodeString(str string) (info AudioTrackInfo, err error) {
 	var data []byte
 	data, err = base64.StdEncoding.DecodeString(str)
 	if err != nil {
@@ -55,7 +55,7 @@ func DecodeString(str string) (info TrackInfo, err error) {
 
 	r := bytes.NewReader(data)
 
-	trackInfo := &DefaultTrackInfo{}
+	trackInfo := &defaultTrackInfo{}
 
 	value, err := ReadInt32(r)
 

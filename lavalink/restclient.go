@@ -21,7 +21,7 @@ func (t SearchType) Apply(searchString string) string {
 }
 
 type RestClient interface {
-	SearchItem(searchType SearchType, query string) ([]Track, *Exception)
+	SearchItem(searchType SearchType, query string) ([]AudioTrack, *Exception)
 	LoadItem(identifier string) LoadResult
 	LoadItemHandler(identifier string, audioLoaderResultHandler AudioLoaderResultHandler)
 }
@@ -35,7 +35,7 @@ type restClientImpl struct {
 	httpClient *http.Client
 }
 
-func (c *restClientImpl) SearchItem(searchType SearchType, query string) ([]Track, *Exception) {
+func (c *restClientImpl) SearchItem(searchType SearchType, query string) ([]AudioTrack, *Exception) {
 	result := c.LoadItem(searchType.Apply(query))
 	if result.Exception != nil {
 		return nil, result.Exception
