@@ -2,11 +2,12 @@ package main
 
 import (
 	"fmt"
+	"math/rand"
+	"time"
+
 	"github.com/DisgoOrg/disgo/core/events"
 	"github.com/DisgoOrg/disgo/discord"
 	"github.com/DisgoOrg/disgolink/lavalink"
-	"math/rand"
-	"time"
 )
 
 func checkMusicPlayer(event *events.ApplicationCommandInteractionEvent) *MusicPlayer {

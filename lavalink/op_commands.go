@@ -2,6 +2,7 @@ package lavalink
 
 import (
 	"encoding/json"
+
 	"github.com/DisgoOrg/disgolink/filters"
 )
 

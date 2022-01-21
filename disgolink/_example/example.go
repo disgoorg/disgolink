@@ -2,12 +2,13 @@ package main
 
 import (
 	"context"
-	"github.com/DisgoOrg/disgolink/disgolink"
 	"os"
 	"os/signal"
 	"regexp"
 	"strconv"
 	"syscall"
+
+	"github.com/DisgoOrg/disgolink/disgolink"
 
 	"github.com/DisgoOrg/disgo/core"
 	"github.com/DisgoOrg/disgo/core/bot"

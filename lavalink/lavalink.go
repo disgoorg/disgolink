@@ -2,10 +2,11 @@ package lavalink
 
 import (
 	"context"
-	"github.com/DisgoOrg/log"
 	"net/http"
 	"sync"
 	"time"
+
+	"github.com/DisgoOrg/log"
 )
 
 type Lavalink interface {

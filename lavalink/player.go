@@ -2,9 +2,10 @@ package lavalink
 
 import (
 	"encoding/json"
+	"time"
+
 	"github.com/DisgoOrg/disgolink/filters"
 	"github.com/pkg/errors"
-	"time"
 )
 
 type Player interface {

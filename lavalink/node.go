@@ -4,11 +4,12 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"net/http"
+	"time"
+
 	"github.com/DisgoOrg/disgolink/info"
 	"github.com/gorilla/websocket"
 	"github.com/pkg/errors"
-	"net/http"
-	"time"
 )
 
 type Node interface {

@@ -1,15 +1,16 @@
 package main
 
 import (
-	"github.com/DisgoOrg/disgolink/dgolink"
-	"github.com/DisgoOrg/disgolink/lavalink"
-	"github.com/bwmarrin/discordgo"
 	"os"
 	"os/signal"
 	"regexp"
 	"strconv"
 	"strings"
 	"syscall"
+
+	"github.com/DisgoOrg/disgolink/dgolink"
+	"github.com/DisgoOrg/disgolink/lavalink"
+	"github.com/bwmarrin/discordgo"
 )
 
 var (

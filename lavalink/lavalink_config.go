@@ -1,8 +1,9 @@
 package lavalink
 
 import (
-	"github.com/DisgoOrg/log"
 	"net/http"
+
+	"github.com/DisgoOrg/log"
 )
 
 type Config struct {
