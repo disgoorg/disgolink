@@ -30,7 +30,7 @@ type Lavalink interface {
 	UserID() string
 	SetUserID(userID string)
 
-	Close(ctx context.Context)
+	Close()
 
 	VoiceServerUpdate(voiceServerUpdate VoiceServerUpdate)
 	VoiceStateUpdate(voiceStateUpdate VoiceStateUpdate)
@@ -214,11 +214,11 @@ func (l *lavalinkImpl) SetUserID(userID string) {
 	l.config.UserID = userID
 }
 
-func (l *lavalinkImpl) Close(ctx context.Context) {
+func (l *lavalinkImpl) Close() {
 	l.nodesMu.Lock()
 	defer l.nodesMu.Unlock()
 	for _, node := range l.nodes {
-		node.Close(ctx)
+		node.Close()
 	}
 }
 

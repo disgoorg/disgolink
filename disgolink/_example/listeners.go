@@ -63,7 +63,7 @@ func onApplicationCommand(event *events.ApplicationCommandInteractionEvent) {
 		}
 		tracks := ""
 		for i, track := range musicPlayer.queue {
-			tracks += fmt.Sprintf("%d. [%s](%s)\n", i+1, track.Title(), *track.URI())
+			tracks += fmt.Sprintf("%d. [%s](%s)\n", i+1, track.Info().Title(), *track.Info().URI())
 		}
 		_ = event.Create(discord.NewMessageCreateBuilder().SetEmbeds(discord.NewEmbedBuilder().
 			SetTitle("Queue:").
@@ -120,14 +120,14 @@ func onApplicationCommand(event *events.ApplicationCommandInteractionEvent) {
 				skipSegments = *option
 			}
 
-			musicPlayer.Node().RestClient().LoadItemHandler(query, lavalink.NewResultHandler(
+			_ = musicPlayer.Node().RestClient().LoadItemHandler(query, lavalink.NewResultHandler(
 				func(track lavalink.AudioTrack) {
 					if ok = connect(event, voiceState); !ok {
 						return
 					}
 					musicPlayer.Queue(event, skipSegments, track)
 				},
-				func(playlist lavalink.Playlist) {
+				func(playlist lavalink.AudioPlaylist) {
 					if ok = connect(event, voiceState); !ok {
 						return
 					}
@@ -142,7 +142,7 @@ func onApplicationCommand(event *events.ApplicationCommandInteractionEvent) {
 				func() {
 					_, _ = event.UpdateResponse(discord.NewMessageUpdateBuilder().SetContent("no tracks found").Build())
 				},
-				func(e lavalink.Exception) {
+				func(e lavalink.FriendlyException) {
 					_, _ = event.UpdateResponse(discord.NewMessageUpdateBuilder().SetContent("error while loading track:\n" + e.Error()).Build())
 				},
 			))

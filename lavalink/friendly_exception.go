@@ -1,22 +1,14 @@
 package lavalink
 
-var _ error = (*Exception)(nil)
+var _ error = (*FriendlyException)(nil)
 
-func NewExceptionFromErr(err error) *Exception {
-	return &Exception{Message: err.Error(), Severity: SeverityFault}
-}
-
-func NewException(message string, severity Severity) *Exception {
-	return &Exception{Message: message, Severity: severity}
-}
-
-type Exception struct {
+type FriendlyException struct {
 	Message  string   `json:"message"`
 	Severity Severity `json:"severity"`
 	Cause    *string  `json:"cause,omitempty"`
 }
 
-func (e *Exception) Error() string {
+func (e FriendlyException) Error() string {
 	return e.Message
 }
 

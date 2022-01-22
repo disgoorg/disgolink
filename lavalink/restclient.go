@@ -21,9 +21,9 @@ func (t SearchType) Apply(searchString string) string {
 }
 
 type RestClient interface {
-	SearchItem(searchType SearchType, query string) ([]AudioTrack, *Exception)
-	LoadItem(identifier string) LoadResult
-	LoadItemHandler(identifier string, audioLoaderResultHandler AudioLoaderResultHandler)
+	Plugins() ([]Plugin, error)
+	LoadItem(identifier string) (*LoadResult, error)
+	LoadItemHandler(identifier string, audioLoaderResultHandler AudioLoadResultHandler) error
 }
 
 func newRestClientImpl(node Node, httpClient *http.Client) RestClient {
@@ -35,43 +35,50 @@ type restClientImpl struct {
 	httpClient *http.Client
 }
 
-func (c *restClientImpl) SearchItem(searchType SearchType, query string) ([]AudioTrack, *Exception) {
-	result := c.LoadItem(searchType.Apply(query))
-	if result.Exception != nil {
-		return nil, result.Exception
-	}
-
-	return result.Tracks, nil
-}
-
-func (c *restClientImpl) LoadItem(identifier string) LoadResult {
-	var result LoadResult
-	err := c.get(c.node.RestURL()+"/loadtracks?identifier="+url.QueryEscape(identifier), &result)
+func (c *restClientImpl) Plugins() (plugins []Plugin, err error) {
+	err = c.get("/plugins", &plugins)
 	if err != nil {
-		return LoadResult{LoadType: LoadTypeLoadFailed, Exception: NewExceptionFromErr(err)}
+		return nil, err
 	}
-	return result
+	return
 }
 
-func (c *restClientImpl) LoadItemHandler(identifier string, audioLoaderResultHandler AudioLoaderResultHandler) {
-	result := c.LoadItem(identifier)
+func (c *restClientImpl) LoadItem(identifier string) (*LoadResult, error) {
+	var result LoadResult
+	err := c.get("/loadtracks?identifier="+url.QueryEscape(identifier), &result)
+	if err != nil {
+		return nil, err
+	}
+	return &result, nil
+}
+
+func (c *restClientImpl) LoadItemHandler(identifier string, audioLoaderResultHandler AudioLoadResultHandler) error {
+	result, err := c.LoadItem(identifier)
+	if err != nil {
+		return err
+	}
 
 	switch result.LoadType {
 	case LoadTypeTrackLoaded:
 		audioLoaderResultHandler.TrackLoaded(result.Tracks[0])
+
 	case LoadTypePlaylistLoaded:
-		audioLoaderResultHandler.PlaylistLoaded(NewPlaylist(result))
+		audioLoaderResultHandler.PlaylistLoaded(NewAudioPlaylist(*result))
+
 	case LoadTypeSearchResult:
 		audioLoaderResultHandler.SearchResultLoaded(result.Tracks)
+
 	case LoadTypeNoMatches:
 		audioLoaderResultHandler.NoMatches()
+
 	case LoadTypeLoadFailed:
 		audioLoaderResultHandler.LoadFailed(*result.Exception)
 	}
+	return nil
 }
 
-func (c *restClientImpl) get(url string, v interface{}) error {
-	rq, err := http.NewRequest("GET", url, nil)
+func (c *restClientImpl) get(path string, v interface{}) error {
+	rq, err := http.NewRequest("GET", c.node.RestURL()+path, nil)
 	if err != nil {
 		return err
 	}
@@ -86,7 +93,7 @@ func (c *restClientImpl) get(url string, v interface{}) error {
 	defer rs.Body.Close()
 
 	raw, err := ioutil.ReadAll(rs.Body)
-	c.node.Lavalink().Logger().Debugf("response from %s, code %d, body: %s", url, rs.StatusCode, string(raw))
+	c.node.Lavalink().Logger().Debugf("response from %s, code %d, body: %s", c.node.RestURL()+path, rs.StatusCode, string(raw))
 	if err != nil {
 		return err
 	}

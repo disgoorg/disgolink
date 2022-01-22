@@ -6,19 +6,20 @@ type PlayerEventListener interface {
 	OnPlayerUpdate(player Player, state PlayerState)
 	OnTrackStart(player Player, track AudioTrack)
 	OnTrackEnd(player Player, track AudioTrack, endReason TrackEndReason)
-	OnTrackException(player Player, track AudioTrack, exception Exception)
+	OnTrackException(player Player, track AudioTrack, exception FriendlyException)
 	OnTrackStuck(player Player, track AudioTrack, thresholdMs int)
 	OnWebSocketClosed(player Player, code int, reason string, byRemote bool)
 }
 
 type PlayerEventAdapter struct{}
 
-func (a PlayerEventAdapter) OnPlayerPause(player Player)                                           {}
-func (a PlayerEventAdapter) OnPlayerResume(player Player)                                          {}
-func (a PlayerEventAdapter) OnPlayerUpdate(player Player, state PlayerState)                       {}
-func (a PlayerEventAdapter) OnTrackStart(player Player, track AudioTrack)                          {}
-func (a PlayerEventAdapter) OnTrackEnd(player Player, track AudioTrack, endReason TrackEndReason)  {}
-func (a PlayerEventAdapter) OnTrackException(player Player, track AudioTrack, exception Exception) {}
-func (a PlayerEventAdapter) OnTrackStuck(player Player, track AudioTrack, thresholdMs int)         {}
+func (a PlayerEventAdapter) OnPlayerPause(player Player)                                          {}
+func (a PlayerEventAdapter) OnPlayerResume(player Player)                                         {}
+func (a PlayerEventAdapter) OnPlayerUpdate(player Player, state PlayerState)                      {}
+func (a PlayerEventAdapter) OnTrackStart(player Player, track AudioTrack)                         {}
+func (a PlayerEventAdapter) OnTrackEnd(player Player, track AudioTrack, endReason TrackEndReason) {}
+func (a PlayerEventAdapter) OnTrackException(player Player, track AudioTrack, exception FriendlyException) {
+}
+func (a PlayerEventAdapter) OnTrackStuck(player Player, track AudioTrack, thresholdMs int) {}
 func (a PlayerEventAdapter) OnWebSocketClosed(player Player, code int, reason string, byRemote bool) {
 }

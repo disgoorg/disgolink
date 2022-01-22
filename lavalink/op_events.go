@@ -79,9 +79,9 @@ func (e TrackEndEvent) GuildID() string { return e.GID }
 func (TrackEndEvent) OpEvent()          {}
 
 type TrackExceptionEvent struct {
-	GID       string    `json:"guildId"`
-	Track     string    `json:"track"`
-	Exception Exception `json:"exception"`
+	GID       string            `json:"guildId"`
+	Track     string            `json:"track"`
+	Exception FriendlyException `json:"exception"`
 }
 
 func (TrackExceptionEvent) Event() EventType  { return EventTypeTrackStart }

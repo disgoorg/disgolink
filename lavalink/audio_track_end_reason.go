@@ -2,6 +2,7 @@ package lavalink
 
 type TrackEndReason string
 
+//goland:noinspection GoUnusedConst
 const (
 	TrackEndReasonFinished   TrackEndReason = "FINISHED"
 	TrackEndReasonLoadFailed TrackEndReason = "LOAD_FAILED"

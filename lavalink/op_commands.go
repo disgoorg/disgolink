@@ -2,6 +2,7 @@ package lavalink
 
 import (
 	"encoding/json"
+	"time"
 
 	"github.com/DisgoOrg/disgolink/filters"
 )
@@ -136,17 +137,20 @@ func (VoiceUpdateCommand) Op() OpType { return OpTypeVoiceUpdate }
 func (VoiceUpdateCommand) OpCommand() {}
 
 type ConfigureResumingCommand struct {
-	GuildID string `json:"guildId"`
+	Key     string        `json:"key"`
+	Timeout time.Duration `json:"timeout"`
 }
 
 func (c ConfigureResumingCommand) MarshalJSON() ([]byte, error) {
 	type cmd ConfigureResumingCommand
 	return json.Marshal(struct {
-		Op OpType `json:"op"`
+		Op      OpType `json:"op"`
+		Timeout int    `json:"timeout"`
 		cmd
 	}{
-		Op:  c.Op(),
-		cmd: cmd(c),
+		Op:      c.Op(),
+		Timeout: int(c.Timeout.Seconds()),
+		cmd:     cmd(c),
 	})
 }
 func (ConfigureResumingCommand) Op() OpType { return OpTypeConfigureResuming }

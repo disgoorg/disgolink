@@ -63,7 +63,7 @@ func (b *Bot) messageCreateHandler(s *discordgo.Session, e *discordgo.MessageCre
 			func(track lavalink.AudioTrack) {
 				play(s, b.Link, e.GuildID, args[1], e.ChannelID, track)
 			},
-			func(playlist lavalink.Playlist) {
+			func(playlist lavalink.AudioPlaylist) {
 				play(s, b.Link, e.GuildID, args[1], e.ChannelID, playlist.Tracks[0])
 			},
 			func(tracks []lavalink.AudioTrack) {
@@ -72,7 +72,7 @@ func (b *Bot) messageCreateHandler(s *discordgo.Session, e *discordgo.MessageCre
 			func() {
 				_, _ = s.ChannelMessageSend(e.ChannelID, "no matches found for: "+query)
 			},
-			func(ex lavalink.Exception) {
+			func(ex lavalink.FriendlyException) {
 				_, _ = s.ChannelMessageSend(e.ChannelID, "error while loading track: "+ex.Message)
 			},
 		))

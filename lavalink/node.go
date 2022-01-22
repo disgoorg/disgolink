@@ -12,13 +12,22 @@ import (
 	"github.com/pkg/errors"
 )
 
+type NodeStatus string
+
+// Indicates how far along the client is to connecting
+const (
+	Connecting   NodeStatus = "CONNECTING"
+	Reconnecting NodeStatus = "RECONNECTING"
+	Disconnected NodeStatus = "DISCONNECTED"
+)
+
 type Node interface {
 	Lavalink() Lavalink
 	Send(cmd OpCommand) error
+	ConfigureResuming(key string, timeout time.Duration) error
 
 	Open(ctx context.Context) error
-	ReOpen(ctx context.Context) error
-	Close(ctx context.Context)
+	Close()
 
 	Name() string
 	RestClient() RestClient
@@ -28,11 +37,12 @@ type Node interface {
 }
 
 type NodeConfig struct {
-	Name     string
-	Host     string
-	Port     string
-	Password string
-	Secure   bool
+	Name        string `json:"name"`
+	Host        string `json:"host"`
+	Port        string `json:"port"`
+	Password    string `json:"password"`
+	Secure      bool   `json:"secure"`
+	ResumingKey string `json:"resumingKey"`
 }
 
 type nodeImpl struct {
@@ -87,6 +97,13 @@ func (n *nodeImpl) Send(cmd OpCommand) error {
 	return nil
 }
 
+func (n *nodeImpl) ConfigureResuming(key string, timeout time.Duration) error {
+	return n.Send(ConfigureResumingCommand{
+		Key:     key,
+		Timeout: timeout,
+	})
+}
+
 func (n *nodeImpl) Status() NodeStatus {
 	return n.status
 }
@@ -100,12 +117,12 @@ func (n *nodeImpl) reconnect(ctx context.Context, delay time.Duration) {
 		time.Sleep(delay)
 
 		if n.Status() == Connecting || n.Status() == Reconnecting {
-			n.lavalink.Logger().Error("tried to reconnect gateway while connecting/reconnecting")
+			n.lavalink.Logger().Error("tried to reconnect websocket while connecting/reconnecting")
 			return
 		}
-		n.lavalink.Logger().Info("reconnecting gateway...")
+		n.lavalink.Logger().Info("reconnecting websocket...")
 		if err := n.Open(ctx); err != nil {
-			n.lavalink.Logger().Errorf("failed to reconnect gateway: %s", err)
+			n.lavalink.Logger().Errorf("failed to reconnect websocket: %s", err)
 			n.status = Disconnected
 			n.reconnect(ctx, delay*2)
 		}
@@ -128,7 +145,7 @@ func (n *nodeImpl) listen() {
 			_, data, err := n.conn.ReadMessage()
 			if err != nil {
 				n.lavalink.Logger().Errorf("error while reading from ws. error: %s", err)
-				n.Close(context.TODO())
+				n.Close()
 				n.reconnect(context.TODO(), 1*time.Second)
 				return
 			}
@@ -186,7 +203,9 @@ func (n *nodeImpl) onPlayerUpdate(playerUpdate PlayerUpdateOp) {
 				listener.OnPlayerUpdate(player, playerUpdate.State)
 			}
 		})
+		return
 	}
+	n.lavalink.Logger().Warnf("player update received for unknown player: %s", playerUpdate.GuildID)
 }
 
 func (n *nodeImpl) onEvent(event OpEvent) {
@@ -197,7 +216,7 @@ func (n *nodeImpl) onEvent(event OpEvent) {
 
 	switch e := event.(type) {
 	case TrackStartEvent:
-		track := NewTrack(e.Track)
+		track := NewAudioTrack(e.Track)
 		player.SetTrack(track)
 		player.EmitEvent(func(l interface{}) {
 			if listener := l.(PlayerEventListener); listener != nil {
@@ -208,21 +227,21 @@ func (n *nodeImpl) onEvent(event OpEvent) {
 	case TrackEndEvent:
 		player.EmitEvent(func(l interface{}) {
 			if listener := l.(PlayerEventListener); listener != nil {
-				listener.OnTrackEnd(player, NewTrack(e.Track), e.Reason)
+				listener.OnTrackEnd(player, NewAudioTrack(e.Track), e.Reason)
 			}
 		})
 
 	case TrackExceptionEvent:
 		player.EmitEvent(func(l interface{}) {
 			if listener := l.(PlayerEventListener); listener != nil {
-				listener.OnTrackException(player, NewTrack(e.Track), e.Exception)
+				listener.OnTrackException(player, NewAudioTrack(e.Track), e.Exception)
 			}
 		})
 
 	case TrackStuckEvent:
 		player.EmitEvent(func(l interface{}) {
 			if listener := l.(PlayerEventListener); listener != nil {
-				listener.OnTrackStuck(player, NewTrack(e.Track), e.ThresholdMs)
+				listener.OnTrackStuck(player, NewAudioTrack(e.Track), e.ThresholdMs)
 			}
 		})
 
@@ -266,9 +285,23 @@ func (n *nodeImpl) Open(ctx context.Context) error {
 	header.Add("Authorization", n.config.Password)
 	header.Add("User-Id", n.lavalink.UserID())
 	header.Add("Client-Name", fmt.Sprintf("%s/%s", info.Name, info.Version))
+	if n.config.ResumingKey != "" {
+		header.Add("Resume-Key", n.config.ResumingKey)
+	}
 
-	var err error
-	n.conn, _, err = websocket.DefaultDialer.DialContext(ctx, fmt.Sprintf("%s://%s:%s", scheme, n.config.Host, n.config.Port), header)
+	var (
+		err error
+		rs  *http.Response
+	)
+	n.conn, rs, err = websocket.DefaultDialer.DialContext(ctx, fmt.Sprintf("%s://%s:%s", scheme, n.config.Host, n.config.Port), header)
+	if err != nil {
+		return errors.Wrap(err, "failed to connect to lavalink websocket")
+	}
+	if n.config.ResumingKey != "" {
+		if rs.Header.Get("Session-Resumed") != "true" {
+			n.lavalink.Logger().Warnf("failed to resume session with key %s", n.config.ResumingKey)
+		}
+	}
 
 	go n.listen()
 
@@ -281,11 +314,7 @@ func (n *nodeImpl) Open(ctx context.Context) error {
 	return err
 }
 
-func (n *nodeImpl) ReOpen(ctx context.Context) error {
-	return nil
-}
-
-func (n *nodeImpl) Close(ctx context.Context) {
+func (n *nodeImpl) Close() {
 	for _, pl := range n.Lavalink().Plugins() {
 		if plugin, ok := pl.(PluginEventHandler); ok {
 			plugin.OnNodeDestroy(n)

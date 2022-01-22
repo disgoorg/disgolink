@@ -31,7 +31,7 @@ type Player interface {
 	SetLastSessionID(sessionID string)
 
 	Node() Node
-	ChangeNode(node Node)
+	SetNode(node Node)
 
 	PlayerUpdate(state PlayerState)
 	EmitEvent(caller func(l interface{}))
@@ -186,8 +186,8 @@ func (p *DefaultPlayer) Position() time.Duration {
 	}
 	if p.paused {
 		timeDiff := time.Since(p.state.Time)
-		if p.state.Position+timeDiff > p.track.Length() {
-			return p.track.Length()
+		if p.state.Position+timeDiff > p.track.Info().Length() {
+			return p.track.Info().Length()
 		}
 		return p.state.Position + timeDiff
 	}
@@ -260,7 +260,7 @@ func (p *DefaultPlayer) Node() Node {
 	return p.node
 }
 
-func (p *DefaultPlayer) ChangeNode(node Node) {
+func (p *DefaultPlayer) SetNode(node Node) {
 	p.node = node
 }
 

@@ -49,7 +49,7 @@ func (b *Bot) messageCreateHandler() {
 		func(track lavalink.AudioTrack) {
 			b.Play(guildID, args[1], channelID, track)
 		},
-		func(playlist lavalink.Playlist) {
+		func(playlist lavalink.AudioPlaylist) {
 			b.Play(guildID, args[1], channelID, playlist.Tracks[0])
 		},
 		func(tracks []lavalink.AudioTrack) {
@@ -58,7 +58,7 @@ func (b *Bot) messageCreateHandler() {
 		func() {
 			// TODO: send error message
 		},
-		func(ex lavalink.Exception) {
+		func(ex lavalink.FriendlyException) {
 			// TODO: send error message
 		},
 	))

@@ -7,6 +7,7 @@ import (
 	"regexp"
 	"strconv"
 	"syscall"
+	"time"
 
 	"github.com/DisgoOrg/disgolink/disgolink"
 
@@ -55,7 +56,7 @@ func main() {
 	dgolink = disgolink.New(disgo)
 	registerNodes()
 
-	defer dgolink.Close(context.TODO())
+	defer dgolink.Close()
 
 	_, err = disgo.SetGuildCommands(guildID, commands)
 	if err != nil {
@@ -87,10 +88,15 @@ func connect(event *events.ApplicationCommandInteractionEvent, voiceState *core.
 func registerNodes() {
 	secure, _ := strconv.ParseBool(os.Getenv("lavalink_secure"))
 	dgolink.AddNode(lavalink.NodeConfig{
-		Name:     "test",
-		Host:     os.Getenv("lavalink_host"),
-		Port:     os.Getenv("lavalink_port"),
-		Password: os.Getenv("lavalink_password"),
-		Secure:   secure,
+		Name:        "test",
+		Host:        os.Getenv("lavalink_host"),
+		Port:        os.Getenv("lavalink_port"),
+		Password:    os.Getenv("lavalink_password"),
+		Secure:      secure,
+		ResumingKey: os.Getenv("lavalink_resuming_key"),
 	})
+	go func() {
+		time.Sleep(time.Second * 5)
+		_ = dgolink.BestNode().ConfigureResuming("test", 20*time.Second)
+	}()
 }

@@ -70,7 +70,7 @@ func (p *MusicPlayer) OnTrackEnd(player lavalink.Player, track lavalink.AudioTra
 		_ = player.Play(newTrack)
 	}
 }
-func (p *MusicPlayer) OnTrackException(player lavalink.Player, track lavalink.AudioTrack, exception lavalink.Exception) {
+func (p *MusicPlayer) OnTrackException(player lavalink.Player, track lavalink.AudioTrack, exception lavalink.FriendlyException) {
 	_, _ = p.channel.CreateMessage(discord.NewMessageCreateBuilder().SetContentf("AudioTrack exception: `%s`, `%s`, `%+v`", track.Info().Title(), exception).Build())
 }
 func (p *MusicPlayer) OnTrackStuck(player lavalink.Player, track lavalink.AudioTrack, thresholdMs int) {
