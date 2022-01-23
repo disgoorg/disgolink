@@ -3,8 +3,6 @@ package lavalink
 import (
 	"encoding/json"
 	"time"
-
-	"github.com/DisgoOrg/disgolink/filters"
 )
 
 type PlayCommand struct {
@@ -158,7 +156,7 @@ func (ConfigureResumingCommand) OpCommand() {}
 
 type FiltersCommand struct {
 	GuildID string `json:"guildId"`
-	filters.Filters
+	Filters
 }
 
 func (c FiltersCommand) MarshalJSON() ([]byte, error) {

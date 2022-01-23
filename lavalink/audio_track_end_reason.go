@@ -1,19 +1,19 @@
 package lavalink
 
-type TrackEndReason string
+type AudioTrackEndReason string
 
 //goland:noinspection GoUnusedConst
 const (
-	TrackEndReasonFinished   TrackEndReason = "FINISHED"
-	TrackEndReasonLoadFailed TrackEndReason = "LOAD_FAILED"
-	TrackEndReasonStopped    TrackEndReason = "STOPPED"
-	TrackEndReasonReplaced   TrackEndReason = "REPLACED"
-	TrackEndReasonCleanup    TrackEndReason = "CLEANUP"
+	AudioTrackEndReasonFinished   AudioTrackEndReason = "FINISHED"
+	AudioTrackEndReasonLoadFailed AudioTrackEndReason = "LOAD_FAILED"
+	AudioTrackEndReasonStopped    AudioTrackEndReason = "STOPPED"
+	AudioTrackEndReasonReplaced   AudioTrackEndReason = "REPLACED"
+	AudioTrackEndReasonCleanup    AudioTrackEndReason = "CLEANUP"
 )
 
-func (e TrackEndReason) MayStartNext() bool {
+func (e AudioTrackEndReason) MayStartNext() bool {
 	switch e {
-	case TrackEndReasonFinished, TrackEndReasonLoadFailed:
+	case AudioTrackEndReasonFinished, AudioTrackEndReasonLoadFailed:
 		return true
 	default:
 		return false

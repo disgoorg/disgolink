@@ -57,47 +57,68 @@ func (e *UnmarshalOpEvent) UnmarshalJSON(data []byte) error {
 	return nil
 }
 
+var (
+	_ TrackEvent = (*TrackStartEvent)(nil)
+	_ TrackEvent = (*TrackEndEvent)(nil)
+	_ TrackEvent = (*TrackExceptionEvent)(nil)
+	_ TrackEvent = (*TrackStuckEvent)(nil)
+
+	_ OpEvent = (*TrackStartEvent)(nil)
+	_ OpEvent = (*TrackEndEvent)(nil)
+	_ OpEvent = (*TrackExceptionEvent)(nil)
+	_ OpEvent = (*TrackStuckEvent)(nil)
+	_ OpEvent = (*WebsocketClosedEvent)(nil)
+)
+
+type TrackEvent interface {
+	Track() string
+}
+
 type TrackStartEvent struct {
-	GID   string `json:"guildId"`
-	Track string `json:"track"`
+	GID         string `json:"guildId"`
+	TrackString string `json:"track"`
 }
 
 func (TrackStartEvent) Event() EventType  { return EventTypeTrackStart }
 func (TrackStartEvent) Op() OpType        { return OpTypeEvent }
 func (e TrackStartEvent) GuildID() string { return e.GID }
+func (e TrackStartEvent) Track() string   { return e.TrackString }
 func (TrackStartEvent) OpEvent()          {}
 
 type TrackEndEvent struct {
-	GID    string         `json:"guildId"`
-	Track  string         `json:"track"`
-	Reason TrackEndReason `json:"reason"`
+	GID         string              `json:"guildId"`
+	TrackString string              `json:"track"`
+	Reason      AudioTrackEndReason `json:"reason"`
 }
 
 func (TrackEndEvent) Event() EventType  { return EventTypeTrackStart }
 func (TrackEndEvent) Op() OpType        { return OpTypeEvent }
 func (e TrackEndEvent) GuildID() string { return e.GID }
+func (e TrackEndEvent) Track() string   { return e.TrackString }
 func (TrackEndEvent) OpEvent()          {}
 
 type TrackExceptionEvent struct {
-	GID       string            `json:"guildId"`
-	Track     string            `json:"track"`
-	Exception FriendlyException `json:"exception"`
+	GID         string            `json:"guildId"`
+	TrackString string            `json:"track"`
+	Exception   FriendlyException `json:"exception"`
 }
 
 func (TrackExceptionEvent) Event() EventType  { return EventTypeTrackStart }
 func (TrackExceptionEvent) Op() OpType        { return OpTypeEvent }
 func (e TrackExceptionEvent) GuildID() string { return e.GID }
+func (e TrackExceptionEvent) Track() string   { return e.TrackString }
 func (TrackExceptionEvent) OpEvent()          {}
 
 type TrackStuckEvent struct {
 	GID         string `json:"guildId"`
-	Track       string `json:"track"`
+	TrackString string `json:"track"`
 	ThresholdMs int    `json:"threasholdMs"`
 }
 
 func (TrackStuckEvent) Event() EventType  { return EventTypeTrackStuck }
 func (TrackStuckEvent) Op() OpType        { return OpTypeEvent }
 func (e TrackStuckEvent) GuildID() string { return e.GID }
+func (e TrackStuckEvent) Track() string   { return e.TrackString }
 func (TrackStuckEvent) OpEvent()          {}
 
 type WebsocketClosedEvent struct {
@@ -118,7 +139,7 @@ type UnknownEvent struct {
 	Data    []byte `json:"-"`
 }
 
-func (o *UnknownEvent) UnmarshalJSON(data []byte) error {
+func (e *UnknownEvent) UnmarshalJSON(data []byte) error {
 	var v struct {
 		Event   EventType `json:"type"`
 		GuildID string    `json:"guildId"`
@@ -126,9 +147,9 @@ func (o *UnknownEvent) UnmarshalJSON(data []byte) error {
 	if err := json.Unmarshal(data, &v); err != nil {
 		return err
 	}
-	o.event = v.Event
-	o.guildID = v.GuildID
-	o.Data = data
+	e.event = v.Event
+	e.guildID = v.GuildID
+	e.Data = data
 	return nil
 }
 

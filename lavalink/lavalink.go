@@ -2,6 +2,7 @@ package lavalink
 
 import (
 	"context"
+	"io"
 	"net/http"
 	"sync"
 	"time"
@@ -12,7 +13,7 @@ import (
 type Lavalink interface {
 	Logger() log.Logger
 
-	AddNode(config NodeConfig) Node
+	AddNode(ctx context.Context, config NodeConfig) Node
 	Nodes() []Node
 	Node(name string) Node
 	BestNode() Node
@@ -22,6 +23,9 @@ type Lavalink interface {
 	AddPlugins(plugins ...interface{})
 	Plugins() []interface{}
 	RemovePlugins(plugins ...interface{})
+
+	EncodeTrack(track AudioTrack) (string, error)
+	DecodeTrack(track string) (AudioTrack, error)
 
 	Player(guildID string) Player
 	ExistingPlayer(guildID string) Player
@@ -74,24 +78,19 @@ func (l *lavalinkImpl) Logger() log.Logger {
 	return l.config.Logger
 }
 
-func (l *lavalinkImpl) AddNode(config NodeConfig) Node {
+func (l *lavalinkImpl) AddNode(ctx context.Context, config NodeConfig) Node {
 	node := &nodeImpl{
 		config:   config,
 		lavalink: l,
+		statusMu: &sync.Mutex{},
+		status:   Disconnected,
 	}
 	node.restClient = newRestClientImpl(node, l.config.HTTPClient)
-	go func() {
-		delay := 500
-		for {
-			err := node.Open(context.TODO())
-			if err == nil {
-				break
-			}
-			delay += int(float64(delay) * 1.2)
-			l.Logger().Errorf("error while connecting to node: %s, waiting %ds, error: %s", node.Name(), delay/1000, err)
-			time.Sleep(time.Duration(delay) * time.Millisecond)
-		}
-	}()
+	if err := node.Open(ctx); err != nil {
+		l.Logger().Error("failed to open connection to node", "error", err)
+		return nil
+	}
+
 	l.nodesMu.Lock()
 	defer l.nodesMu.Unlock()
 	l.nodes[config.Name] = node
@@ -172,6 +171,32 @@ func (l *lavalinkImpl) RemovePlugins(plugins ...interface{}) {
 			}
 		}
 	}
+}
+
+func (l *lavalinkImpl) EncodeTrack(track AudioTrack) (string, error) {
+	return EncodeToString(track, func(track AudioTrack, w io.Writer) error {
+		for _, pl := range l.config.Plugins {
+			if plugin, ok := pl.(SourceExtension); ok {
+				if plugin.SourceName() == track.Info().SourceName() {
+					return plugin.Encode(track, w)
+				}
+			}
+		}
+		return nil
+	})
+}
+
+func (l *lavalinkImpl) DecodeTrack(str string) (AudioTrack, error) {
+	return DecodeString(str, func(info AudioTrackInfo, r io.Reader) (AudioTrack, error) {
+		for _, pl := range l.config.Plugins {
+			if plugin, ok := pl.(SourceExtension); ok {
+				if track, err := plugin.Decode(info, r); err == nil {
+					return track, nil
+				}
+			}
+		}
+		return NewAudioTrack(str, info), nil
+	})
 }
 
 func (l *lavalinkImpl) Player(guildID string) Player {

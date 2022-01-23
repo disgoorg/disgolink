@@ -63,7 +63,7 @@ func (p *MusicPlayer) OnPlayerUpdate(player lavalink.Player, state lavalink.Play
 func (p *MusicPlayer) OnTrackStart(player lavalink.Player, track lavalink.AudioTrack) {
 
 }
-func (p *MusicPlayer) OnTrackEnd(player lavalink.Player, track lavalink.AudioTrack, endReason lavalink.TrackEndReason) {
+func (p *MusicPlayer) OnTrackEnd(player lavalink.Player, track lavalink.AudioTrack, endReason lavalink.AudioTrackEndReason) {
 	if endReason.MayStartNext() && len(p.queue) > 0 {
 		var newTrack lavalink.AudioTrack
 		newTrack, p.queue = p.queue[len(p.queue)-1], p.queue[:len(p.queue)-1]

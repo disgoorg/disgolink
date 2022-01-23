@@ -8,26 +8,27 @@ import (
 	"time"
 )
 
-func DecodeString(str string, customFields func(info AudioTrackInfo, r io.Reader) error) (track *DefaultAudioTrack, err error) {
+type CustomTrackInfoDecoder func(info AudioTrackInfo, r io.Reader) (AudioTrack, error)
+
+func DecodeString(str string, customTrackInfoDecoder CustomTrackInfoDecoder) (track AudioTrack, err error) {
 	var data []byte
-	data, err = base64.StdEncoding.DecodeString(str)
-	if err != nil {
+	if data, err = base64.StdEncoding.DecodeString(str); err != nil {
 		return
 	}
 
 	r := bytes.NewReader(data)
 
 	info := &DefaultAudioTrackInfo{}
-
-	value, err := ReadInt32(r)
-
+	var value int32
+	if value, err = ReadInt32(r); err != nil {
+		return
+	}
 	flags := int(value) & 0xC00000000 >> 30
 	//messageSize := value & 0x3FFFFFFF
 
 	var version uint8
 	if flags&trackInfoVersioned != 0 {
-		version, err = r.ReadByte()
-		if err != nil {
+		if version, err = r.ReadByte(); err != nil {
 			return
 		}
 		version = version & 0xFF
@@ -49,9 +50,8 @@ func DecodeString(str string, customFields func(info AudioTrackInfo, r io.Reader
 	}
 	info.TrackLength = time.Duration(length) * time.Millisecond
 
-	info.TrackIdentifier, err = ReadString(r)
-	if err != nil {
-		return nil, err
+	if info.TrackIdentifier, err = ReadString(r); err != nil {
+		return
 	}
 
 	if info.TrackIsStream, err = ReadBool(r); err != nil {
@@ -66,8 +66,8 @@ func DecodeString(str string, customFields func(info AudioTrackInfo, r io.Reader
 		return
 	}
 
-	if customFields != nil {
-		if err = customFields(info, r); err != nil {
+	if customTrackInfoDecoder != nil {
+		if track, err = customTrackInfoDecoder(info, r); err != nil {
 			return
 		}
 	}
@@ -78,10 +78,7 @@ func DecodeString(str string, customFields func(info AudioTrackInfo, r io.Reader
 	}
 	info.TrackPosition = time.Duration(position) * time.Millisecond
 
-	return &DefaultAudioTrack{
-		Base64Track:    str,
-		AudioTrackInfo: info,
-	}, nil
+	return NewAudioTrack(str, info), nil
 }
 
 func ReadInt64(r io.Reader) (i int64, err error) {
@@ -105,11 +102,11 @@ func ReadString(r io.Reader) (string, error) {
 	if err != nil {
 		return "", err
 	}
-	bytes := make([]byte, size)
-	if err = binary.Read(r, binary.BigEndian, &bytes); err != nil {
+	b := make([]byte, size)
+	if err = binary.Read(r, binary.BigEndian, &b); err != nil {
 		return "", err
 	}
-	return string(bytes), nil
+	return string(b), nil
 }
 
 func ReadNullableString(r io.Reader) (*string, error) {

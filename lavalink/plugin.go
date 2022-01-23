@@ -28,7 +28,7 @@ type EventExtension interface {
 type SourceExtension interface {
 	SourceName() string
 	Encode(track AudioTrack, w io.Writer) error
-	Decode(trackInfo AudioTrackInfo, r io.Reader) (AudioTrack, error)
+	Decode(info AudioTrackInfo, r io.Reader) (AudioTrack, error)
 }
 
 type PluginEventHandler interface {

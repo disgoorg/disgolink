@@ -30,80 +30,42 @@ type AudioTrackInfo interface {
 	URI() *string
 	SourceName() string
 	Position() time.Duration
-	setPosition(position time.Duration)
+	SetPosition(position time.Duration)
 }
 
-func NewAudioTrack(track string) AudioTrack {
+func NewAudioTrack(track string, info AudioTrackInfo) AudioTrack {
 	return &DefaultAudioTrack{
-		Base64Track: track,
-	}
-}
-
-func NewAudioTrackByInfo(trackInfo AudioTrackInfo) AudioTrack {
-	return &DefaultAudioTrack{
-		AudioTrackInfo: trackInfo,
+		AudioTrack:     track,
+		AudioTrackInfo: info,
 	}
 }
 
 type DefaultAudioTrack struct {
-	Base64Track    string `json:"track"`
-	AudioTrackInfo `json:"info"`
+	AudioTrack     string         `json:"track"`
+	AudioTrackInfo AudioTrackInfo `json:"info"`
 }
 
 func (t *DefaultAudioTrack) UnmarshalJSON(data []byte) error {
 	var v struct {
-		Base64Track string                 `json:"track"`
-		TrackInfo   *DefaultAudioTrackInfo `json:"info"`
+		AudioTrack     string                `json:"track"`
+		AudioTrackInfo DefaultAudioTrackInfo `json:"info"`
 	}
 	err := json.Unmarshal(data, &v)
 	if err != nil {
 		return err
 	}
 
-	t.Base64Track = v.Base64Track
-	t.AudioTrackInfo = v.TrackInfo
+	t.AudioTrack = v.AudioTrack
+	t.AudioTrackInfo = &v.AudioTrackInfo
 	return nil
 }
 
-func (t *DefaultAudioTrack) Track() string {
-	if t.Base64Track == "" {
-		if err := t.EncodeInfo(); err != nil {
-			return ""
-		}
-	}
-	return t.Base64Track
+func (t DefaultAudioTrack) Track() string {
+	return t.AudioTrack
 }
 
-func (t *DefaultAudioTrack) Info() AudioTrackInfo {
-	if t.AudioTrackInfo == nil {
-		if err := t.DecodeInfo(); err != nil {
-			return nil
-		}
-	}
+func (t DefaultAudioTrack) Info() AudioTrackInfo {
 	return t.AudioTrackInfo
-}
-
-func (t *DefaultAudioTrack) EncodeInfo() error {
-	if t.AudioTrackInfo == nil {
-		return ErrEmptyTrackInfo
-	}
-
-	var err error
-	t.Base64Track, err = EncodeToString(t, nil)
-	return err
-}
-
-func (t *DefaultAudioTrack) DecodeInfo() error {
-	if t.Base64Track == "" {
-		return ErrEmptyTrack
-	}
-
-	track, err := DecodeString(t.Base64Track, nil)
-	if err != nil {
-		return err
-	}
-	*t = *track
-	return nil
 }
 
 type DefaultAudioTrackInfo struct {
@@ -127,6 +89,7 @@ func (i *DefaultAudioTrackInfo) UnmarshalJSON(data []byte) error {
 	if err := json.Unmarshal(data, &v); err != nil {
 		return err
 	}
+
 	*i = DefaultAudioTrackInfo(v.defaultTrackInfo)
 	i.TrackLength = time.Duration(v.TrackLength) * time.Millisecond
 	i.TrackPosition = time.Duration(v.TrackPosition) * time.Millisecond
@@ -135,16 +98,15 @@ func (i *DefaultAudioTrackInfo) UnmarshalJSON(data []byte) error {
 }
 
 func (i DefaultAudioTrackInfo) MarshalJSON() ([]byte, error) {
-	type defaultTrackInfo DefaultAudioTrackInfo
-
+	type defaultAudioTrackInfo DefaultAudioTrackInfo
 	return json.Marshal(struct {
 		TrackLength   int64 `json:"length"`
 		TrackPosition int64 `json:"position"`
-		defaultTrackInfo
+		defaultAudioTrackInfo
 	}{
-		TrackLength:      int64(i.TrackLength / time.Millisecond),
-		TrackPosition:    int64(i.TrackPosition / time.Millisecond),
-		defaultTrackInfo: defaultTrackInfo(i),
+		TrackLength:           i.TrackLength.Milliseconds(),
+		TrackPosition:         i.TrackPosition.Milliseconds(),
+		defaultAudioTrackInfo: defaultAudioTrackInfo(i),
 	})
 }
 
@@ -180,6 +142,6 @@ func (i DefaultAudioTrackInfo) Position() time.Duration {
 	return i.TrackPosition
 }
 
-func (i *DefaultAudioTrackInfo) setPosition(position time.Duration) {
+func (i *DefaultAudioTrackInfo) SetPosition(position time.Duration) {
 	i.TrackPosition = position
 }

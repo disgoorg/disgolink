@@ -5,9 +5,9 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
+	"sync"
 	"time"
 
-	"github.com/DisgoOrg/disgolink/info"
 	"github.com/gorilla/websocket"
 	"github.com/pkg/errors"
 )
@@ -17,6 +17,7 @@ type NodeStatus string
 // Indicates how far along the client is to connecting
 const (
 	Connecting   NodeStatus = "CONNECTING"
+	Connected    NodeStatus = "CONNECTED"
 	Reconnecting NodeStatus = "RECONNECTING"
 	Disconnected NodeStatus = "DISCONNECTED"
 )
@@ -49,8 +50,8 @@ type nodeImpl struct {
 	config     NodeConfig
 	lavalink   Lavalink
 	conn       *websocket.Conn
-	quit       chan interface{}
 	status     NodeStatus
+	statusMu   sync.Locker
 	stats      Stats
 	available  bool
 	restClient RestClient
@@ -82,6 +83,13 @@ func (n *nodeImpl) Name() string {
 }
 
 func (n *nodeImpl) Send(cmd OpCommand) error {
+	n.statusMu.Lock()
+	defer n.statusMu.Unlock()
+
+	if n.status != Connected {
+		return errors.Errorf("node is not %s", n.statusMu)
+	}
+
 	data, err := json.Marshal(cmd)
 	if err != nil {
 		return err
@@ -112,21 +120,17 @@ func (n *nodeImpl) Stats() Stats {
 	return n.stats
 }
 
-func (n *nodeImpl) reconnect(ctx context.Context, delay time.Duration) {
-	go func() {
-		time.Sleep(delay)
+func (n *nodeImpl) reconnect() error {
+	n.statusMu.Lock()
+	n.status = Reconnecting
+	defer n.statusMu.Unlock()
 
-		if n.Status() == Connecting || n.Status() == Reconnecting {
-			n.lavalink.Logger().Error("tried to reconnect websocket while connecting/reconnecting")
-			return
-		}
-		n.lavalink.Logger().Info("reconnecting websocket...")
-		if err := n.Open(ctx); err != nil {
-			n.lavalink.Logger().Errorf("failed to reconnect websocket: %s", err)
-			n.status = Disconnected
-			n.reconnect(ctx, delay*2)
-		}
-	}()
+	if err := n.open(context.TODO(), 0); err != nil {
+		n.status = Disconnected
+		return err
+	}
+	n.status = Connected
+	return nil
 }
 
 func (n *nodeImpl) listen() {
@@ -134,63 +138,59 @@ func (n *nodeImpl) listen() {
 		n.lavalink.Logger().Info("shut down listen goroutine")
 	}()
 	for {
-		select {
-		case <-n.quit:
-			n.lavalink.Logger().Infof("existed listen routine")
+		if n.conn == nil {
 			return
-		default:
-			if n.conn == nil {
-				return
+		}
+		_, data, err := n.conn.ReadMessage()
+		if err != nil {
+			n.lavalink.Logger().Errorf("error while reading from lavalink websocket. error: %s", err)
+			n.Close()
+			if err := n.reconnect(); err != nil {
+				n.lavalink.Logger().Errorf("error while reconnecting to lavalink websocket. error: %s", err)
 			}
-			_, data, err := n.conn.ReadMessage()
-			if err != nil {
-				n.lavalink.Logger().Errorf("error while reading from ws. error: %s", err)
-				n.Close()
-				n.reconnect(context.TODO(), 1*time.Second)
-				return
+			return
+		}
+
+		n.lavalink.Logger().Debugf("received: %s", string(data))
+
+		for _, pl := range n.Lavalink().Plugins() {
+			if plugin, ok := pl.(PluginEventHandler); ok {
+				plugin.OnNodeMessageIn(n, data)
 			}
+		}
 
-			n.lavalink.Logger().Debugf("received: %s", string(data))
+		var v UnmarshalOp
+		if err = json.Unmarshal(data, &v); err != nil {
+			n.lavalink.Logger().Errorf("error while unmarshalling op. error: %s", err)
+			continue
+		}
 
+		switch op := v.Op.(type) {
+		case UnknownOp:
 			for _, pl := range n.Lavalink().Plugins() {
-				if plugin, ok := pl.(PluginEventHandler); ok {
-					plugin.OnNodeMessageIn(n, data)
+				if plugin, ok := pl.(OpExtension); ok {
+					plugin.OnOpInvocation(n, op.Data)
 				}
-			}
-
-			var v UnmarshalOp
-			if err = json.Unmarshal(data, &v); err != nil {
-				n.lavalink.Logger().Errorf("error while unmarshalling op. error: %s", err)
-				continue
-			}
-
-			switch op := v.Op.(type) {
-			case UnknownOp:
-				for _, pl := range n.Lavalink().Plugins() {
-					if plugin, ok := pl.(OpExtension); ok {
-						plugin.OnOpInvocation(n, op.Data)
-					}
-					if plugin, ok := pl.(OpExtensions); ok {
-						for _, ext := range plugin.OpExtensions() {
-							if ext.Op() == op.Op() {
-								ext.OnOpInvocation(n, op.Data)
-							}
+				if plugin, ok := pl.(OpExtensions); ok {
+					for _, ext := range plugin.OpExtensions() {
+						if ext.Op() == op.Op() {
+							ext.OnOpInvocation(n, op.Data)
 						}
 					}
 				}
-
-			case PlayerUpdateOp:
-				n.onPlayerUpdate(op)
-
-			case OpEvent:
-				n.onEvent(op)
-
-			case StatsOp:
-				n.onStatsEvent(op)
-
-			default:
-				n.lavalink.Logger().Warnf("unexpected op received: %T, data: ", op, string(data))
 			}
+
+		case PlayerUpdateOp:
+			n.onPlayerUpdate(op)
+
+		case OpEvent:
+			n.onEvent(op)
+
+		case StatsOp:
+			n.onStatsEvent(op)
+
+		default:
+			n.lavalink.Logger().Warnf("unexpected op received: %T, data: ", op, string(data))
 		}
 	}
 }
@@ -215,35 +215,42 @@ func (n *nodeImpl) onEvent(event OpEvent) {
 	}
 
 	switch e := event.(type) {
-	case TrackStartEvent:
-		track := NewAudioTrack(e.Track)
-		player.SetTrack(track)
-		player.EmitEvent(func(l interface{}) {
-			if listener := l.(PlayerEventListener); listener != nil {
-				listener.OnTrackStart(player, track)
-			}
-		})
+	case TrackEvent:
+		track, err := n.lavalink.DecodeTrack(e.Track())
+		if err != nil {
+			n.lavalink.Logger().Errorf("error while decoding track: %s", err)
+			return
+		}
+		switch ee := e.(type) {
+		case TrackStartEvent:
+			player.SetTrack(track)
+			player.EmitEvent(func(l interface{}) {
+				if listener := l.(PlayerEventListener); listener != nil {
+					listener.OnTrackStart(player, track)
+				}
+			})
 
-	case TrackEndEvent:
-		player.EmitEvent(func(l interface{}) {
-			if listener := l.(PlayerEventListener); listener != nil {
-				listener.OnTrackEnd(player, NewAudioTrack(e.Track), e.Reason)
-			}
-		})
+		case TrackEndEvent:
+			player.EmitEvent(func(l interface{}) {
+				if listener := l.(PlayerEventListener); listener != nil {
+					listener.OnTrackEnd(player, track, ee.Reason)
+				}
+			})
 
-	case TrackExceptionEvent:
-		player.EmitEvent(func(l interface{}) {
-			if listener := l.(PlayerEventListener); listener != nil {
-				listener.OnTrackException(player, NewAudioTrack(e.Track), e.Exception)
-			}
-		})
+		case TrackExceptionEvent:
+			player.EmitEvent(func(l interface{}) {
+				if listener := l.(PlayerEventListener); listener != nil {
+					listener.OnTrackException(player, track, ee.Exception)
+				}
+			})
 
-	case TrackStuckEvent:
-		player.EmitEvent(func(l interface{}) {
-			if listener := l.(PlayerEventListener); listener != nil {
-				listener.OnTrackStuck(player, NewAudioTrack(e.Track), e.ThresholdMs)
-			}
-		})
+		case TrackStuckEvent:
+			player.EmitEvent(func(l interface{}) {
+				if listener := l.(PlayerEventListener); listener != nil {
+					listener.OnTrackStuck(player, track, ee.ThresholdMs)
+				}
+			})
+		}
 
 	case WebsocketClosedEvent:
 		player.EmitEvent(func(l interface{}) {
@@ -276,7 +283,7 @@ func (n *nodeImpl) onStatsEvent(stats StatsOp) {
 	n.stats = stats.Stats
 }
 
-func (n *nodeImpl) Open(ctx context.Context) error {
+func (n *nodeImpl) open(ctx context.Context, delay time.Duration) error {
 	scheme := "ws"
 	if n.config.Secure {
 		scheme += "s"
@@ -284,7 +291,7 @@ func (n *nodeImpl) Open(ctx context.Context) error {
 	header := http.Header{}
 	header.Add("Authorization", n.config.Password)
 	header.Add("User-Id", n.lavalink.UserID())
-	header.Add("Client-Name", fmt.Sprintf("%s/%s", info.Name, info.Version))
+	header.Add("Client-Name", fmt.Sprintf("%s/%s", Name, Version))
 	if n.config.ResumingKey != "" {
 		header.Add("Resume-Key", n.config.ResumingKey)
 	}
@@ -295,7 +302,16 @@ func (n *nodeImpl) Open(ctx context.Context) error {
 	)
 	n.conn, rs, err = websocket.DefaultDialer.DialContext(ctx, fmt.Sprintf("%s://%s:%s", scheme, n.config.Host, n.config.Port), header)
 	if err != nil {
-		return errors.Wrap(err, "failed to connect to lavalink websocket")
+		n.lavalink.Logger().Warnf("error while connecting to lavalink websocket, retrying in %f seconds: %s", delay.Seconds(), err)
+		if delay > 0 {
+			time.Sleep(delay)
+		} else {
+			delay = 1 * time.Second
+		}
+		if delay < 30*time.Second {
+			delay *= 2
+		}
+		return n.open(ctx, delay)
 	}
 	if n.config.ResumingKey != "" {
 		if rs.Header.Get("Session-Resumed") != "true" {
@@ -314,19 +330,28 @@ func (n *nodeImpl) Open(ctx context.Context) error {
 	return err
 }
 
+func (n *nodeImpl) Open(ctx context.Context) error {
+	n.statusMu.Lock()
+	n.status = Connecting
+	defer n.statusMu.Unlock()
+
+	if err := n.open(ctx, 0); err != nil {
+		n.status = Disconnected
+		return err
+	}
+	n.status = Connected
+	return nil
+}
+
 func (n *nodeImpl) Close() {
+	n.statusMu.Lock()
+	defer n.statusMu.Unlock()
 	for _, pl := range n.Lavalink().Plugins() {
 		if plugin, ok := pl.(PluginEventHandler); ok {
 			plugin.OnNodeDestroy(n)
 		}
 	}
 	n.status = Disconnected
-	if n.quit != nil {
-		n.lavalink.Logger().Info("closing ws goroutines...")
-		close(n.quit)
-		n.quit = nil
-		n.lavalink.Logger().Info("closed ws goroutines")
-	}
 	if n.conn != nil {
 		if err := n.conn.Close(); err != nil {
 			n.lavalink.Logger().Errorf("error while closing wsconn: %s", err)

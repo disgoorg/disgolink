@@ -31,6 +31,7 @@ var (
 )
 
 func main() {
+	log.SetFlags(log.LstdFlags | log.Lshortfile)
 	log.SetLevel(log.LevelDebug)
 	log.Info("starting _example...")
 
@@ -68,7 +69,7 @@ func main() {
 		log.Fatalf("error while connecting to discord: %s", err)
 	}
 
-	log.Infof("_example is now running. Press CTRL-C to exit.")
+	log.Infof("example is now running. Press CTRL-C to exit.")
 	s := make(chan os.Signal, 1)
 	signal.Notify(s, syscall.SIGINT, syscall.SIGTERM, os.Interrupt, os.Kill)
 	<-s
@@ -87,7 +88,7 @@ func connect(event *events.ApplicationCommandInteractionEvent, voiceState *core.
 
 func registerNodes() {
 	secure, _ := strconv.ParseBool(os.Getenv("lavalink_secure"))
-	dgolink.AddNode(lavalink.NodeConfig{
+	dgolink.AddNode(context.TODO(), lavalink.NodeConfig{
 		Name:        "test",
 		Host:        os.Getenv("lavalink_host"),
 		Port:        os.Getenv("lavalink_port"),
@@ -95,8 +96,5 @@ func registerNodes() {
 		Secure:      secure,
 		ResumingKey: os.Getenv("lavalink_resuming_key"),
 	})
-	go func() {
-		time.Sleep(time.Second * 5)
-		_ = dgolink.BestNode().ConfigureResuming("test", 20*time.Second)
-	}()
+	_ = dgolink.BestNode().ConfigureResuming("test", 20*time.Second)
 }
