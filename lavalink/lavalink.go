@@ -250,7 +250,7 @@ func (l *lavalinkImpl) Close() {
 
 func (l *lavalinkImpl) VoiceServerUpdate(voiceServerUpdate VoiceServerUpdate) {
 	player := l.ExistingPlayer(voiceServerUpdate.GuildID)
-	if player == nil {
+	if player == nil || player.LastSessionID() == nil {
 		return
 	}
 	_ = player.Node().Send(VoiceUpdateCommand{
