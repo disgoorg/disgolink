@@ -2,7 +2,8 @@ package lavalink
 
 import (
 	"encoding/json"
-	"github.com/pkg/errors"
+
+	"github.com/DisgoOrg/snowflake"
 )
 
 type OpType string
@@ -45,7 +46,7 @@ type OpCommand interface {
 type OpEvent interface {
 	Op
 	Event() EventType
-	GuildID() string
+	GuildID() snowflake.Snowflake
 	OpEvent()
 }
 
@@ -83,7 +84,9 @@ func (e *UnmarshalOp) UnmarshalJSON(data []byte) error {
 		op = v
 
 	default:
-		return errors.Errorf("unknown op type %s received", opType.Op)
+		var v UnknownOp
+		err = json.Unmarshal(data, &v)
+		op = v
 	}
 
 	if err != nil {
@@ -95,8 +98,8 @@ func (e *UnmarshalOp) UnmarshalJSON(data []byte) error {
 }
 
 type PlayerUpdateOp struct {
-	GuildID string      `json:"guildId"`
-	State   PlayerState `json:"state"`
+	GuildID snowflake.Snowflake `json:"guildId"`
+	State   PlayerState         `json:"state"`
 }
 
 func (PlayerUpdateOp) Op() OpType { return OpTypePlayerUpdate }
@@ -106,3 +109,22 @@ type StatsOp struct {
 }
 
 func (StatsOp) Op() OpType { return OpTypeStats }
+
+type UnknownOp struct {
+	op   OpType
+	Data []byte `json:"-"`
+}
+
+func (o *UnknownOp) UnmarshalJSON(data []byte) error {
+	var v struct {
+		Op OpType `json:"op"`
+	}
+	if err := json.Unmarshal(data, &v); err != nil {
+		return err
+	}
+	o.op = v.Op
+	o.Data = data
+	return nil
+}
+
+func (o UnknownOp) Op() OpType { return o.op }

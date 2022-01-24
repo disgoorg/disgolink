@@ -2,16 +2,17 @@ package lavalink
 
 import (
 	"encoding/json"
-	"github.com/DisgoOrg/disgolink/filters"
-	"github.com/pkg/errors"
 	"time"
+
+	"github.com/DisgoOrg/snowflake"
+	"github.com/pkg/errors"
 )
 
 type Player interface {
-	Track() Track
-	SetTrack(track Track)
-	Play(track Track) error
-	PlayAt(track Track, start time.Duration, end time.Duration) error
+	Track() AudioTrack
+	SetTrack(track AudioTrack)
+	Play(track AudioTrack) error
+	PlayAt(track AudioTrack, start time.Duration, end time.Duration) error
 	Stop() error
 	Destroy() error
 	Pause(paused bool) error
@@ -20,22 +21,22 @@ type Player interface {
 	Seek(position time.Duration) error
 	Volume() int
 	SetVolume(volume int) error
-	Filters() filters.Filters
-	SetFilters(filters filters.Filters)
+	Filters() Filters
+	SetFilters(filters Filters)
 
-	GuildID() string
-	ChannelID() *string
-	SetChannelID(channelID *string)
+	GuildID() snowflake.Snowflake
+	ChannelID() *snowflake.Snowflake
+	SetChannelID(channelID *snowflake.Snowflake)
 	LastSessionID() *string
 	SetLastSessionID(sessionID string)
 
 	Node() Node
-	ChangeNode(node Node)
+	SetNode(node Node)
 
 	PlayerUpdate(state PlayerState)
-	EmitEvent(listenerCaller func(listener PlayerEventListener))
-	AddListener(playerListener PlayerEventListener)
-	RemoveListener(playerListener PlayerEventListener)
+	EmitEvent(caller func(l interface{}))
+	AddListener(listener interface{})
+	RemoveListener(listener interface{})
 }
 
 type PlayerState struct {
@@ -61,7 +62,7 @@ func (s *PlayerState) UnmarshalJSON(data []byte) error {
 
 var _ Player = (*DefaultPlayer)(nil)
 
-func NewPlayer(node Node, guildID string) Player {
+func NewPlayer(node Node, guildID snowflake.Snowflake) Player {
 	return &DefaultPlayer{
 		guildID: guildID,
 		volume:  100,
@@ -70,27 +71,27 @@ func NewPlayer(node Node, guildID string) Player {
 }
 
 type DefaultPlayer struct {
-	guildID       string
-	channelID     *string
+	guildID       snowflake.Snowflake
+	channelID     *snowflake.Snowflake
 	lastSessionID *string
-	track         Track
+	track         AudioTrack
 	volume        int
 	paused        bool
 	state         PlayerState
-	filters       filters.Filters
+	filters       Filters
 	node          Node
-	listeners     []PlayerEventListener
+	listeners     []interface{}
 }
 
-func (p *DefaultPlayer) Track() Track {
+func (p *DefaultPlayer) Track() AudioTrack {
 	return p.track
 }
 
-func (p *DefaultPlayer) SetTrack(track Track) {
+func (p *DefaultPlayer) SetTrack(track AudioTrack) {
 	p.track = track
 }
 
-func (p *DefaultPlayer) Play(track Track) error {
+func (p *DefaultPlayer) Play(track AudioTrack) error {
 	t := track.Track()
 	if t == "" {
 		return errors.New("can't play empty track")
@@ -105,7 +106,7 @@ func (p *DefaultPlayer) Play(track Track) error {
 	return nil
 }
 
-func (p *DefaultPlayer) PlayAt(track Track, start time.Duration, end time.Duration) error {
+func (p *DefaultPlayer) PlayAt(track AudioTrack, start time.Duration, end time.Duration) error {
 	t := track.Track()
 	if t == "" {
 		return errors.New("can't play empty track")
@@ -137,6 +138,11 @@ func (p *DefaultPlayer) Destroy() error {
 	if err := p.Node().Send(DestroyCommand{GuildID: p.guildID}); err != nil {
 		return errors.Wrap(err, "error while destroying player")
 	}
+	for _, pl := range p.Node().Lavalink().Plugins() {
+		if plugin, ok := pl.(PluginEventHandler); ok {
+			plugin.OnDestroyPlayer(p)
+		}
+	}
 	return nil
 }
 
@@ -154,12 +160,17 @@ func (p *DefaultPlayer) Pause(pause bool) error {
 
 	p.paused = pause
 	if pause {
-		p.EmitEvent(func(listener PlayerEventListener) {
-			listener.OnPlayerPause(p)
+		p.EmitEvent(func(l interface{}) {
+			if listener, ok := l.(PlayerEventListener); ok {
+				listener.OnPlayerPause(p)
+			}
+
 		})
 	} else {
-		p.EmitEvent(func(listener PlayerEventListener) {
-			listener.OnPlayerResume(p)
+		p.EmitEvent(func(l interface{}) {
+			if listener, ok := l.(PlayerEventListener); ok {
+				listener.OnPlayerResume(p)
+			}
 		})
 	}
 	return nil
@@ -214,26 +225,26 @@ func (p *DefaultPlayer) SetVolume(volume int) error {
 	return nil
 }
 
-func (p *DefaultPlayer) Filters() filters.Filters {
+func (p *DefaultPlayer) Filters() Filters {
 	if p.filters == nil {
-		p.filters = filters.NewFilters(p.commitFilters)
+		p.filters = NewFilters(p.commitFilters)
 	}
 	return p.filters
 }
 
-func (p *DefaultPlayer) SetFilters(filters filters.Filters) {
+func (p *DefaultPlayer) SetFilters(filters Filters) {
 	p.filters = filters
 }
 
-func (p *DefaultPlayer) GuildID() string {
+func (p *DefaultPlayer) GuildID() snowflake.Snowflake {
 	return p.guildID
 }
 
-func (p *DefaultPlayer) ChannelID() *string {
+func (p *DefaultPlayer) ChannelID() *snowflake.Snowflake {
 	return p.channelID
 }
 
-func (p *DefaultPlayer) SetChannelID(channelID *string) {
+func (p *DefaultPlayer) SetChannelID(channelID *snowflake.Snowflake) {
 	p.channelID = channelID
 }
 
@@ -249,7 +260,7 @@ func (p *DefaultPlayer) Node() Node {
 	return p.node
 }
 
-func (p *DefaultPlayer) ChangeNode(node Node) {
+func (p *DefaultPlayer) SetNode(node Node) {
 	p.node = node
 }
 
@@ -257,25 +268,25 @@ func (p *DefaultPlayer) PlayerUpdate(state PlayerState) {
 	p.state = state
 }
 
-func (p *DefaultPlayer) EmitEvent(listenerCaller func(listener PlayerEventListener)) {
+func (p *DefaultPlayer) EmitEvent(caller func(l interface{})) {
 	for _, listener := range p.listeners {
-		listenerCaller(listener)
+		caller(listener)
 	}
 }
 
-func (p *DefaultPlayer) AddListener(playerListener PlayerEventListener) {
-	p.listeners = append(p.listeners, playerListener)
+func (p *DefaultPlayer) AddListener(listener interface{}) {
+	p.listeners = append(p.listeners, listener)
 }
 
-func (p *DefaultPlayer) RemoveListener(playerListener PlayerEventListener) {
-	for i, listener := range p.listeners {
-		if listener == playerListener {
+func (p *DefaultPlayer) RemoveListener(listener interface{}) {
+	for i, l := range p.listeners {
+		if l == listener {
 			p.listeners = append(p.listeners[:i], p.listeners[i+1:]...)
 		}
 	}
 }
 
-func (p *DefaultPlayer) commitFilters(filters filters.Filters) error {
+func (p *DefaultPlayer) commitFilters(filters Filters) error {
 	if err := p.node.Send(FiltersCommand{
 		GuildID: p.guildID,
 		Filters: filters,

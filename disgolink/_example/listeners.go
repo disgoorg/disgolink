@@ -2,11 +2,12 @@ package main
 
 import (
 	"fmt"
+	"math/rand"
+	"time"
+
 	"github.com/DisgoOrg/disgo/core/events"
 	"github.com/DisgoOrg/disgo/discord"
 	"github.com/DisgoOrg/disgolink/lavalink"
-	"math/rand"
-	"time"
 )
 
 func checkMusicPlayer(event *events.ApplicationCommandInteractionEvent) *MusicPlayer {
@@ -119,20 +120,20 @@ func onApplicationCommand(event *events.ApplicationCommandInteractionEvent) {
 				skipSegments = *option
 			}
 
-			musicPlayer.Node().RestClient().LoadItemHandler(query, lavalink.NewResultHandler(
-				func(track lavalink.Track) {
+			_ = musicPlayer.Node().RestClient().LoadItemHandler(query, lavalink.NewResultHandler(
+				func(track lavalink.AudioTrack) {
 					if ok = connect(event, voiceState); !ok {
 						return
 					}
 					musicPlayer.Queue(event, skipSegments, track)
 				},
-				func(playlist lavalink.Playlist) {
+				func(playlist lavalink.AudioPlaylist) {
 					if ok = connect(event, voiceState); !ok {
 						return
 					}
 					musicPlayer.Queue(event, skipSegments, playlist.Tracks...)
 				},
-				func(tracks []lavalink.Track) {
+				func(tracks []lavalink.AudioTrack) {
 					if ok = connect(event, voiceState); !ok {
 						return
 					}
@@ -141,7 +142,7 @@ func onApplicationCommand(event *events.ApplicationCommandInteractionEvent) {
 				func() {
 					_, _ = event.UpdateResponse(discord.NewMessageUpdateBuilder().SetContent("no tracks found").Build())
 				},
-				func(e lavalink.Exception) {
+				func(e lavalink.FriendlyException) {
 					_, _ = event.UpdateResponse(discord.NewMessageUpdateBuilder().SetContent("error while loading track:\n" + e.Error()).Build())
 				},
 			))

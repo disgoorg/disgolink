@@ -1,12 +1,12 @@
-package filters
+package lavalink
 
-// TODO add constructor func for all filters with default values
+import "encoding/json"
 
 var DefaultVolume Volume = 1.0
 
 type Filters interface {
 	Volume() *Volume
-	Equalizer() Equalizer
+	Equalizer() *Equalizer
 	Timescale() *Timescale
 	Tremolo() *Tremolo
 	Vibrato() *Vibrato
@@ -15,7 +15,7 @@ type Filters interface {
 	Distortion() *Distortion
 
 	SetVolume(v *Volume) Filters
-	SetEqualizer(equalizer Equalizer) Filters
+	SetEqualizer(equalizer *Equalizer) Filters
 	SetTimescale(timescale *Timescale) Filters
 	SetTremolo(tremolo *Tremolo) Filters
 	SetVibrato(vibrato *Vibrato) Filters
@@ -35,7 +35,7 @@ var _ Filters = (*defaultFilters)(nil)
 
 type defaultFilters struct {
 	FilterVolume     *Volume     `json:"volume,omitempty"`
-	FilterEqualizer  Equalizer   `json:"equalizer,omitempty"`
+	FilterEqualizer  *Equalizer  `json:"equalizer,omitempty"`
 	FilterTimescale  *Timescale  `json:"timescale,omitempty"`
 	FilterTremolo    *Tremolo    `json:"tremolo,omitempty"`
 	FilterVibrato    *Vibrato    `json:"vibrato,omitempty"`
@@ -57,14 +57,14 @@ func (f *defaultFilters) SetVolume(volume *Volume) Filters {
 	return f
 }
 
-func (f *defaultFilters) Equalizer() Equalizer {
+func (f *defaultFilters) Equalizer() *Equalizer {
 	if f.FilterEqualizer == nil {
-		f.FilterEqualizer = make(map[int]float32)
+		f.FilterEqualizer = new(Equalizer)
 	}
 	return f.FilterEqualizer
 }
 
-func (f *defaultFilters) SetEqualizer(equalizer Equalizer) Filters {
+func (f *defaultFilters) SetEqualizer(equalizer *Equalizer) Filters {
 	f.FilterEqualizer = equalizer
 	return f
 }
@@ -155,4 +155,63 @@ func (f *defaultFilters) Clear() Filters {
 
 func (f *defaultFilters) Commit() error {
 	return f.commitFunc(f)
+}
+
+type Distortion struct {
+	SinOffset int `json:"sinOffset"`
+	SinScale  int `json:"sinScale"`
+	CosOffset int `json:"cosOffset"`
+	CosScale  int `json:"cosScale"`
+	TanOffset int `json:"tanOffset"`
+	TanScale  int `json:"tanScale"`
+	Offset    int `json:"offset"`
+	Scale     int `json:"scale"`
+}
+
+type Karaoke struct {
+	Level       float32 `json:"level"`
+	MonoLevel   float32 `json:"monoLevel"`
+	FilterBand  float32 `json:"filterBand"`
+	FilterWidth float32 `json:"filterWidth"`
+}
+
+type Rotation struct {
+	RotationHz int `json:"rotationHz"`
+}
+
+type Timescale struct {
+	Speed float32 `json:"speed"`
+	Pitch float32 `json:"pitch"`
+	Rate  float32 `json:"rate"`
+}
+
+type Tremolo struct {
+	Frequency float32 `json:"frequency"`
+	Depth     float32 `json:"depth"`
+}
+
+type Vibrato struct {
+	Frequency float32 `json:"frequency"`
+	Depth     float32 `json:"depth"`
+}
+
+type Volume float32
+
+type Equalizer map[int]float32
+
+type EqBand struct {
+	Band int     `json:"band"`
+	Gain float32 `json:"gain"`
+}
+
+// MarshalJSON marshals the map as object array
+func (e Equalizer) MarshalJSON() ([]byte, error) {
+	var bands []EqBand
+	for band, gain := range e {
+		bands = append(bands, EqBand{
+			Band: band,
+			Gain: gain,
+		})
+	}
+	return json.Marshal(bands)
 }

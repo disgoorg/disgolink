@@ -2,12 +2,15 @@ package main
 
 import (
 	"context"
-	"github.com/DisgoOrg/disgolink/disgolink"
 	"os"
 	"os/signal"
 	"regexp"
 	"strconv"
 	"syscall"
+	"time"
+
+	"github.com/DisgoOrg/disgolink/disgolink"
+	"github.com/DisgoOrg/snowflake"
 
 	"github.com/DisgoOrg/disgo/core"
 	"github.com/DisgoOrg/disgo/core/bot"
@@ -22,13 +25,14 @@ var (
 	URLPattern = regexp.MustCompile("^https?://[-a-zA-Z0-9+&@#/%?=~_|!:,.;]*[-a-zA-Z0-9+&@#/%=~_|]?")
 
 	token        = os.Getenv("disgolink_token")
-	guildID      = discord.Snowflake(os.Getenv("guild_id"))
+	guildID      = snowflake.GetSnowflakeEnv("guild_id")
 	disgo        *core.Bot
 	dgolink      disgolink.Link
-	musicPlayers = map[discord.Snowflake]*MusicPlayer{}
+	musicPlayers = map[snowflake.Snowflake]*MusicPlayer{}
 )
 
 func main() {
+	log.SetFlags(log.LstdFlags | log.Lshortfile)
 	log.SetLevel(log.LevelDebug)
 	log.Info("starting _example...")
 
@@ -54,7 +58,7 @@ func main() {
 	dgolink = disgolink.New(disgo)
 	registerNodes()
 
-	defer dgolink.Close(context.TODO())
+	defer dgolink.Close()
 
 	_, err = disgo.SetGuildCommands(guildID, commands)
 	if err != nil {
@@ -66,7 +70,7 @@ func main() {
 		log.Fatalf("error while connecting to discord: %s", err)
 	}
 
-	log.Infof("_example is now running. Press CTRL-C to exit.")
+	log.Infof("example is now running. Press CTRL-C to exit.")
 	s := make(chan os.Signal, 1)
 	signal.Notify(s, syscall.SIGINT, syscall.SIGTERM, os.Interrupt, os.Kill)
 	<-s
@@ -85,11 +89,13 @@ func connect(event *events.ApplicationCommandInteractionEvent, voiceState *core.
 
 func registerNodes() {
 	secure, _ := strconv.ParseBool(os.Getenv("lavalink_secure"))
-	dgolink.AddNode(lavalink.NodeConfig{
-		Name:     "test",
-		Host:     os.Getenv("lavalink_host"),
-		Port:     os.Getenv("lavalink_port"),
-		Password: os.Getenv("lavalink_password"),
-		Secure:   secure,
+	dgolink.AddNode(context.TODO(), lavalink.NodeConfig{
+		Name:        "test",
+		Host:        os.Getenv("lavalink_host"),
+		Port:        os.Getenv("lavalink_port"),
+		Password:    os.Getenv("lavalink_password"),
+		Secure:      secure,
+		ResumingKey: os.Getenv("lavalink_resuming_key"),
 	})
+	_ = dgolink.BestNode().ConfigureResuming("test", 20*time.Second)
 }

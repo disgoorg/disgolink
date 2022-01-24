@@ -1,14 +1,17 @@
 package lavalink
 
 import (
-	"github.com/DisgoOrg/log"
 	"net/http"
+
+	"github.com/DisgoOrg/log"
+	"github.com/DisgoOrg/snowflake"
 )
 
 type Config struct {
 	Logger     log.Logger
 	HTTPClient *http.Client
-	UserID     string
+	UserID     snowflake.Snowflake
+	Plugins    []interface{}
 }
 
 type ConfigOpt func(config *Config)
@@ -35,8 +38,15 @@ func WithHTTPClient(httpClient *http.Client) ConfigOpt {
 }
 
 //goland:noinspection GoUnusedExportedFunction
-func WithUserID(userID string) ConfigOpt {
+func WithUserID(userID snowflake.Snowflake) ConfigOpt {
 	return func(config *Config) {
 		config.UserID = userID
+	}
+}
+
+//goland:noinspection GoUnusedExportedFunction
+func WithPlugins(plugins ...interface{}) ConfigOpt {
+	return func(config *Config) {
+		config.Plugins = append(config.Plugins, plugins...)
 	}
 }

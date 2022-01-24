@@ -4,7 +4,10 @@ go 1.17
 
 replace github.com/DisgoOrg/disgolink => ../
 
-require github.com/DisgoOrg/disgolink v0.2.5-0.20220112205449-450f387bf713
+require (
+	github.com/DisgoOrg/disgolink v0.2.5-0.20220112205449-450f387bf713
+	github.com/DisgoOrg/snowflake v1.0.1
+)
 
 require (
 	github.com/DisgoOrg/log v1.1.2 // indirect

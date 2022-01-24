@@ -7,11 +7,12 @@ import (
 )
 
 func New(disgo *core.Bot, opts ...lavalink.ConfigOpt) Link {
-	opts = append(opts, lavalink.WithLogger(disgo.Logger),
-		lavalink.WithHTTPClient(disgo.RestServices.HTTPClient()),
-		lavalink.WithUserID(disgo.ApplicationID.String()))
 	dgolink := &linkImpl{
-		Lavalink: lavalink.New(opts...),
+		Lavalink: lavalink.New(append([]lavalink.ConfigOpt{
+			lavalink.WithLogger(disgo.Logger),
+			lavalink.WithHTTPClient(disgo.RestServices.HTTPClient()),
+			lavalink.WithUserID(disgo.ApplicationID),
+		}, opts...)...),
 	}
 
 	disgo.EventManager.AddEventListeners(dgolink)
@@ -38,17 +39,17 @@ func (l *linkImpl) OnEvent(event core.Event) {
 	case *events.VoiceServerUpdateEvent:
 		l.VoiceServerUpdate(lavalink.VoiceServerUpdate{
 			Token:    e.VoiceServerUpdate.Token,
-			GuildID:  e.VoiceServerUpdate.GuildID.String(),
+			GuildID:  e.VoiceServerUpdate.GuildID,
 			Endpoint: e.VoiceServerUpdate.Endpoint,
 		})
 
 	case *events.GuildVoiceStateUpdateEvent:
-		if e.VoiceState.UserID.String() != l.UserID() {
+		if e.VoiceState.UserID != l.UserID() {
 			return
 		}
 		l.VoiceStateUpdate(lavalink.VoiceStateUpdate{
-			GuildID:   e.VoiceState.GuildID.String(),
-			ChannelID: (*string)(e.VoiceState.ChannelID),
+			GuildID:   e.VoiceState.GuildID,
+			ChannelID: e.VoiceState.ChannelID,
 			SessionID: e.VoiceState.SessionID,
 		})
 	}
