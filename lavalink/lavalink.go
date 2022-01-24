@@ -51,21 +51,22 @@ func New(opts ...ConfigOpt) Lavalink {
 	if config.HTTPClient == nil {
 		config.HTTPClient = &http.Client{Timeout: 20 * time.Second}
 	}
-	lavalink := &lavalinkImpl{
+	return &lavalinkImpl{
 		config:    *config,
+		userIDMu:  &sync.Mutex{},
 		pluginsMu: &sync.Mutex{},
 		nodesMu:   &sync.Mutex{},
 		nodes:     map[string]Node{},
 		playersMu: &sync.Mutex{},
 		players:   map[snowflake.Snowflake]Player{},
 	}
-	return lavalink
 }
 
 var _ Lavalink = (*lavalinkImpl)(nil)
 
 type lavalinkImpl struct {
 	config    Config
+	userIDMu  sync.Locker
 	pluginsMu sync.Locker
 
 	nodesMu sync.Locker
@@ -176,7 +177,7 @@ func (l *lavalinkImpl) RemovePlugins(plugins ...interface{}) {
 
 func (l *lavalinkImpl) EncodeTrack(track AudioTrack) (string, error) {
 	return EncodeToString(track, func(track AudioTrack, w io.Writer) error {
-		for _, pl := range l.config.Plugins {
+		for _, pl := range l.Plugins() {
 			if plugin, ok := pl.(SourceExtension); ok {
 				if plugin.SourceName() == track.Info().SourceName() {
 					return plugin.Encode(track, w)
@@ -189,7 +190,7 @@ func (l *lavalinkImpl) EncodeTrack(track AudioTrack) (string, error) {
 
 func (l *lavalinkImpl) DecodeTrack(str string) (AudioTrack, error) {
 	return DecodeString(str, func(track string, info AudioTrackInfo, r io.Reader) (AudioTrack, error) {
-		for _, pl := range l.config.Plugins {
+		for _, pl := range l.Plugins() {
 			if plugin, ok := pl.(SourceExtension); ok {
 				if plugin.SourceName() == info.SourceName() {
 					return plugin.Decode(track, info, r)
@@ -207,7 +208,7 @@ func (l *lavalinkImpl) Player(guildID snowflake.Snowflake) Player {
 		return player
 	}
 	player := NewPlayer(l.BestNode(), guildID)
-	for _, pl := range l.config.Plugins {
+	for _, pl := range l.Plugins() {
 		if plugin, ok := pl.(PluginEventHandler); ok {
 			plugin.OnNewPlayer(player)
 		}
@@ -233,10 +234,14 @@ func (l *lavalinkImpl) Players() map[snowflake.Snowflake]Player {
 }
 
 func (l *lavalinkImpl) UserID() snowflake.Snowflake {
+	l.userIDMu.Lock()
+	defer l.userIDMu.Unlock()
 	return l.config.UserID
 }
 
 func (l *lavalinkImpl) SetUserID(userID snowflake.Snowflake) {
+	l.userIDMu.Lock()
+	defer l.userIDMu.Unlock()
 	l.config.UserID = userID
 }
 
