@@ -3,14 +3,14 @@ module github.com/DisgoOrg/disgolink/dgolink/_example
 go 1.17
 
 replace (
-	github.com/DisgoOrg/disgolink => ../../
 	github.com/DisgoOrg/disgolink/dgolink => ../
+	github.com/DisgoOrg/disgolink/lavalink => ../../lavalink
 )
 
 require (
-	github.com/DisgoOrg/disgolink v1.0.1-0.20220113110532-5b6f72beb7fe
 	github.com/DisgoOrg/disgolink/dgolink v0.0.0-20220112214621-4d364f10b07e
-	github.com/DisgoOrg/snowflake v1.0.1
+	github.com/DisgoOrg/disgolink/lavalink v1.0.1-0.20220113110532-5b6f72beb7fe
+	github.com/DisgoOrg/snowflake v1.0.3
 	github.com/bwmarrin/discordgo v0.23.3-0.20211228023845-29269347e820
 )
 

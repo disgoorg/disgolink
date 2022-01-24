@@ -18,7 +18,7 @@ There are 3 packages depending on which go lib you use get a different package
 #### lavalink(non specific implementation)
 
 ```sh
-go get github.com/DisgoOrg/disgolink
+go get github.com/DisgoOrg/disgolink/lavalink
 ```
 
 #### disgolink([disgo](https://github.com/DisgoOrg/disgo) implementation)
