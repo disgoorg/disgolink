@@ -1,6 +1,7 @@
 package main
 
 import (
+	"context"
 	"os"
 	"os/signal"
 	"regexp"
@@ -10,6 +11,7 @@ import (
 
 	"github.com/DisgoOrg/disgolink/dgolink"
 	"github.com/DisgoOrg/disgolink/lavalink"
+	"github.com/DisgoOrg/snowflake"
 	"github.com/bwmarrin/discordgo"
 )
 
@@ -59,7 +61,7 @@ func (b *Bot) messageCreateHandler(s *discordgo.Session, e *discordgo.MessageCre
 		if !urlPattern.MatchString(query) {
 			query = "ytsearch:" + query
 		}
-		b.Link.BestRestClient().LoadItemHandler(query, lavalink.NewResultHandler(
+		_ = b.Link.BestRestClient().LoadItemHandler(query, lavalink.NewResultHandler(
 			func(track lavalink.AudioTrack) {
 				play(s, b.Link, e.GuildID, args[1], e.ChannelID, track)
 			},
@@ -85,7 +87,7 @@ func play(s *discordgo.Session, link *dgolink.Link, guildID string, voiceChannel
 		_, _ = s.ChannelMessageSend(channelID, "error while joining voice channel: "+err.Error())
 		return
 	}
-	if err := link.Player(guildID).Play(track); err != nil {
+	if err := link.Player(snowflake.Snowflake(guildID)).Play(track); err != nil {
 		_, _ = s.ChannelMessageSend(channelID, "error while playing track: "+err.Error())
 		return
 	}
@@ -94,7 +96,7 @@ func play(s *discordgo.Session, link *dgolink.Link, guildID string, voiceChannel
 
 func (b *Bot) registerNodes() {
 	secure, _ := strconv.ParseBool(os.Getenv("LAVALINK_SECURE"))
-	b.Link.AddNode(lavalink.NodeConfig{
+	b.Link.AddNode(context.TODO(), lavalink.NodeConfig{
 		Name:     "test",
 		Host:     os.Getenv("LAVALINK_HOST"),
 		Port:     os.Getenv("LAVALINK_PORT"),

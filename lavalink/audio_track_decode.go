@@ -8,7 +8,7 @@ import (
 	"time"
 )
 
-type CustomTrackInfoDecoder func(info AudioTrackInfo, r io.Reader) (AudioTrack, error)
+type CustomTrackInfoDecoder func(track string, info AudioTrackInfo, r io.Reader) (AudioTrack, error)
 
 func DecodeString(str string, customTrackInfoDecoder CustomTrackInfoDecoder) (track AudioTrack, err error) {
 	var data []byte
@@ -23,23 +23,23 @@ func DecodeString(str string, customTrackInfoDecoder CustomTrackInfoDecoder) (tr
 	if value, err = ReadInt32(r); err != nil {
 		return
 	}
-	flags := int(value) & 0xC00000000 >> 30
+	flags := int32(int64(value) & 0xC0000000 >> 30)
 	//messageSize := value & 0x3FFFFFFF
 
-	var version uint8
-	if flags&trackInfoVersioned != 0 {
-		if version, err = r.ReadByte(); err != nil {
+	var version int32
+	if flags&trackInfoVersioned == 0 {
+		version = 1
+	} else {
+		var v byte
+		if v, err = r.ReadByte(); err != nil {
 			return
 		}
-		version = version & 0xFF
-	} else {
-		version = 1
+		version = int32(v & 0xFF)
 	}
 
 	if info.TrackTitle, err = ReadString(r); err != nil {
 		return
 	}
-
 	if info.TrackAuthor, err = ReadString(r); err != nil {
 		return
 	}
@@ -53,32 +53,34 @@ func DecodeString(str string, customTrackInfoDecoder CustomTrackInfoDecoder) (tr
 	if info.TrackIdentifier, err = ReadString(r); err != nil {
 		return
 	}
-
 	if info.TrackIsStream, err = ReadBool(r); err != nil {
 		return
 	}
-
-	if info.TrackURI, err = ReadNullableString(r); err != nil {
-		return
+	if version >= 2 {
+		if info.TrackURI, err = ReadNullableString(r); err != nil {
+			return
+		}
 	}
-
 	if info.TrackSourceName, err = ReadString(r); err != nil {
 		return
 	}
 
 	if customTrackInfoDecoder != nil {
-		if track, err = customTrackInfoDecoder(info, r); err != nil {
+		if track, err = customTrackInfoDecoder(str, info, r); err != nil {
 			return
 		}
+	}
+	if track == nil {
+		track = NewAudioTrack(str, info)
 	}
 
 	var position int64
 	if position, err = ReadInt64(r); err != nil {
 		return
 	}
-	info.TrackPosition = time.Duration(position) * time.Millisecond
+	track.Info().SetPosition(time.Duration(position) * time.Millisecond)
 
-	return NewAudioTrack(str, info), nil
+	return track, nil
 }
 
 func ReadInt64(r io.Reader) (i int64, err error) {
@@ -89,7 +91,11 @@ func ReadInt32(r io.Reader) (i int32, err error) {
 	return i, binary.Read(r, binary.BigEndian, &i)
 }
 
-func ReadUInt16(r io.Reader) (i uint16, err error) {
+func ReadInt16(r io.Reader) (i int16, err error) {
+	return i, binary.Read(r, binary.BigEndian, &i)
+}
+
+func ReadInt8(r io.Reader) (i int8, err error) {
 	return i, binary.Read(r, binary.BigEndian, &i)
 }
 
@@ -98,7 +104,7 @@ func ReadBool(r io.Reader) (b bool, err error) {
 }
 
 func ReadString(r io.Reader) (string, error) {
-	size, err := ReadUInt16(r)
+	size, err := ReadInt16(r)
 	if err != nil {
 		return "", err
 	}

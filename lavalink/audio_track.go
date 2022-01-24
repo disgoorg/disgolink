@@ -2,17 +2,11 @@ package lavalink
 
 import (
 	"encoding/json"
-	"errors"
 	"time"
 )
 
-var (
-	ErrEmptyTrack     = errors.New("track is empty")
-	ErrEmptyTrackInfo = errors.New("trackinfo is empty")
-)
-
 const (
-	trackInfoVersioned int   = 1
+	trackInfoVersioned int32 = 1
 	trackInfoVersion   int32 = 2
 )
 

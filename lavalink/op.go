@@ -2,6 +2,8 @@ package lavalink
 
 import (
 	"encoding/json"
+
+	"github.com/DisgoOrg/snowflake"
 )
 
 type OpType string
@@ -44,7 +46,7 @@ type OpCommand interface {
 type OpEvent interface {
 	Op
 	Event() EventType
-	GuildID() string
+	GuildID() snowflake.Snowflake
 	OpEvent()
 }
 
@@ -96,8 +98,8 @@ func (e *UnmarshalOp) UnmarshalJSON(data []byte) error {
 }
 
 type PlayerUpdateOp struct {
-	GuildID string      `json:"guildId"`
-	State   PlayerState `json:"state"`
+	GuildID snowflake.Snowflake `json:"guildId"`
+	State   PlayerState         `json:"state"`
 }
 
 func (PlayerUpdateOp) Op() OpType { return OpTypePlayerUpdate }

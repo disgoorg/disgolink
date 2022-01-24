@@ -7,12 +7,13 @@ import (
 	"github.com/DisgoOrg/disgo/discord"
 	"github.com/DisgoOrg/disgolink/lavalink"
 	"github.com/DisgoOrg/log"
+	"github.com/DisgoOrg/snowflake"
 
 	"github.com/DisgoOrg/disgo/core"
 )
 
-func NewMusicPlayer(guildID discord.Snowflake) *MusicPlayer {
-	player := dgolink.Player(guildID.String())
+func NewMusicPlayer(guildID snowflake.Snowflake) *MusicPlayer {
+	player := dgolink.Player(guildID)
 	musicPlayer := &MusicPlayer{
 		Player: player,
 	}

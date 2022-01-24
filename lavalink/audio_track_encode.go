@@ -5,6 +5,8 @@ import (
 	"encoding/base64"
 	"encoding/binary"
 	"io"
+
+	"github.com/pkg/errors"
 )
 
 type CustomTrackEncoder func(info AudioTrack, w io.Writer) error
@@ -12,7 +14,7 @@ type CustomTrackEncoder func(info AudioTrack, w io.Writer) error
 func EncodeToString(track AudioTrack, customTrackEncoder CustomTrackEncoder) (str string, err error) {
 	w := new(bytes.Buffer)
 
-	if err = WriteInt32(w, trackInfoVersion); err != nil {
+	if err = w.WriteByte(byte(trackInfoVersion)); err != nil {
 		return
 	}
 	if err = WriteString(w, track.Info().Title()); err != nil {
@@ -28,9 +30,6 @@ func EncodeToString(track AudioTrack, customTrackEncoder CustomTrackEncoder) (st
 		return
 	}
 	if err = WriteBool(w, track.Info().IsStream()); err != nil {
-		return
-	}
-	if err = WriteBool(w, track.Info().URI() != nil); err != nil {
 		return
 	}
 	if err = WriteNullableString(w, track.Info().URI()); err != nil {
@@ -49,11 +48,17 @@ func EncodeToString(track AudioTrack, customTrackEncoder CustomTrackEncoder) (st
 	if err = WriteInt64(w, track.Info().Position().Milliseconds()); err != nil {
 		return
 	}
-	if err = WriteInt32(w, int32(w.Len()|trackInfoVersioned<<30)); err != nil {
+
+	output := bytes.NewBuffer(make([]byte, 0, 8+w.Len()))
+	if err = WriteInt32(output, int32(w.Len())|trackInfoVersioned<<30); err != nil {
 		return
 	}
 
-	return base64.StdEncoding.EncodeToString(w.Bytes()), nil
+	if err = binary.Write(output, binary.LittleEndian, w.Bytes()); err != nil {
+		return
+	}
+
+	return base64.StdEncoding.EncodeToString(output.Bytes()), nil
 }
 
 func WriteInt64(w io.Writer, i int64) error {
@@ -64,34 +69,27 @@ func WriteInt32(w io.Writer, i int32) error {
 	return binary.Write(w, binary.BigEndian, i)
 }
 
-func WriteUInt16(w io.Writer, i uint16) error {
+func WriteInt16(w io.Writer, i int16) error {
 	return binary.Write(w, binary.BigEndian, i)
 }
 
-func WriteBool(w io.Writer, bool bool) (err error) {
-	var bInt uint8
-	if bool {
-		bInt = 1
-	} else {
-		bInt = 0
-	}
-
-	if err = binary.Write(w, binary.BigEndian, bInt); err != nil {
-		return
-	}
-	return
+func WriteBool(w io.Writer, bool bool) error {
+	return binary.Write(w, binary.BigEndian, bool)
 }
 
-func WriteString(w io.Writer, str string) (err error) {
+func WriteString(w io.Writer, str string) error {
 	data := []byte(str)
 
-	if err = WriteUInt16(w, uint16(len(data))); err != nil {
-		return
+	size := len(data)
+
+	if size > 65535 {
+		return errors.New("string too big")
 	}
-	if err = binary.Write(w, binary.BigEndian, data); err != nil {
-		return
+
+	if err := WriteInt16(w, int16(size)); err != nil {
+		return err
 	}
-	return
+	return binary.Write(w, binary.BigEndian, data)
 }
 
 func WriteNullableString(w io.Writer, str *string) error {

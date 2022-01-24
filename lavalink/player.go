@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"time"
 
+	"github.com/DisgoOrg/snowflake"
 	"github.com/pkg/errors"
 )
 
@@ -23,9 +24,9 @@ type Player interface {
 	Filters() Filters
 	SetFilters(filters Filters)
 
-	GuildID() string
-	ChannelID() *string
-	SetChannelID(channelID *string)
+	GuildID() snowflake.Snowflake
+	ChannelID() *snowflake.Snowflake
+	SetChannelID(channelID *snowflake.Snowflake)
 	LastSessionID() *string
 	SetLastSessionID(sessionID string)
 
@@ -61,7 +62,7 @@ func (s *PlayerState) UnmarshalJSON(data []byte) error {
 
 var _ Player = (*DefaultPlayer)(nil)
 
-func NewPlayer(node Node, guildID string) Player {
+func NewPlayer(node Node, guildID snowflake.Snowflake) Player {
 	return &DefaultPlayer{
 		guildID: guildID,
 		volume:  100,
@@ -70,8 +71,8 @@ func NewPlayer(node Node, guildID string) Player {
 }
 
 type DefaultPlayer struct {
-	guildID       string
-	channelID     *string
+	guildID       snowflake.Snowflake
+	channelID     *snowflake.Snowflake
 	lastSessionID *string
 	track         AudioTrack
 	volume        int
@@ -235,15 +236,15 @@ func (p *DefaultPlayer) SetFilters(filters Filters) {
 	p.filters = filters
 }
 
-func (p *DefaultPlayer) GuildID() string {
+func (p *DefaultPlayer) GuildID() snowflake.Snowflake {
 	return p.guildID
 }
 
-func (p *DefaultPlayer) ChannelID() *string {
+func (p *DefaultPlayer) ChannelID() *snowflake.Snowflake {
 	return p.channelID
 }
 
-func (p *DefaultPlayer) SetChannelID(channelID *string) {
+func (p *DefaultPlayer) SetChannelID(channelID *snowflake.Snowflake) {
 	p.channelID = channelID
 }
 

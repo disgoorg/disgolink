@@ -4,12 +4,13 @@ import (
 	"net/http"
 
 	"github.com/DisgoOrg/log"
+	"github.com/DisgoOrg/snowflake"
 )
 
 type Config struct {
 	Logger     log.Logger
 	HTTPClient *http.Client
-	UserID     string
+	UserID     snowflake.Snowflake
 	Plugins    []interface{}
 }
 
@@ -37,7 +38,7 @@ func WithHTTPClient(httpClient *http.Client) ConfigOpt {
 }
 
 //goland:noinspection GoUnusedExportedFunction
-func WithUserID(userID string) ConfigOpt {
+func WithUserID(userID snowflake.Snowflake) ConfigOpt {
 	return func(config *Config) {
 		config.UserID = userID
 	}

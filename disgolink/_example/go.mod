@@ -3,6 +3,7 @@ module github.com/DisgoOrg/disgolink/disgolink/_example
 go 1.17
 
 replace (
+	github.com/DisgoOrg/disgo => ../../../disgo
 	github.com/DisgoOrg/disgolink => ../../
 	github.com/DisgoOrg/disgolink/disgolink => ../
 )
@@ -15,6 +16,7 @@ require (
 )
 
 require (
+	github.com/DisgoOrg/snowflake v1.0.1 // indirect
 	github.com/google/go-cmp v0.5.6 // indirect
 	github.com/gorilla/websocket v1.4.2 // indirect
 	github.com/pkg/errors v0.9.1 // indirect

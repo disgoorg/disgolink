@@ -290,7 +290,7 @@ func (n *nodeImpl) open(ctx context.Context, delay time.Duration) error {
 	}
 	header := http.Header{}
 	header.Add("Authorization", n.config.Password)
-	header.Add("User-Id", n.lavalink.UserID())
+	header.Add("User-Id", n.lavalink.UserID().String())
 	header.Add("Client-Name", fmt.Sprintf("%s/%s", Name, Version))
 	if n.config.ResumingKey != "" {
 		header.Add("Resume-Key", n.config.ResumingKey)

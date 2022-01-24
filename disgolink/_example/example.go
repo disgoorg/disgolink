@@ -10,6 +10,7 @@ import (
 	"time"
 
 	"github.com/DisgoOrg/disgolink/disgolink"
+	"github.com/DisgoOrg/snowflake"
 
 	"github.com/DisgoOrg/disgo/core"
 	"github.com/DisgoOrg/disgo/core/bot"
@@ -24,10 +25,10 @@ var (
 	URLPattern = regexp.MustCompile("^https?://[-a-zA-Z0-9+&@#/%?=~_|!:,.;]*[-a-zA-Z0-9+&@#/%=~_|]?")
 
 	token        = os.Getenv("disgolink_token")
-	guildID      = discord.Snowflake(os.Getenv("guild_id"))
+	guildID      = snowflake.GetSnowflakeEnv("guild_id")
 	disgo        *core.Bot
 	dgolink      disgolink.Link
-	musicPlayers = map[discord.Snowflake]*MusicPlayer{}
+	musicPlayers = map[snowflake.Snowflake]*MusicPlayer{}
 )
 
 func main() {

@@ -2,44 +2,47 @@ package lavalink
 
 import (
 	"testing"
+	"time"
 
 	"github.com/stretchr/testify/assert"
 )
 
-var uri = "https://www.youtube.com/watch?v=jdWhJcrrjQs"
-
-var encodedTrack = "QAAAfwIAFkFyY2hpdGVjdHMgLSAiQW5pbWFscyIAD0VwaXRhcGggUmVjb3JkcwAAAAAAA70IAAtqZFdoSmNycmpRcwABACtodHRwczovL3d3dy55b3V0dWJlLmNvbS93YXRjaD92PWpkV2hKY3JyalFzAAd5b3V0dWJlAAAAAAADuiQ="
-var testTrack = &DefaultAudioTrack{
-	Base64Track: &encodedTrack,
-	AudioTrackInfo: &defaultTrackInfo{
-		TrackIdentifier: "jdWhJcrrjQs",
-		TrackAuthor:     "745v9648967vb489",
-		TrackLength:     245000,
-		TrackIsStream:   false,
-		TrackTitle:      "325346b456b56",
-		TrackURI:        &uri,
-		TrackSourceName: "spotify",
-	},
-}
+var (
+	uri       = "https://www.youtube.com/watch?v=jdWhJcrrjQs"
+	testTrack = &DefaultAudioTrack{
+		AudioTrack: "QAAAfwIAFkFyY2hpdGVjdHMgLSAiQW5pbWFscyIAD0VwaXRhcGggUmVjb3JkcwAAAAAAA70IAAtqZFdoSmNycmpRcwABACtodHRwczovL3d3dy55b3V0dWJlLmNvbS93YXRjaD92PWpkV2hKY3JyalFzAAd5b3V0dWJlAAAAAAAAAAA=",
+		AudioTrackInfo: &DefaultAudioTrackInfo{
+			TrackIdentifier: "jdWhJcrrjQs",
+			TrackAuthor:     "Epitaph Records",
+			TrackLength:     245000 * time.Millisecond,
+			TrackIsStream:   false,
+			TrackTitle:      `Architects - "Animals"`,
+			TrackURI:        &uri,
+			TrackSourceName: "youtube",
+			TrackPosition:   0,
+		},
+	}
+)
 
 func TestDecodeString(t *testing.T) {
-	trackInfo, err := DecodeString(testTrack.Track())
+	track, err := DecodeString(testTrack.Track(), nil)
+
 	assert.NoError(t, err)
-	assert.Equal(t, testTrack.Info(), trackInfo)
+	assert.Equal(t, testTrack.Info(), track.Info())
 }
 
 func TestEncodeTrackString(t *testing.T) {
-	track, err := EncodeToString(testTrack.Info())
+	track, err := EncodeToString(testTrack, nil)
 	assert.NoError(t, err)
 	assert.Equal(t, testTrack.Track(), track)
 }
 
 func TestEncodeDecodeString(t *testing.T) {
-	trackInfo, err := DecodeString(testTrack.Track())
+	audioTrack, err := DecodeString(testTrack.Track(), nil)
 	assert.NoError(t, err)
-	assert.Equal(t, testTrack.Info(), trackInfo)
+	assert.Equal(t, testTrack.Info(), audioTrack.Info())
 
-	track, err := EncodeToString(trackInfo)
+	track, err := EncodeToString(audioTrack, nil)
 	assert.NoError(t, err)
 	assert.Equal(t, testTrack.Track(), track)
 }

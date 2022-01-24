@@ -2,6 +2,7 @@ package dgolink
 
 import (
 	"github.com/DisgoOrg/disgolink/lavalink"
+	"github.com/DisgoOrg/snowflake"
 	"github.com/bwmarrin/discordgo"
 )
 
@@ -24,7 +25,7 @@ type Link struct {
 }
 
 func (l *Link) ReadyHandler(_ *discordgo.Session, ready *discordgo.Ready) {
-	l.SetUserID(ready.User.ID)
+	l.SetUserID(snowflake.Snowflake(ready.User.ID))
 }
 
 func (l *Link) VoiceStateUpdateHandler(_ *discordgo.Session, voiceStateUpdate *discordgo.VoiceStateUpdate) {
@@ -33,8 +34,8 @@ func (l *Link) VoiceStateUpdateHandler(_ *discordgo.Session, voiceStateUpdate *d
 		channelID = &voiceStateUpdate.ChannelID
 	}
 	l.VoiceStateUpdate(lavalink.VoiceStateUpdate{
-		GuildID:   voiceStateUpdate.GuildID,
-		ChannelID: channelID,
+		GuildID:   snowflake.Snowflake(voiceStateUpdate.GuildID),
+		ChannelID: (*snowflake.Snowflake)(channelID),
 		SessionID: voiceStateUpdate.SessionID,
 	})
 }
@@ -45,7 +46,7 @@ func (l *Link) VoiceServerUpdateHandler(_ *discordgo.Session, voiceServerUpdate 
 		endpoint = &voiceServerUpdate.Endpoint
 	}
 	l.VoiceServerUpdate(lavalink.VoiceServerUpdate{
-		GuildID:  voiceServerUpdate.GuildID,
+		GuildID:  snowflake.Snowflake(voiceServerUpdate.GuildID),
 		Token:    voiceServerUpdate.Token,
 		Endpoint: endpoint,
 	})
