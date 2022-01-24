@@ -7,9 +7,8 @@ import (
 )
 
 func New(s *discordgo.Session, opts ...lavalink.ConfigOpt) *Link {
-	opts = append(opts, lavalink.WithHTTPClient(s.Client))
 	discordgolink := &Link{
-		Lavalink: lavalink.New(opts...),
+		Lavalink: lavalink.New(append([]lavalink.ConfigOpt{lavalink.WithHTTPClient(s.Client)}, opts...)...),
 	}
 
 	s.AddHandler(discordgolink.ReadyHandler)
