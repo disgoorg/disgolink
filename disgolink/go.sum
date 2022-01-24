@@ -1,3 +1,5 @@
+github.com/DisgoOrg/disgo v0.7.0 h1:qA3pSicmpvD0qLVWYIuI5twlR6AmQpL8MquyQjnKU34=
+github.com/DisgoOrg/disgo v0.7.0/go.mod h1:evu4FAO+764nZ+RLc2JaoJTpCCXMCgwHrejt758KKU0=
 github.com/DisgoOrg/log v1.1.2 h1:tGJS4jaH1PyjPRHybHp8WpYJ/4fR3fYWT4Mv1PoDGBM=
 github.com/DisgoOrg/log v1.1.2/go.mod h1:tSMofXaNhQNvzLRoL4tAiCG9yGY1ES5DLvduh7e9GRU=
 github.com/DisgoOrg/snowflake v1.0.1 h1:+UKgfjOnj2KBj/20tWKFNzhbo9awzThkY12ZaOQzaSg=

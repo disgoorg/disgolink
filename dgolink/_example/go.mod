@@ -8,8 +8,9 @@ replace (
 )
 
 require (
-	github.com/DisgoOrg/disgolink v0.2.5-0.20220112205449-450f387bf713
+	github.com/DisgoOrg/disgolink v1.0.1-0.20220113110532-5b6f72beb7fe
 	github.com/DisgoOrg/disgolink/dgolink v0.0.0-20220112214621-4d364f10b07e
+	github.com/DisgoOrg/snowflake v1.0.1
 	github.com/bwmarrin/discordgo v0.23.3-0.20211228023845-29269347e820
 )
 
