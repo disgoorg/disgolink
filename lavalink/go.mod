@@ -1,4 +1,4 @@
-module github.com/DisgoOrg/disgolink
+module github.com/DisgoOrg/disgolink/lavalink
 
 go 1.17
 
