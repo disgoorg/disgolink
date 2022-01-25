@@ -17,7 +17,7 @@ jobs:
                     go-version: 1.17
 
             -   name: go build
-                run: go build -v ./dgolink/...
+                run: cd dgolink && go build -v ./...
 
     govet:
         # We want to run on external PRs, but not on our own internal PRs as they'll be run
@@ -33,7 +33,7 @@ jobs:
                     go-version: 1.17
 
             -   name: go vet
-                run: go vet -v ./dgolink/...
+                run: cd dgolink && go vet -v ./...
 
     gotest:
         # We want to run on external PRs, but not on our own internal PRs as they'll be run
@@ -51,20 +51,4 @@ jobs:
             -   name: go test
                 env:
                     token: ${{ secrets.TOKEN }}
-                run: go test -v ./dgolink/...
-
-    gostaticcheck:
-        # We want to run on external PRs, but not on our own internal PRs as they'll be run
-        # by the push to the branch.
-        if: github.event_name == 'push' || github.event.pull_request.head.repo.full_name != github.repository
-        runs-on: ubuntu-latest
-        steps:
-            -   uses: actions/checkout@v2
-
-            -   name: Set up Go
-                uses: actions/setup-go@v2
-                with:
-                    go-version: 1.17
-
-            -   name: go staticcheck -v ./dgolink/...
-                uses: dominikh/staticcheck-action@v1.1.0
+                run: cd dgolink && go test -v ./...
