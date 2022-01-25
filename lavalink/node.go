@@ -285,6 +285,12 @@ func (n *nodeImpl) onStatsEvent(stats StatsOp) {
 }
 
 func (n *nodeImpl) open(ctx context.Context, delay time.Duration) error {
+	select {
+	case <-ctx.Done():
+		return ctx.Err()
+	default:
+	}
+
 	scheme := "ws"
 	if n.config.Secure {
 		scheme += "s"
