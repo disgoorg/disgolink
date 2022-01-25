@@ -5,6 +5,8 @@
 [![Disgo Version](https://img.shields.io/github/v/release/DisgoOrg/disgolink?label=release)](https://github.com/DisgoOrg/disgolink/releases/latest)
 [![Disgo Discord](https://discord.com/api/guilds/817327181659111454/widget.png)](https://discord.gg/NFmvZYmZMF)
 
+<img align="right" src="/.github/disgolink.png" width=192 alt="discord gopher">
+
 # disgolink
 
 disgolink is a [Lavalink](https://github.com/freyacodes/Lavalink) Client which supports the latest Lavalink 3.4 release
