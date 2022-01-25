@@ -9,7 +9,7 @@
 
 # disgolink
 
-disgolink is a [Lavalink](https://github.com/freyacodes/Lavalink) Client which supports the latest Lavalink 3.4 release
+disgolink is a [Lavalink](https://github.com/freyacodes/Lavalink) Client which supports the latest Lavalink 3.4 release and the new plugin system([lavalink dev](https://github.com/freyacodes/Lavalink/tree/dev) only)
 
 ## Getting Started
 
