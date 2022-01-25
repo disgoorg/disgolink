@@ -84,13 +84,12 @@ func (n *nodeImpl) Name() string {
 }
 
 func (n *nodeImpl) Send(cmd OpCommand) error {
-	if n.status != Connected {
-		return errors.Errorf("node is %s and cannot send a cmd to the node", n.status)
-	}
-
 	n.statusMu.Lock()
 	defer n.statusMu.Unlock()
 
+	if n.status != Connected {
+		return errors.Errorf("node is %s and cannot send a cmd to the node", n.status)
+	}
 	data, err := json.Marshal(cmd)
 	if err != nil {
 		return err
