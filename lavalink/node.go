@@ -35,6 +35,7 @@ type Node interface {
 	RestURL() string
 	Config() NodeConfig
 	Stats() Stats
+	Status() NodeStatus
 }
 
 type NodeConfig struct {
@@ -83,12 +84,12 @@ func (n *nodeImpl) Name() string {
 }
 
 func (n *nodeImpl) Send(cmd OpCommand) error {
+	if n.status != Connected {
+		return errors.Errorf("node is %s and cannot send a cmd to the node", n.status)
+	}
+
 	n.statusMu.Lock()
 	defer n.statusMu.Unlock()
-
-	if n.status != Connected {
-		return errors.Errorf("node is not %s", n.statusMu)
-	}
 
 	data, err := json.Marshal(cmd)
 	if err != nil {
@@ -102,6 +103,7 @@ func (n *nodeImpl) Send(cmd OpCommand) error {
 	if err = n.conn.WriteMessage(websocket.TextMessage, data); err != nil {
 		return errors.Wrap(err, "error while sending to lavalink websocket")
 	}
+
 	return nil
 }
 
@@ -122,9 +124,9 @@ func (n *nodeImpl) Stats() Stats {
 
 func (n *nodeImpl) reconnect() error {
 	n.statusMu.Lock()
-	n.status = Reconnecting
 	defer n.statusMu.Unlock()
 
+	n.status = Reconnecting
 	if err := n.open(context.TODO(), 0); err != nil {
 		n.status = Disconnected
 		return err
@@ -332,9 +334,9 @@ func (n *nodeImpl) open(ctx context.Context, delay time.Duration) error {
 
 func (n *nodeImpl) Open(ctx context.Context) error {
 	n.statusMu.Lock()
-	n.status = Connecting
 	defer n.statusMu.Unlock()
 
+	n.status = Connecting
 	if err := n.open(ctx, 0); err != nil {
 		n.status = Disconnected
 		return err
@@ -346,6 +348,7 @@ func (n *nodeImpl) Open(ctx context.Context) error {
 func (n *nodeImpl) Close() {
 	n.statusMu.Lock()
 	defer n.statusMu.Unlock()
+
 	for _, pl := range n.Lavalink().Plugins() {
 		if plugin, ok := pl.(PluginEventHandler); ok {
 			plugin.OnNodeDestroy(n)
