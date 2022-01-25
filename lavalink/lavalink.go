@@ -14,7 +14,7 @@ import (
 type Lavalink interface {
 	Logger() log.Logger
 
-	AddNode(ctx context.Context, config NodeConfig) Node
+	AddNode(ctx context.Context, config NodeConfig) (Node, error)
 	Nodes() []Node
 	Node(name string) Node
 	BestNode() Node
@@ -79,7 +79,7 @@ func (l *lavalinkImpl) Logger() log.Logger {
 	return l.config.Logger
 }
 
-func (l *lavalinkImpl) AddNode(ctx context.Context, config NodeConfig) Node {
+func (l *lavalinkImpl) AddNode(ctx context.Context, config NodeConfig) (Node, error) {
 	node := &nodeImpl{
 		config:   config,
 		lavalink: l,
@@ -88,14 +88,13 @@ func (l *lavalinkImpl) AddNode(ctx context.Context, config NodeConfig) Node {
 	}
 	node.restClient = newRestClientImpl(node, l.config.HTTPClient)
 	if err := node.Open(ctx); err != nil {
-		l.Logger().Error("failed to open connection to node", "error", err)
-		return nil
+		return nil, err
 	}
 
 	l.nodesMu.Lock()
 	defer l.nodesMu.Unlock()
 	l.nodes[config.Name] = node
-	return node
+	return node, nil
 }
 
 func (l *lavalinkImpl) Nodes() []Node {

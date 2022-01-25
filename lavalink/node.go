@@ -311,7 +311,12 @@ func (n *nodeImpl) open(ctx context.Context, delay time.Duration) error {
 	if err != nil {
 		n.lavalink.Logger().Warnf("error while connecting to lavalink websocket, retrying in %f seconds: %s", delay.Seconds(), err)
 		if delay > 0 {
-			time.Sleep(delay)
+			select {
+			case <-ctx.Done():
+				return ctx.Err()
+			case <-time.After(delay):
+			}
+
 		} else {
 			delay = 1 * time.Second
 		}
