@@ -58,15 +58,20 @@ func (c *restClientImpl) LoadItemHandler(identifier string, audioLoaderResultHan
 		return err
 	}
 
+	tracks, err := c.parseLoadResultTracks(result.Tracks)
+	if err != nil {
+		return err
+	}
+
 	switch result.LoadType {
 	case LoadTypeTrackLoaded:
-		audioLoaderResultHandler.TrackLoaded(result.Tracks[0])
+		audioLoaderResultHandler.TrackLoaded(tracks[0])
 
 	case LoadTypePlaylistLoaded:
-		audioLoaderResultHandler.PlaylistLoaded(NewAudioPlaylist(*result))
+		audioLoaderResultHandler.PlaylistLoaded(NewAudioPlaylist(*result.PlaylistInfo, tracks))
 
 	case LoadTypeSearchResult:
-		audioLoaderResultHandler.SearchResultLoaded(result.Tracks)
+		audioLoaderResultHandler.SearchResultLoaded(tracks)
 
 	case LoadTypeNoMatches:
 		audioLoaderResultHandler.NoMatches()
@@ -75,6 +80,18 @@ func (c *restClientImpl) LoadItemHandler(identifier string, audioLoaderResultHan
 		audioLoaderResultHandler.LoadFailed(*result.Exception)
 	}
 	return nil
+}
+
+func (c *restClientImpl) parseLoadResultTracks(loadResultTracks []LoadResultAudioTrack) ([]AudioTrack, error) {
+	var tracks []AudioTrack
+	for _, loadResultTrack := range loadResultTracks {
+		track, err := c.node.Lavalink().DecodeTrack(loadResultTrack.Track)
+		if err != nil {
+			return nil, err
+		}
+		tracks = append(tracks, track)
+	}
+	return tracks, nil
 }
 
 func (c *restClientImpl) get(path string, v interface{}) error {

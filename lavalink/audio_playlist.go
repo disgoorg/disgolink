@@ -1,9 +1,9 @@
 package lavalink
 
-func NewAudioPlaylist(result LoadResult) AudioPlaylist {
+func NewAudioPlaylist(info AudioPlaylistInfo, tracks []AudioTrack) AudioPlaylist {
 	return AudioPlaylist{
-		Info:   *result.PlaylistInfo,
-		Tracks: result.Tracks,
+		Info:   info,
+		Tracks: tracks,
 	}
 }
 
