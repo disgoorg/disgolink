@@ -9,7 +9,7 @@ import (
 	"github.com/pkg/errors"
 )
 
-type CustomTrackEncoder func(info AudioTrack, w io.Writer) error
+type CustomTrackEncoder func(track AudioTrack, w io.Writer) error
 
 func EncodeToString(track AudioTrack, customTrackEncoder CustomTrackEncoder) (str string, err error) {
 	w := new(bytes.Buffer)
@@ -17,25 +17,25 @@ func EncodeToString(track AudioTrack, customTrackEncoder CustomTrackEncoder) (st
 	if err = w.WriteByte(byte(trackInfoVersion)); err != nil {
 		return
 	}
-	if err = WriteString(w, track.Info().Title()); err != nil {
+	if err = WriteString(w, track.Info().Title); err != nil {
 		return
 	}
-	if err = WriteString(w, track.Info().Author()); err != nil {
+	if err = WriteString(w, track.Info().Author); err != nil {
 		return
 	}
-	if err = WriteInt64(w, track.Info().Length().Milliseconds()); err != nil {
+	if err = WriteInt64(w, track.Info().Length.Milliseconds()); err != nil {
 		return
 	}
-	if err = WriteString(w, track.Info().Identifier()); err != nil {
+	if err = WriteString(w, track.Info().Identifier); err != nil {
 		return
 	}
-	if err = WriteBool(w, track.Info().IsStream()); err != nil {
+	if err = WriteBool(w, track.Info().IsStream); err != nil {
 		return
 	}
-	if err = WriteNullableString(w, track.Info().URI()); err != nil {
+	if err = WriteNullableString(w, track.Info().URI); err != nil {
 		return
 	}
-	if err = WriteString(w, track.Info().SourceName()); err != nil {
+	if err = WriteString(w, track.Info().SourceName); err != nil {
 		return
 	}
 
@@ -45,7 +45,7 @@ func EncodeToString(track AudioTrack, customTrackEncoder CustomTrackEncoder) (st
 		}
 	}
 
-	if err = WriteInt64(w, track.Info().Position().Milliseconds()); err != nil {
+	if err = WriteInt64(w, track.Info().Position.Milliseconds()); err != nil {
 		return
 	}
 

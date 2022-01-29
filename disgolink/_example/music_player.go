@@ -38,7 +38,7 @@ func (p *MusicPlayer) Queue(event *events.ApplicationCommandInteractionEvent, sk
 		var track lavalink.AudioTrack
 		track, p.queue = p.queue[len(p.queue)-1], p.queue[:len(p.queue)-1]
 		_ = p.Play(track)
-		message := fmt.Sprintf("▶ ️playing [%s](%s)", track.Info().Title(), *track.Info().URI())
+		message := fmt.Sprintf("▶ ️playing [%s](%s)", track.Info().Title, *track.Info().URI)
 		if len(tracks) > 1 {
 			message += fmt.Sprintf("\nand queued %d tracks", len(tracks)-1)
 		}
@@ -72,10 +72,10 @@ func (p *MusicPlayer) OnTrackEnd(player lavalink.Player, track lavalink.AudioTra
 	}
 }
 func (p *MusicPlayer) OnTrackException(player lavalink.Player, track lavalink.AudioTrack, exception lavalink.FriendlyException) {
-	_, _ = p.channel.CreateMessage(discord.NewMessageCreateBuilder().SetContentf("AudioTrack exception: `%s`, `%s`, `%+v`", track.Info().Title(), exception).Build())
+	_, _ = p.channel.CreateMessage(discord.NewMessageCreateBuilder().SetContentf("AudioTrack exception: `%s`, `%s`, `%+v`", track.Info().Title, exception).Build())
 }
 func (p *MusicPlayer) OnTrackStuck(player lavalink.Player, track lavalink.AudioTrack, thresholdMs int) {
-	_, _ = p.channel.CreateMessage(discord.NewMessageCreateBuilder().SetContentf("track stuck: `%s`, %d", track.Info().Title(), thresholdMs).Build())
+	_, _ = p.channel.CreateMessage(discord.NewMessageCreateBuilder().SetContentf("track stuck: `%s`, %d", track.Info().Title, thresholdMs).Build())
 }
 func (p *MusicPlayer) OnWebSocketClosed(player lavalink.Player, code int, reason string, byRemote bool) {
 	_, _ = p.channel.CreateMessage(discord.NewMessageCreateBuilder().SetContentf("websocket closed: `%d`, `%s`, `%t`", code, reason, byRemote).Build())

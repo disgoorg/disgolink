@@ -63,7 +63,7 @@ func onApplicationCommand(event *events.ApplicationCommandInteractionEvent) {
 		}
 		tracks := ""
 		for i, track := range musicPlayer.queue {
-			tracks += fmt.Sprintf("%d. [%s](%s)\n", i+1, track.Info().Title(), *track.Info().URI())
+			tracks += fmt.Sprintf("%d. [%s](%s)\n", i+1, track.Info().Title, *track.Info().URI)
 		}
 		_ = event.Create(discord.NewMessageCreateBuilder().SetEmbeds(discord.NewEmbedBuilder().
 			SetTitle("Queue:").
