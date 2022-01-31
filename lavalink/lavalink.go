@@ -51,7 +51,7 @@ func New(opts ...ConfigOpt) Lavalink {
 	if config.HTTPClient == nil {
 		config.HTTPClient = &http.Client{Timeout: 20 * time.Second}
 	}
-	lavalink := &lavalinkImpl{
+	return &lavalinkImpl{
 		config:    *config,
 		pluginsMu: &sync.Mutex{},
 		nodesMu:   &sync.Mutex{},
@@ -59,7 +59,6 @@ func New(opts ...ConfigOpt) Lavalink {
 		playersMu: &sync.Mutex{},
 		players:   map[snowflake.Snowflake]Player{},
 	}
-	return lavalink
 }
 
 var _ Lavalink = (*lavalinkImpl)(nil)
