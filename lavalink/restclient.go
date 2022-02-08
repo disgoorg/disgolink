@@ -3,9 +3,11 @@ package lavalink
 import (
 	"context"
 	"encoding/json"
-	"io/ioutil"
+	"io"
 	"net/http"
 	"net/url"
+
+	"github.com/pkg/errors"
 )
 
 type SearchType string
@@ -38,7 +40,7 @@ type restClientImpl struct {
 }
 
 func (c *restClientImpl) Plugins(ctx context.Context) (plugins []Plugin, err error) {
-	err = c.get(ctx, "/plugins", &plugins)
+	err = c.getJSON(ctx, "/plugins", &plugins)
 	if err != nil {
 		return nil, err
 	}
@@ -47,7 +49,7 @@ func (c *restClientImpl) Plugins(ctx context.Context) (plugins []Plugin, err err
 
 func (c *restClientImpl) LoadItem(ctx context.Context, identifier string) (*LoadResult, error) {
 	var result LoadResult
-	err := c.get(ctx, "/loadtracks?identifier="+url.QueryEscape(identifier), &result)
+	err := c.getJSON(ctx, "/loadtracks?identifier="+url.QueryEscape(identifier), &result)
 	if err != nil {
 		return nil, err
 	}
@@ -85,25 +87,11 @@ func (c *restClientImpl) LoadItemHandler(ctx context.Context, identifier string,
 }
 
 func (c *restClientImpl) Version(ctx context.Context) (string, error) {
-	path := "/version"
-	rq, err := http.NewRequestWithContext(ctx, "GET", c.node.RestURL()+path, nil)
+	rawBody, err := c.get(ctx, "/version")
 	if err != nil {
 		return "", err
 	}
-	rq.Header.Set("Authorization", c.node.Config().Password)
-
-	rs, err := c.httpClient.Do(rq)
-	if err != nil {
-		return "", err
-	}
-	defer rs.Body.Close()
-
-	raw, err := ioutil.ReadAll(rs.Body)
-	c.node.Lavalink().Logger().Debugf("response from %s, code %d, body: %s", c.node.RestURL()+path, rs.StatusCode, string(raw))
-	if err != nil {
-		return "", err
-	}
-	return string(raw), nil
+	return string(rawBody), nil
 }
 
 func (c *restClientImpl) parseLoadResultTracks(loadResultTracks []LoadResultAudioTrack) ([]AudioTrack, error) {
@@ -118,29 +106,30 @@ func (c *restClientImpl) parseLoadResultTracks(loadResultTracks []LoadResultAudi
 	return tracks, nil
 }
 
-func (c *restClientImpl) get(ctx context.Context, path string, v interface{}) error {
-	rq, err := http.NewRequestWithContext(ctx, "GET", c.node.RestURL()+path, nil)
+func (c *restClientImpl) get(ctx context.Context, path string) ([]byte, error) {
+	rq, err := http.NewRequestWithContext(ctx, http.MethodGet, c.node.RestURL()+path, nil)
 	if err != nil {
-		return err
+		return nil, err
 	}
 	rq.Header.Set("Authorization", c.node.Config().Password)
-	rq.Header.Set("Content-Type", "application/json")
 
 	rs, err := c.httpClient.Do(rq)
 	if err != nil {
-		return err
+		return nil, err
 	}
-
 	defer rs.Body.Close()
+	if rs.StatusCode != http.StatusOK {
+		return nil, errors.New(rs.Status)
+	}
+	rawBody, _ := io.ReadAll(rs.Body)
+	c.node.Lavalink().Logger().Debugf("response from %s, code %d, body: %s", c.node.RestURL()+path, rs.StatusCode, string(rawBody))
+	return rawBody, nil
+}
 
-	raw, err := ioutil.ReadAll(rs.Body)
-	c.node.Lavalink().Logger().Debugf("response from %s, code %d, body: %s", c.node.RestURL()+path, rs.StatusCode, string(raw))
+func (c *restClientImpl) getJSON(ctx context.Context, path string, v interface{}) error {
+	rawBody, err := c.get(ctx, path)
 	if err != nil {
 		return err
 	}
-	err = json.Unmarshal(raw, v)
-	if err != nil {
-		return err
-	}
-	return nil
+	return json.Unmarshal(rawBody, v)
 }

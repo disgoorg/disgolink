@@ -1,6 +1,7 @@
 package main
 
 import (
+	"context"
 	"fmt"
 	"math/rand"
 	"time"
@@ -120,7 +121,7 @@ func onApplicationCommand(event *events.ApplicationCommandInteractionEvent) {
 				skipSegments = *option
 			}
 
-			_ = musicPlayer.Node().RestClient().LoadItemHandler(query, lavalink.NewResultHandler(
+			_ = musicPlayer.Node().RestClient().LoadItemHandler(context.TODO(), query, lavalink.NewResultHandler(
 				func(track lavalink.AudioTrack) {
 					if ok = connect(event, voiceState); !ok {
 						return

@@ -124,7 +124,7 @@ func (b *Bot) messageCreateHandler(s *discordgo.Session, e *discordgo.MessageCre
 		if !urlPattern.MatchString(query) {
 			query = "ytsearch:" + query
 		}
-		_ = b.Link.BestRestClient().LoadItemHandler(query, lavalink.NewResultHandler(
+		_ = b.Link.BestRestClient().LoadItemHandler(context.TODO(), query, lavalink.NewResultHandler(
 			func(track lavalink.AudioTrack) {
 				b.play(s, e.GuildID, args[1], e.ChannelID, track)
 			},
