@@ -53,6 +53,7 @@ func New(opts ...ConfigOpt) Lavalink {
 	}
 	return &lavalinkImpl{
 		config:    *config,
+		userIDMu:  &sync.Mutex{},
 		pluginsMu: &sync.Mutex{},
 		nodesMu:   &sync.Mutex{},
 		nodes:     map[string]Node{},
@@ -65,6 +66,7 @@ var _ Lavalink = (*lavalinkImpl)(nil)
 
 type lavalinkImpl struct {
 	config    Config
+	userIDMu  sync.Locker
 	pluginsMu sync.Locker
 
 	nodesMu sync.Locker
@@ -205,7 +207,7 @@ func (l *lavalinkImpl) Player(guildID snowflake.Snowflake) Player {
 		return player
 	}
 	player := NewPlayer(l.BestNode(), guildID)
-	for _, pl := range l.config.Plugins {
+	for _, pl := range l.Plugins() {
 		if plugin, ok := pl.(PluginEventHandler); ok {
 			plugin.OnNewPlayer(player)
 		}
@@ -231,10 +233,14 @@ func (l *lavalinkImpl) Players() map[snowflake.Snowflake]Player {
 }
 
 func (l *lavalinkImpl) UserID() snowflake.Snowflake {
+	l.userIDMu.Lock()
+	defer l.userIDMu.Unlock()
 	return l.config.UserID
 }
 
 func (l *lavalinkImpl) SetUserID(userID snowflake.Snowflake) {
+	l.userIDMu.Lock()
+	defer l.userIDMu.Unlock()
 	l.config.UserID = userID
 }
 

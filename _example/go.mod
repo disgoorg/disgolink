@@ -6,7 +6,7 @@ replace github.com/DisgoOrg/disgolink/lavalink => ../lavalink
 
 require (
 	github.com/DisgoOrg/disgolink/lavalink v1.2.1
-	github.com/DisgoOrg/snowflake v1.0.3
+	github.com/DisgoOrg/snowflake v1.0.4
 )
 
 require (
