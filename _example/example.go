@@ -18,11 +18,7 @@ var (
 )
 
 func main() {
-	bot := &Bot{
-		Link: lavalink.New(
-			lavalink.WithUserID(""),
-		),
-	}
+	bot := &Bot{Link: lavalink.New(lavalink.WithUserID("0123456789"))}
 	bot.registerNodes()
 
 	sc := make(chan os.Signal, 1)
@@ -47,7 +43,7 @@ func (b *Bot) messageCreateHandler() {
 	if !urlPattern.MatchString(query) {
 		query = "ytsearch:" + query
 	}
-	_ = b.Link.BestRestClient().LoadItemHandler(query, lavalink.NewResultHandler(
+	_ = b.Link.BestRestClient().LoadItemHandler(context.TODO(), query, lavalink.NewResultHandler(
 		func(track lavalink.AudioTrack) {
 			b.Play(guildID, snowflake.Snowflake(args[1]), channelID, track)
 		},
@@ -77,12 +73,15 @@ func (b *Bot) Play(guildID snowflake.Snowflake, voiceChannelID snowflake.Snowfla
 }
 
 func (b *Bot) registerNodes() {
-	secure, _ := strconv.ParseBool(os.Getenv("LAVALINK_SECURE"))
-	b.Link.AddNode(context.TODO(), lavalink.NodeConfig{
-		Name:     "test",
-		Host:     os.Getenv("LAVALINK_HOST"),
-		Port:     os.Getenv("LAVALINK_PORT"),
-		Password: os.Getenv("LAVALINK_PASSWORD"),
-		Secure:   secure,
+	secure, _ := strconv.ParseBool(os.Getenv("lavalink_secure"))
+	node, _ := b.Link.AddNode(context.TODO(), lavalink.NodeConfig{
+		Name:        "test",
+		Host:        os.Getenv("lavalink_host"),
+		Port:        os.Getenv("lavalink_port"),
+		Password:    os.Getenv("lavalink_password"),
+		Secure:      secure,
+		ResumingKey: os.Getenv("lavalink_resuming_key"),
 	})
+	version, _ := node.RestClient().Version(context.TODO())
+	println("Lavalink Server Version: ", version)
 }
