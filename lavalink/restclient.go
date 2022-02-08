@@ -25,6 +25,7 @@ type RestClient interface {
 	Plugins(ctx context.Context) ([]Plugin, error)
 	LoadItem(ctx context.Context, identifier string) (*LoadResult, error)
 	LoadItemHandler(ctx context.Context, identifier string, audioLoaderResultHandler AudioLoadResultHandler) error
+	Version(ctx context.Context) (string, error)
 }
 
 func newRestClientImpl(node Node, httpClient *http.Client) RestClient {
@@ -81,6 +82,28 @@ func (c *restClientImpl) LoadItemHandler(ctx context.Context, identifier string,
 		audioLoaderResultHandler.LoadFailed(*result.Exception)
 	}
 	return nil
+}
+
+func (c *restClientImpl) Version(ctx context.Context) (string, error) {
+	path := "/version"
+	rq, err := http.NewRequestWithContext(ctx, "GET", c.node.RestURL()+path, nil)
+	if err != nil {
+		return "", err
+	}
+	rq.Header.Set("Authorization", c.node.Config().Password)
+
+	rs, err := c.httpClient.Do(rq)
+	if err != nil {
+		return "", err
+	}
+	defer rs.Body.Close()
+
+	raw, err := ioutil.ReadAll(rs.Body)
+	c.node.Lavalink().Logger().Debugf("response from %s, code %d, body: %s", c.node.RestURL()+path, rs.StatusCode, string(raw))
+	if err != nil {
+		return "", err
+	}
+	return string(raw), nil
 }
 
 func (c *restClientImpl) parseLoadResultTracks(loadResultTracks []LoadResultAudioTrack) ([]AudioTrack, error) {
