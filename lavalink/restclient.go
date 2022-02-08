@@ -1,6 +1,7 @@
 package lavalink
 
 import (
+	"context"
 	"encoding/json"
 	"io/ioutil"
 	"net/http"
@@ -21,9 +22,9 @@ func (t SearchType) Apply(searchString string) string {
 }
 
 type RestClient interface {
-	Plugins() ([]Plugin, error)
-	LoadItem(identifier string) (*LoadResult, error)
-	LoadItemHandler(identifier string, audioLoaderResultHandler AudioLoadResultHandler) error
+	Plugins(ctx context.Context) ([]Plugin, error)
+	LoadItem(ctx context.Context, identifier string) (*LoadResult, error)
+	LoadItemHandler(ctx context.Context, identifier string, audioLoaderResultHandler AudioLoadResultHandler) error
 }
 
 func newRestClientImpl(node Node, httpClient *http.Client) RestClient {
@@ -35,25 +36,25 @@ type restClientImpl struct {
 	httpClient *http.Client
 }
 
-func (c *restClientImpl) Plugins() (plugins []Plugin, err error) {
-	err = c.get("/plugins", &plugins)
+func (c *restClientImpl) Plugins(ctx context.Context) (plugins []Plugin, err error) {
+	err = c.get(ctx, "/plugins", &plugins)
 	if err != nil {
 		return nil, err
 	}
 	return
 }
 
-func (c *restClientImpl) LoadItem(identifier string) (*LoadResult, error) {
+func (c *restClientImpl) LoadItem(ctx context.Context, identifier string) (*LoadResult, error) {
 	var result LoadResult
-	err := c.get("/loadtracks?identifier="+url.QueryEscape(identifier), &result)
+	err := c.get(ctx, "/loadtracks?identifier="+url.QueryEscape(identifier), &result)
 	if err != nil {
 		return nil, err
 	}
 	return &result, nil
 }
 
-func (c *restClientImpl) LoadItemHandler(identifier string, audioLoaderResultHandler AudioLoadResultHandler) error {
-	result, err := c.LoadItem(identifier)
+func (c *restClientImpl) LoadItemHandler(ctx context.Context, identifier string, audioLoaderResultHandler AudioLoadResultHandler) error {
+	result, err := c.LoadItem(ctx, identifier)
 	if err != nil {
 		return err
 	}
@@ -94,8 +95,8 @@ func (c *restClientImpl) parseLoadResultTracks(loadResultTracks []LoadResultAudi
 	return tracks, nil
 }
 
-func (c *restClientImpl) get(path string, v interface{}) error {
-	rq, err := http.NewRequest("GET", c.node.RestURL()+path, nil)
+func (c *restClientImpl) get(ctx context.Context, path string, v interface{}) error {
+	rq, err := http.NewRequestWithContext(ctx, "GET", c.node.RestURL()+path, nil)
 	if err != nil {
 		return err
 	}
