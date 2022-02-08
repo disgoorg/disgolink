@@ -14,7 +14,7 @@ import (
 type Lavalink interface {
 	Logger() log.Logger
 
-	AddNode(ctx context.Context, config NodeConfig) Node
+	AddNode(ctx context.Context, config NodeConfig) (Node, error)
 	Nodes() []Node
 	Node(name string) Node
 	BestNode() Node
@@ -80,7 +80,7 @@ func (l *lavalinkImpl) Logger() log.Logger {
 	return l.config.Logger
 }
 
-func (l *lavalinkImpl) AddNode(ctx context.Context, config NodeConfig) Node {
+func (l *lavalinkImpl) AddNode(ctx context.Context, config NodeConfig) (Node, error) {
 	node := &nodeImpl{
 		config:   config,
 		lavalink: l,
@@ -89,14 +89,13 @@ func (l *lavalinkImpl) AddNode(ctx context.Context, config NodeConfig) Node {
 	}
 	node.restClient = newRestClientImpl(node, l.config.HTTPClient)
 	if err := node.Open(ctx); err != nil {
-		l.Logger().Error("failed to open connection to node", "error", err)
-		return nil
+		return nil, err
 	}
 
 	l.nodesMu.Lock()
 	defer l.nodesMu.Unlock()
 	l.nodes[config.Name] = node
-	return node
+	return node, nil
 }
 
 func (l *lavalinkImpl) Nodes() []Node {
@@ -143,16 +142,16 @@ func (l *lavalinkImpl) RemoveNode(name string) {
 }
 
 func (l *lavalinkImpl) AddPlugins(plugins ...interface{}) {
-	l.nodesMu.Lock()
-	defer l.nodesMu.Unlock()
+	l.pluginsMu.Lock()
+	defer l.pluginsMu.Unlock()
 	for _, plugin := range plugins {
 		l.config.Plugins = append(l.config.Plugins, plugin)
 	}
 }
 
 func (l *lavalinkImpl) Plugins() []interface{} {
-	l.nodesMu.Lock()
-	defer l.nodesMu.Unlock()
+	l.pluginsMu.Lock()
+	defer l.pluginsMu.Unlock()
 	plugins := make([]interface{}, len(l.config.Plugins))
 	i := 0
 	for _, plugin := range l.config.Plugins {
@@ -163,8 +162,8 @@ func (l *lavalinkImpl) Plugins() []interface{} {
 }
 
 func (l *lavalinkImpl) RemovePlugins(plugins ...interface{}) {
-	l.nodesMu.Lock()
-	defer l.nodesMu.Unlock()
+	l.pluginsMu.Lock()
+	defer l.pluginsMu.Unlock()
 	for _, plugin := range plugins {
 		for i, p := range l.config.Plugins {
 			if p == plugin {
@@ -179,7 +178,7 @@ func (l *lavalinkImpl) EncodeTrack(track AudioTrack) (string, error) {
 	return EncodeToString(track, func(track AudioTrack, w io.Writer) error {
 		for _, pl := range l.Plugins() {
 			if plugin, ok := pl.(SourceExtension); ok {
-				if plugin.SourceName() == track.Info().SourceName() {
+				if plugin.SourceName() == track.Info().SourceName {
 					return plugin.Encode(track, w)
 				}
 			}
@@ -189,11 +188,11 @@ func (l *lavalinkImpl) EncodeTrack(track AudioTrack) (string, error) {
 }
 
 func (l *lavalinkImpl) DecodeTrack(str string) (AudioTrack, error) {
-	return DecodeString(str, func(track string, info AudioTrackInfo, r io.Reader) (AudioTrack, error) {
-		for _, pl := range l.Plugins() {
+	return DecodeString(str, func(info AudioTrackInfo, r io.Reader) (AudioTrack, error) {
+		for _, pl := range l.config.Plugins {
 			if plugin, ok := pl.(SourceExtension); ok {
-				if plugin.SourceName() == info.SourceName() {
-					return plugin.Decode(track, info, r)
+				if plugin.SourceName() == info.SourceName {
+					return plugin.Decode(info, r)
 				}
 			}
 		}

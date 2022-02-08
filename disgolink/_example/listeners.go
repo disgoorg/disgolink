@@ -1,6 +1,7 @@
 package main
 
 import (
+	"context"
 	"fmt"
 	"math/rand"
 	"time"
@@ -63,7 +64,7 @@ func onApplicationCommand(event *events.ApplicationCommandInteractionEvent) {
 		}
 		tracks := ""
 		for i, track := range musicPlayer.queue {
-			tracks += fmt.Sprintf("%d. [%s](%s)\n", i+1, track.Info().Title(), *track.Info().URI())
+			tracks += fmt.Sprintf("%d. [%s](%s)\n", i+1, track.Info().Title, *track.Info().URI)
 		}
 		_ = event.Create(discord.NewMessageCreateBuilder().SetEmbeds(discord.NewEmbedBuilder().
 			SetTitle("Queue:").
@@ -120,7 +121,7 @@ func onApplicationCommand(event *events.ApplicationCommandInteractionEvent) {
 				skipSegments = *option
 			}
 
-			_ = musicPlayer.Node().RestClient().LoadItemHandler(query, lavalink.NewResultHandler(
+			_ = musicPlayer.Node().RestClient().LoadItemHandler(context.TODO(), query, lavalink.NewResultHandler(
 				func(track lavalink.AudioTrack) {
 					if ok = connect(event, voiceState); !ok {
 						return

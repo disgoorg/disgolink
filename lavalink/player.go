@@ -92,9 +92,9 @@ func (p *DefaultPlayer) SetTrack(track AudioTrack) {
 }
 
 func (p *DefaultPlayer) Play(track AudioTrack) error {
-	t := track.Track()
-	if t == "" {
-		return errors.New("can't play empty track")
+	t, err := p.node.Lavalink().EncodeTrack(track)
+	if err != nil {
+		return err
 	}
 
 	if err := p.Node().Send(PlayCommand{
@@ -107,9 +107,9 @@ func (p *DefaultPlayer) Play(track AudioTrack) error {
 }
 
 func (p *DefaultPlayer) PlayAt(track AudioTrack, start time.Duration, end time.Duration) error {
-	t := track.Track()
-	if t == "" {
-		return errors.New("can't play empty track")
+	t, err := p.node.Lavalink().EncodeTrack(track)
+	if err != nil {
+		return err
 	}
 
 	if err := p.Node().Send(PlayCommand{
@@ -186,8 +186,8 @@ func (p *DefaultPlayer) Position() time.Duration {
 	}
 	if p.paused {
 		timeDiff := time.Since(p.state.Time)
-		if p.state.Position+timeDiff > p.track.Info().Length() {
-			return p.track.Info().Length()
+		if p.state.Position+timeDiff > p.track.Info().Length {
+			return p.track.Info().Length
 		}
 		return p.state.Position + timeDiff
 	}

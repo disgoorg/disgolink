@@ -2,11 +2,13 @@ package main
 
 import (
 	"context"
+	"fmt"
 	"os"
 	"os/signal"
 	"regexp"
 	"strconv"
 	"strings"
+	"sync"
 	"syscall"
 
 	"github.com/DisgoOrg/disgolink/dgolink"
@@ -27,7 +29,8 @@ func main() {
 		panic(err)
 	}
 	bot := &Bot{
-		Link: dgolink.New(session),
+		Link:           dgolink.New(session),
+		PlayerManagers: map[string]*PlayerManager{},
 	}
 	session.AddHandler(bot.messageCreateHandler)
 
@@ -43,8 +46,68 @@ func main() {
 }
 
 type Bot struct {
-	Link *dgolink.Link
+	Link           *dgolink.Link
+	PlayerManagers map[string]*PlayerManager
 }
+
+type PlayerManager struct {
+	lavalink.PlayerEventAdapter
+	Player        lavalink.Player
+	Queue         []lavalink.AudioTrack
+	QueueMu       sync.Mutex
+	RepeatingMode RepeatingMode
+}
+
+func (m *PlayerManager) AddQueue(tracks ...lavalink.AudioTrack) {
+	m.QueueMu.Lock()
+	defer m.QueueMu.Unlock()
+	m.Queue = append(m.Queue, tracks...)
+}
+
+func (m *PlayerManager) PopQueue() lavalink.AudioTrack {
+	m.QueueMu.Lock()
+	defer m.QueueMu.Unlock()
+	if len(m.Queue) == 0 {
+		return nil
+	}
+	var track lavalink.AudioTrack
+	track, m.Queue = m.Queue[0], m.Queue[1:]
+	return track
+}
+
+func (m *PlayerManager) OnTrackEnd(player lavalink.Player, track lavalink.AudioTrack, endReason lavalink.AudioTrackEndReason) {
+	if !endReason.MayStartNext() {
+		return
+	}
+	switch m.RepeatingMode {
+	case RepeatingModeOff:
+		if nextTrack := m.PopQueue(); nextTrack != nil {
+			if err := player.Play(nextTrack); err != nil {
+				fmt.Println("error playing next track:", err)
+			}
+		}
+	case RepeatingModeSong:
+		if err := player.Play(track.Clone()); err != nil {
+			fmt.Println("error playing next track:", err)
+		}
+
+	case RepeatingModeQueue:
+		m.AddQueue(track)
+		if nextTrack := m.PopQueue(); nextTrack != nil {
+			if err := player.Play(nextTrack); err != nil {
+				fmt.Println("error playing next track:", err)
+			}
+		}
+	}
+}
+
+type RepeatingMode int
+
+const (
+	RepeatingModeOff = iota
+	RepeatingModeSong
+	RepeatingModeQueue
+)
 
 func (b *Bot) messageCreateHandler(s *discordgo.Session, e *discordgo.MessageCreate) {
 	if e.Author.Bot {
@@ -61,15 +124,15 @@ func (b *Bot) messageCreateHandler(s *discordgo.Session, e *discordgo.MessageCre
 		if !urlPattern.MatchString(query) {
 			query = "ytsearch:" + query
 		}
-		_ = b.Link.BestRestClient().LoadItemHandler(query, lavalink.NewResultHandler(
+		_ = b.Link.BestRestClient().LoadItemHandler(context.TODO(), query, lavalink.NewResultHandler(
 			func(track lavalink.AudioTrack) {
-				play(s, b.Link, e.GuildID, args[1], e.ChannelID, track)
+				b.play(s, e.GuildID, args[1], e.ChannelID, track)
 			},
 			func(playlist lavalink.AudioPlaylist) {
-				play(s, b.Link, e.GuildID, args[1], e.ChannelID, playlist.Tracks[0])
+				b.play(s, e.GuildID, args[1], e.ChannelID, playlist.Tracks...)
 			},
 			func(tracks []lavalink.AudioTrack) {
-				play(s, b.Link, e.GuildID, args[1], e.ChannelID, tracks[0])
+				b.play(s, e.GuildID, args[1], e.ChannelID, tracks[0])
 			},
 			func() {
 				_, _ = s.ChannelMessageSend(e.ChannelID, "no matches found for: "+query)
@@ -82,16 +145,29 @@ func (b *Bot) messageCreateHandler(s *discordgo.Session, e *discordgo.MessageCre
 	}
 }
 
-func play(s *discordgo.Session, link *dgolink.Link, guildID string, voiceChannelID string, channelID string, track lavalink.AudioTrack) {
+func (b *Bot) play(s *discordgo.Session, guildID string, voiceChannelID string, channelID string, tracks ...lavalink.AudioTrack) {
 	if err := s.ChannelVoiceJoinManual(guildID, voiceChannelID, false, false); err != nil {
 		_, _ = s.ChannelMessageSend(channelID, "error while joining voice channel: "+err.Error())
 		return
 	}
-	if err := link.Player(snowflake.Snowflake(guildID)).Play(track); err != nil {
+
+	manager, ok := b.PlayerManagers[guildID]
+	if !ok {
+		manager = &PlayerManager{
+			Player:        b.Link.Player(snowflake.Snowflake(guildID)),
+			RepeatingMode: RepeatingModeOff,
+		}
+		b.PlayerManagers[guildID] = manager
+		manager.Player.AddListener(manager)
+	}
+	manager.AddQueue(tracks...)
+
+	track := manager.PopQueue()
+	if err := manager.Player.Play(track); err != nil {
 		_, _ = s.ChannelMessageSend(channelID, "error while playing track: "+err.Error())
 		return
 	}
-	_, _ = s.ChannelMessageSend(channelID, "Playing: "+track.Info().Title())
+	_, _ = s.ChannelMessageSend(channelID, "Playing: "+track.Info().Title)
 }
 
 func (b *Bot) registerNodes() {

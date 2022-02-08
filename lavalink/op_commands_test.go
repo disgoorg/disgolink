@@ -14,5 +14,5 @@ func TestConfigureResumingCommand_MarshalJSON(t *testing.T) {
 		Timeout: 10 * time.Second,
 	})
 	assert.NoError(t, err)
-	assert.Equal(t, `{"op":"configureResuming","key":"test","timeout":10000}`, string(data))
+	assert.Equal(t, `{"op":"configureResuming","timeout":10000,"key":"test"}`, string(data))
 }

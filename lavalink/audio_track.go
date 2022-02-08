@@ -11,131 +11,89 @@ const (
 )
 
 type AudioTrack interface {
-	Track() string
 	Info() AudioTrackInfo
-}
-
-type AudioTrackInfo interface {
-	Identifier() string
-	Author() string
-	Length() time.Duration
-	IsStream() bool
-	Title() string
-	URI() *string
-	SourceName() string
-	Position() time.Duration
 	SetPosition(position time.Duration)
+	Clone() AudioTrack
 }
 
-func NewAudioTrack(track string, info AudioTrackInfo) AudioTrack {
+type AudioTrackInfo struct {
+	Identifier string        `json:"identifier"`
+	Author     string        `json:"author"`
+	Length     time.Duration `json:"length"`
+	IsStream   bool          `json:"isStream"`
+	Title      string        `json:"title"`
+	URI        *string       `json:"uri"`
+	SourceName string        `json:"sourceName"`
+	Position   time.Duration `json:"position"`
+}
+
+func (i *AudioTrackInfo) UnmarshalJSON(data []byte) error {
+	type trackInfo AudioTrackInfo
+	var v struct {
+		Length   int64 `json:"length"`
+		Position int64 `json:"position"`
+		trackInfo
+	}
+	if err := json.Unmarshal(data, &v); err != nil {
+		return err
+	}
+
+	*i = AudioTrackInfo(v.trackInfo)
+	i.Length = time.Duration(v.Length) * time.Millisecond
+	i.Position = time.Duration(v.Position) * time.Millisecond
+
+	return nil
+}
+
+func (i AudioTrackInfo) MarshalJSON() ([]byte, error) {
+	type audioTrackInfo AudioTrackInfo
+	return json.Marshal(struct {
+		Length   int64 `json:"length"`
+		Position int64 `json:"position"`
+		audioTrackInfo
+	}{
+		Length:         i.Length.Milliseconds(),
+		Position:       i.Position.Milliseconds(),
+		audioTrackInfo: audioTrackInfo(i),
+	})
+}
+
+func NewAudioTrack(info AudioTrackInfo) AudioTrack {
 	return &DefaultAudioTrack{
-		AudioTrack:     track,
 		AudioTrackInfo: info,
 	}
 }
 
 type DefaultAudioTrack struct {
-	AudioTrack     string         `json:"track"`
 	AudioTrackInfo AudioTrackInfo `json:"info"`
 }
 
 func (t *DefaultAudioTrack) UnmarshalJSON(data []byte) error {
 	var v struct {
-		AudioTrack     string                `json:"track"`
-		AudioTrackInfo DefaultAudioTrackInfo `json:"info"`
+		AudioTrack     string         `json:"track"`
+		AudioTrackInfo AudioTrackInfo `json:"info"`
 	}
 	err := json.Unmarshal(data, &v)
 	if err != nil {
 		return err
 	}
 
-	t.AudioTrack = v.AudioTrack
-	t.AudioTrackInfo = &v.AudioTrackInfo
+	t.AudioTrackInfo = v.AudioTrackInfo
 	return nil
 }
 
-func (t DefaultAudioTrack) Track() string {
-	return t.AudioTrack
-}
-
-func (t DefaultAudioTrack) Info() AudioTrackInfo {
+func (t *DefaultAudioTrack) Info() AudioTrackInfo {
 	return t.AudioTrackInfo
 }
 
-type DefaultAudioTrackInfo struct {
-	TrackIdentifier string        `json:"identifier"`
-	TrackAuthor     string        `json:"author"`
-	TrackLength     time.Duration `json:"length"`
-	TrackIsStream   bool          `json:"isStream"`
-	TrackTitle      string        `json:"title"`
-	TrackURI        *string       `json:"uri"`
-	TrackSourceName string        `json:"sourceName"`
-	TrackPosition   time.Duration `json:"position"`
+func (t *DefaultAudioTrack) SetPosition(position time.Duration) {
+	t.AudioTrackInfo.Position = position
 }
 
-func (i *DefaultAudioTrackInfo) UnmarshalJSON(data []byte) error {
-	type defaultTrackInfo DefaultAudioTrackInfo
-	var v struct {
-		TrackLength   int64 `json:"length"`
-		TrackPosition int64 `json:"position"`
-		defaultTrackInfo
+func (t *DefaultAudioTrack) Clone() AudioTrack {
+	info := t.AudioTrackInfo
+	info.Position = 0
+	return &DefaultAudioTrack{
+		AudioTrackInfo: info,
 	}
-	if err := json.Unmarshal(data, &v); err != nil {
-		return err
-	}
-
-	*i = DefaultAudioTrackInfo(v.defaultTrackInfo)
-	i.TrackLength = time.Duration(v.TrackLength) * time.Millisecond
-	i.TrackPosition = time.Duration(v.TrackPosition) * time.Millisecond
-
-	return nil
-}
-
-func (i DefaultAudioTrackInfo) MarshalJSON() ([]byte, error) {
-	type defaultAudioTrackInfo DefaultAudioTrackInfo
-	return json.Marshal(struct {
-		TrackLength   int64 `json:"length"`
-		TrackPosition int64 `json:"position"`
-		defaultAudioTrackInfo
-	}{
-		TrackLength:           i.TrackLength.Milliseconds(),
-		TrackPosition:         i.TrackPosition.Milliseconds(),
-		defaultAudioTrackInfo: defaultAudioTrackInfo(i),
-	})
-}
-
-func (i DefaultAudioTrackInfo) Identifier() string {
-	return i.TrackIdentifier
-}
-
-func (i DefaultAudioTrackInfo) Author() string {
-	return i.TrackAuthor
-}
-
-func (i DefaultAudioTrackInfo) Length() time.Duration {
-	return i.TrackLength
-}
-
-func (i DefaultAudioTrackInfo) IsStream() bool {
-	return i.TrackIsStream
-}
-
-func (i DefaultAudioTrackInfo) Title() string {
-	return i.TrackTitle
-}
-
-func (i DefaultAudioTrackInfo) URI() *string {
-	return i.TrackURI
-}
-
-func (i DefaultAudioTrackInfo) SourceName() string {
-	return i.TrackSourceName
-}
-
-func (i DefaultAudioTrackInfo) Position() time.Duration {
-	return i.TrackPosition
-}
-
-func (i *DefaultAudioTrackInfo) SetPosition(position time.Duration) {
-	i.TrackPosition = position
 }

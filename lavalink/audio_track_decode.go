@@ -8,7 +8,7 @@ import (
 	"time"
 )
 
-type CustomTrackInfoDecoder func(track string, info AudioTrackInfo, r io.Reader) (AudioTrack, error)
+type CustomTrackInfoDecoder func(info AudioTrackInfo, r io.Reader) (AudioTrack, error)
 
 func DecodeString(str string, customTrackInfoDecoder CustomTrackInfoDecoder) (track AudioTrack, err error) {
 	var data []byte
@@ -18,7 +18,7 @@ func DecodeString(str string, customTrackInfoDecoder CustomTrackInfoDecoder) (tr
 
 	r := bytes.NewReader(data)
 
-	info := &DefaultAudioTrackInfo{}
+	info := AudioTrackInfo{}
 	var value int32
 	if value, err = ReadInt32(r); err != nil {
 		return
@@ -37,10 +37,10 @@ func DecodeString(str string, customTrackInfoDecoder CustomTrackInfoDecoder) (tr
 		version = int32(v & 0xFF)
 	}
 
-	if info.TrackTitle, err = ReadString(r); err != nil {
+	if info.Title, err = ReadString(r); err != nil {
 		return
 	}
-	if info.TrackAuthor, err = ReadString(r); err != nil {
+	if info.Author, err = ReadString(r); err != nil {
 		return
 	}
 
@@ -48,37 +48,37 @@ func DecodeString(str string, customTrackInfoDecoder CustomTrackInfoDecoder) (tr
 	if length, err = ReadInt64(r); err != nil {
 		return
 	}
-	info.TrackLength = time.Duration(length) * time.Millisecond
+	info.Length = time.Duration(length) * time.Millisecond
 
-	if info.TrackIdentifier, err = ReadString(r); err != nil {
+	if info.Identifier, err = ReadString(r); err != nil {
 		return
 	}
-	if info.TrackIsStream, err = ReadBool(r); err != nil {
+	if info.IsStream, err = ReadBool(r); err != nil {
 		return
 	}
 	if version >= 2 {
-		if info.TrackURI, err = ReadNullableString(r); err != nil {
+		if info.URI, err = ReadNullableString(r); err != nil {
 			return
 		}
 	}
-	if info.TrackSourceName, err = ReadString(r); err != nil {
+	if info.SourceName, err = ReadString(r); err != nil {
 		return
 	}
 
 	if customTrackInfoDecoder != nil {
-		if track, err = customTrackInfoDecoder(str, info, r); err != nil {
+		if track, err = customTrackInfoDecoder(info, r); err != nil {
 			return
 		}
 	}
 	if track == nil {
-		track = NewAudioTrack(str, info)
+		track = NewAudioTrack(info)
 	}
 
 	var position int64
 	if position, err = ReadInt64(r); err != nil {
 		return
 	}
-	track.Info().SetPosition(time.Duration(position) * time.Millisecond)
+	track.SetPosition(time.Duration(position) * time.Millisecond)
 
 	return track, nil
 }

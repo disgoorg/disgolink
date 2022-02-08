@@ -145,11 +145,11 @@ func (c ConfigureResumingCommand) MarshalJSON() ([]byte, error) {
 	type cmd ConfigureResumingCommand
 	return json.Marshal(struct {
 		Op      OpType `json:"op"`
-		Timeout int    `json:"timeout"`
+		Timeout int64  `json:"timeout"`
 		cmd
 	}{
 		Op:      c.Op(),
-		Timeout: int(c.Timeout.Seconds()),
+		Timeout: c.Timeout.Milliseconds(),
 		cmd:     cmd(c),
 	})
 }

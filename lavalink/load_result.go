@@ -1,7 +1,5 @@
 package lavalink
 
-import "encoding/json"
-
 type LoadType string
 
 const (
@@ -21,31 +19,15 @@ type AudioLoadResultHandler interface {
 }
 
 type LoadResult struct {
-	LoadType     LoadType           `json:"loadType"`
-	PlaylistInfo *AudioPlaylistInfo `json:"playlistInfo"`
-	Tracks       []AudioTrack       `json:"tracks"`
-	Exception    *FriendlyException `json:"exception"`
+	LoadType     LoadType               `json:"loadType"`
+	PlaylistInfo *AudioPlaylistInfo     `json:"playlistInfo"`
+	Tracks       []LoadResultAudioTrack `json:"tracks"`
+	Exception    *FriendlyException     `json:"exception"`
 }
 
-func (r *LoadResult) UnmarshalJSON(data []byte) error {
-	type loadResult LoadResult
-	var v struct {
-		Tracks []*DefaultAudioTrack `json:"tracks"`
-		loadResult
-	}
-
-	if err := json.Unmarshal(data, &v); err != nil {
-		return err
-	}
-
-	*r = LoadResult(v.loadResult)
-	if v.Tracks != nil {
-		r.Tracks = make([]AudioTrack, len(v.Tracks))
-		for i, t := range v.Tracks {
-			r.Tracks[i] = t
-		}
-	}
-	return nil
+type LoadResultAudioTrack struct {
+	Track string         `json:"track"`
+	Info  AudioTrackInfo `json:"info"`
 }
 
 var _ AudioLoadResultHandler = (*FunctionalResultHandler)(nil)
