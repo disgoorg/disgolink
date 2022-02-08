@@ -174,7 +174,7 @@ func (l *lavalinkImpl) RemovePlugins(plugins ...interface{}) {
 
 func (l *lavalinkImpl) EncodeTrack(track AudioTrack) (string, error) {
 	return EncodeToString(track, func(track AudioTrack, w io.Writer) error {
-		for _, pl := range l.config.Plugins {
+		for _, pl := range l.Plugins() {
 			if plugin, ok := pl.(SourceExtension); ok {
 				if plugin.SourceName() == track.Info().SourceName {
 					return plugin.Encode(track, w)
@@ -187,7 +187,7 @@ func (l *lavalinkImpl) EncodeTrack(track AudioTrack) (string, error) {
 
 func (l *lavalinkImpl) DecodeTrack(str string) (AudioTrack, error) {
 	return DecodeString(str, func(info AudioTrackInfo, r io.Reader) (AudioTrack, error) {
-		for _, pl := range l.config.Plugins {
+		for _, pl := range l.Plugins() {
 			if plugin, ok := pl.(SourceExtension); ok {
 				if plugin.SourceName() == info.SourceName {
 					return plugin.Decode(info, r)
