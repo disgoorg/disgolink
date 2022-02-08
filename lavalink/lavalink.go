@@ -140,16 +140,16 @@ func (l *lavalinkImpl) RemoveNode(name string) {
 }
 
 func (l *lavalinkImpl) AddPlugins(plugins ...interface{}) {
-	l.nodesMu.Lock()
-	defer l.nodesMu.Unlock()
+	l.pluginsMu.Lock()
+	defer l.pluginsMu.Unlock()
 	for _, plugin := range plugins {
 		l.config.Plugins = append(l.config.Plugins, plugin)
 	}
 }
 
 func (l *lavalinkImpl) Plugins() []interface{} {
-	l.nodesMu.Lock()
-	defer l.nodesMu.Unlock()
+	l.pluginsMu.Lock()
+	defer l.pluginsMu.Unlock()
 	plugins := make([]interface{}, len(l.config.Plugins))
 	i := 0
 	for _, plugin := range l.config.Plugins {
@@ -160,8 +160,8 @@ func (l *lavalinkImpl) Plugins() []interface{} {
 }
 
 func (l *lavalinkImpl) RemovePlugins(plugins ...interface{}) {
-	l.nodesMu.Lock()
-	defer l.nodesMu.Unlock()
+	l.pluginsMu.Lock()
+	defer l.pluginsMu.Unlock()
 	for _, plugin := range plugins {
 		for i, p := range l.config.Plugins {
 			if p == plugin {
