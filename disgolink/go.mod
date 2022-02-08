@@ -8,7 +8,7 @@ replace (
 
 require (
 	github.com/DisgoOrg/disgo v0.7.0
-	github.com/DisgoOrg/disgolink/lavalink v1.2.0
+	github.com/DisgoOrg/disgolink/lavalink v1.2.1
 )
 
 require (

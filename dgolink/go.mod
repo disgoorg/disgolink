@@ -7,7 +7,7 @@ replace (
 )
 
 require (
-	github.com/DisgoOrg/disgolink/lavalink v1.2.0
+	github.com/DisgoOrg/disgolink/lavalink v1.2.1
 	github.com/DisgoOrg/snowflake v1.0.3
 	github.com/bwmarrin/discordgo v0.23.3-0.20211228023845-29269347e820
 )
