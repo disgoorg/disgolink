@@ -3,14 +3,14 @@ module github.com/DisgoOrg/disgolink/arikawalink/_example
 go 1.17
 
 replace (
-	github.com/DisgoOrg/disgolink/lavalink => ../../lavalink
 	github.com/DisgoOrg/disgolink/arikawalink => ../
+	github.com/DisgoOrg/disgolink/lavalink => ../../lavalink
 )
 
 require (
 	github.com/DisgoOrg/disgolink/arikawalink v1.0.1-0.20220113110532-5b6f72beb7fe
 	github.com/DisgoOrg/disgolink/lavalink v1.1.2
-	github.com/DisgoOrg/snowflake v1.0.3
+	github.com/DisgoOrg/snowflake v1.0.4
 	github.com/diamondburned/arikawa/v3 v3.0.0-rc.4
 )
 

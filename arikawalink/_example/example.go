@@ -78,7 +78,7 @@ func (b *Bot) messageCreateHandler(e *gateway.MessageCreateEvent) {
 			query = "ytsearch:" + query
 		}
 		channelID, _ := discord.ParseSnowflake(args[1])
-		_ = b.Link.BestRestClient().LoadItemHandler(query, lavalink.NewResultHandler(
+		_ = b.Link.BestRestClient().LoadItemHandler(context.TODO(), query, lavalink.NewResultHandler(
 			func(track lavalink.AudioTrack) {
 				b.play(e.GuildID, discord.ChannelID(channelID), e.ChannelID, track)
 			},
@@ -109,9 +109,9 @@ func (b *Bot) play(guildID discord.GuildID, voiceChannelID discord.ChannelID, ch
 		_, _ = b.Session.Client.SendMessage(channelID, "error while joining voice channel: "+err.Error())
 		return
 	}
-	if err := b.Link.Player(snowflake.ParseUInt64(uint64(guildID))).Play(track); err != nil {
+	if err := b.Link.Player(snowflake.ParseString(guildID)).Play(track); err != nil {
 		_, _ = b.Session.Client.SendMessage(channelID, "error while playing track: "+err.Error())
 		return
 	}
-	_, _ = b.Session.Client.SendMessage(channelID, "Playing: "+track.Info().Title())
+	_, _ = b.Session.Client.SendMessage(channelID, "Playing: "+track.Info().Title)
 }

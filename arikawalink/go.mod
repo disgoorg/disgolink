@@ -8,7 +8,7 @@ replace (
 
 require (
 	github.com/DisgoOrg/disgolink/lavalink v1.1.2
-	github.com/DisgoOrg/snowflake v1.0.3
+	github.com/DisgoOrg/snowflake v1.0.4
 	github.com/diamondburned/arikawa/v3 v3.0.0-rc.4
 )
 

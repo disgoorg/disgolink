@@ -17,7 +17,7 @@ func New(s *session.Session, opts ...lavalink.ConfigOpt) *Link {
 		if err != nil {
 			link.Logger().Errorf("Failed to get user ID: %s", err)
 		} else {
-			link.SetUserID(snowflake.ParseUInt64(uint64(user.ID)))
+			link.SetUserID(snowflake.ParseString(user.ID))
 		}
 	}
 
@@ -37,11 +37,11 @@ type Link struct {
 func (l *Link) VoiceStateUpdateHandler(e *gateway.VoiceStateUpdateEvent) {
 	var channelID *snowflake.Snowflake
 	if e.ChannelID != 0 {
-		cid := snowflake.ParseUInt64(uint64(e.ChannelID))
+		cid := snowflake.ParseString(e.ChannelID)
 		channelID = &cid
 	}
 	l.VoiceStateUpdate(lavalink.VoiceStateUpdate{
-		GuildID:   snowflake.ParseUInt64(uint64(e.GuildID)),
+		GuildID:   snowflake.ParseString(e.GuildID),
 		ChannelID: channelID,
 		SessionID: e.SessionID,
 	})
@@ -53,7 +53,7 @@ func (l *Link) VoiceServerUpdateHandler(e *gateway.VoiceServerUpdateEvent) {
 		endpoint = &e.Endpoint
 	}
 	l.VoiceServerUpdate(lavalink.VoiceServerUpdate{
-		GuildID:  snowflake.ParseUInt64(uint64(e.GuildID)),
+		GuildID:  snowflake.ParseString(e.GuildID),
 		Token:    e.Token,
 		Endpoint: endpoint,
 	})
