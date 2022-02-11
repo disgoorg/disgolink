@@ -122,7 +122,7 @@ func (c *restClientImpl) get(ctx context.Context, path string) ([]byte, error) {
 		return nil, errors.New(rs.Status)
 	}
 	rawBody, _ := io.ReadAll(rs.Body)
-	c.node.Lavalink().Logger().Debugf("response from %s, code %d, body: %s", c.node.RestURL()+path, rs.StatusCode, string(rawBody))
+	c.node.Lavalink().Logger().Tracef("response from %s, code %d, body: %s", c.node.RestURL()+path, rs.StatusCode, string(rawBody))
 	return rawBody, nil
 }
 

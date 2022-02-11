@@ -154,7 +154,7 @@ func (n *nodeImpl) listen() {
 			return
 		}
 
-		n.lavalink.Logger().Debugf("received: %s", string(data))
+		n.lavalink.Logger().Trace("received: ", string(data))
 
 		for _, pl := range n.Lavalink().Plugins() {
 			if plugin, ok := pl.(PluginEventHandler); ok {
