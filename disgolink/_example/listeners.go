@@ -14,7 +14,7 @@ import (
 func checkMusicPlayer(event *events.ApplicationCommandInteractionEvent) *MusicPlayer {
 	musicPlayer, ok := musicPlayers[*event.GuildID]
 	if !ok {
-		_ = event.Create(discord.NewMessageCreateBuilder().SetEphemeral(true).SetContent("No MusicPlayer found for this guild").Build())
+		_ = event.CreateMessage(discord.NewMessageCreateBuilder().SetEphemeral(true).SetContent("No MusicPlayer found for this guild").Build())
 		return nil
 	}
 	return musicPlayer
@@ -30,14 +30,14 @@ func onApplicationCommand(event *events.ApplicationCommandInteractionEvent) {
 		}
 
 		if len(musicPlayer.queue) == 0 {
-			_ = event.Create(discord.NewMessageCreateBuilder().SetContent("Queue is empty").Build())
+			_ = event.CreateMessage(discord.NewMessageCreateBuilder().SetContent("Queue is empty").Build())
 			return
 		}
 		rand.Seed(time.Now().UnixNano())
 		rand.Shuffle(len(musicPlayer.queue), func(i, j int) {
 			musicPlayer.queue[i], musicPlayer.queue[j] = musicPlayer.queue[j], musicPlayer.queue[i]
 		})
-		_ = event.Create(discord.NewMessageCreateBuilder().SetContent("Queue shuffled").Build())
+		_ = event.CreateMessage(discord.NewMessageCreateBuilder().SetContent("Queue shuffled").Build())
 
 	case "filter":
 		musicPlayer := checkMusicPlayer(event)
@@ -60,13 +60,13 @@ func onApplicationCommand(event *events.ApplicationCommandInteractionEvent) {
 		}
 
 		if len(musicPlayer.queue) == 0 {
-			_ = event.Create(discord.NewMessageCreateBuilder().SetContent("No songs in queue").Build())
+			_ = event.CreateMessage(discord.NewMessageCreateBuilder().SetContent("No songs in queue").Build())
 		}
 		tracks := ""
 		for i, track := range musicPlayer.queue {
 			tracks += fmt.Sprintf("%d. [%s](%s)\n", i+1, track.Info().Title, *track.Info().URI)
 		}
-		_ = event.Create(discord.NewMessageCreateBuilder().SetEmbeds(discord.NewEmbedBuilder().
+		_ = event.CreateMessage(discord.NewMessageCreateBuilder().SetEmbeds(discord.NewEmbedBuilder().
 			SetTitle("Queue:").
 			SetDescription(tracks).
 			Build(),
@@ -84,17 +84,17 @@ func onApplicationCommand(event *events.ApplicationCommandInteractionEvent) {
 		if !pause {
 			message = "resumed"
 		}
-		_ = event.Create(discord.NewMessageCreateBuilder().SetContent(message + " music").Build())
+		_ = event.CreateMessage(discord.NewMessageCreateBuilder().SetContent(message + " music").Build())
 
 	case "play":
 		voiceState := event.Member.VoiceState()
 
 		if voiceState == nil || voiceState.ChannelID == nil {
-			_ = event.Create(discord.NewMessageCreateBuilder().SetEphemeral(true).SetContent("Please join a VoiceChannel to use this command").Build())
+			_ = event.CreateMessage(discord.NewMessageCreateBuilder().SetEphemeral(true).SetContent("Please join a VoiceChannel to use this command").Build())
 			return
 		}
 		go func() {
-			_ = event.DeferCreate(false)
+			_ = event.DeferCreateMessage(false)
 
 			query := *data.Options.String("query")
 			if searchProvider := data.Options.String("search-provider"); searchProvider != nil {
@@ -141,10 +141,10 @@ func onApplicationCommand(event *events.ApplicationCommandInteractionEvent) {
 					musicPlayer.Queue(event, skipSegments, tracks[0])
 				},
 				func() {
-					_, _ = event.UpdateResponse(discord.NewMessageUpdateBuilder().SetContent("no tracks found").Build())
+					_, _ = event.UpdateOriginalMessage(discord.NewMessageUpdateBuilder().SetContent("no tracks found").Build())
 				},
 				func(e lavalink.FriendlyException) {
-					_, _ = event.UpdateResponse(discord.NewMessageUpdateBuilder().SetContent("error while loading track:\n" + e.Error()).Build())
+					_, _ = event.UpdateOriginalMessage(discord.NewMessageUpdateBuilder().SetContent("error while loading track:\n" + e.Error()).Build())
 				},
 			))
 		}()

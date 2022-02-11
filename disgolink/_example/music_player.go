@@ -47,7 +47,7 @@ func (p *MusicPlayer) Queue(event *events.ApplicationCommandInteractionEvent, sk
 		embed.SetDescriptionf("queued %d tracks", len(tracks))
 	}
 	embed.SetFooter("executed by "+event.Member.EffectiveName(), event.User.EffectiveAvatarURL(1024))
-	if _, err := event.UpdateResponse(discord.NewMessageUpdateBuilder().SetEmbeds(embed.Build()).Build()); err != nil {
+	if _, err := event.UpdateOriginalMessage(discord.NewMessageUpdateBuilder().SetEmbeds(embed.Build()).Build()); err != nil {
 		log.Errorf("error while edit original: %s", err)
 	}
 }

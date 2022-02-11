@@ -49,11 +49,7 @@ func main() {
 		return
 	}
 
-	defer func() {
-		if err = disgo.Close(context.TODO()); err != nil {
-			log.Error("error while closing disgolink instance: %s", err)
-		}
-	}()
+	defer disgo.Close(context.TODO())
 
 	dgolink = disgolink.New(disgo)
 	registerNodes()
@@ -80,7 +76,7 @@ func connect(event *events.ApplicationCommandInteractionEvent, voiceState *core.
 	channel := voiceState.Channel()
 	err := channel.Connect(context.TODO())
 	if err != nil {
-		_, _ = event.UpdateResponse(discord.NewMessageUpdateBuilder().SetContent("error while connecting to channel:\n" + err.Error()).Build())
+		_, _ = event.UpdateOriginalMessage(discord.NewMessageUpdateBuilder().SetContent("error while connecting to channel:\n" + err.Error()).Build())
 		log.Errorf("error while connecting to channel: %s", err)
 		return false
 	}
