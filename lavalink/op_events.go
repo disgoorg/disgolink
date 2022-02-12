@@ -116,7 +116,7 @@ func (TrackExceptionEvent) OpEvent()                       {}
 type TrackStuckEvent struct {
 	GID         snowflake.Snowflake `json:"guildId"`
 	TrackString string              `json:"track"`
-	ThresholdMs int                 `json:"threasholdMs"`
+	ThresholdMs Duration            `json:"threasholdMs"`
 }
 
 func (TrackStuckEvent) Event() EventType               { return EventTypeTrackStuck }

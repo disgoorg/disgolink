@@ -5,7 +5,6 @@ import (
 	"encoding/base64"
 	"encoding/binary"
 	"io"
-	"time"
 )
 
 type CustomTrackInfoDecoder func(info AudioTrackInfo, r io.Reader) (AudioTrack, error)
@@ -48,7 +47,7 @@ func DecodeString(str string, customTrackInfoDecoder CustomTrackInfoDecoder) (tr
 	if length, err = ReadInt64(r); err != nil {
 		return
 	}
-	info.Length = time.Duration(length) * time.Millisecond
+	info.Length = Duration(length)
 
 	if info.Identifier, err = ReadString(r); err != nil {
 		return
@@ -78,7 +77,7 @@ func DecodeString(str string, customTrackInfoDecoder CustomTrackInfoDecoder) (tr
 	if position, err = ReadInt64(r); err != nil {
 		return
 	}
-	track.SetPosition(time.Duration(position) * time.Millisecond)
+	track.SetPosition(Duration(position))
 
 	return track, nil
 }

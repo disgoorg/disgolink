@@ -7,7 +7,7 @@ type PlayerEventListener interface {
 	OnTrackStart(player Player, track AudioTrack)
 	OnTrackEnd(player Player, track AudioTrack, endReason AudioTrackEndReason)
 	OnTrackException(player Player, track AudioTrack, exception FriendlyException)
-	OnTrackStuck(player Player, track AudioTrack, thresholdMs int)
+	OnTrackStuck(player Player, track AudioTrack, thresholdMs Duration)
 	OnWebSocketClosed(player Player, code int, reason string, byRemote bool)
 }
 
@@ -21,6 +21,6 @@ func (a PlayerEventAdapter) OnTrackEnd(player Player, track AudioTrack, endReaso
 }
 func (a PlayerEventAdapter) OnTrackException(player Player, track AudioTrack, exception FriendlyException) {
 }
-func (a PlayerEventAdapter) OnTrackStuck(player Player, track AudioTrack, thresholdMs int) {}
+func (a PlayerEventAdapter) OnTrackStuck(player Player, track AudioTrack, thresholdMs Duration) {}
 func (a PlayerEventAdapter) OnWebSocketClosed(player Player, code int, reason string, byRemote bool) {
 }

@@ -2,7 +2,6 @@ package lavalink
 
 import (
 	"encoding/json"
-	"time"
 )
 
 const (
@@ -12,37 +11,19 @@ const (
 
 type AudioTrack interface {
 	Info() AudioTrackInfo
-	SetPosition(position time.Duration)
+	SetPosition(position Duration)
 	Clone() AudioTrack
 }
 
 type AudioTrackInfo struct {
-	Identifier string        `json:"identifier"`
-	Author     string        `json:"author"`
-	Length     time.Duration `json:"length"`
-	IsStream   bool          `json:"isStream"`
-	Title      string        `json:"title"`
-	URI        *string       `json:"uri"`
-	SourceName string        `json:"sourceName"`
-	Position   time.Duration `json:"position"`
-}
-
-func (i *AudioTrackInfo) UnmarshalJSON(data []byte) error {
-	type trackInfo AudioTrackInfo
-	var v struct {
-		Length   int64 `json:"length"`
-		Position int64 `json:"position"`
-		trackInfo
-	}
-	if err := json.Unmarshal(data, &v); err != nil {
-		return err
-	}
-
-	*i = AudioTrackInfo(v.trackInfo)
-	i.Length = time.Duration(v.Length) * time.Millisecond
-	i.Position = time.Duration(v.Position) * time.Millisecond
-
-	return nil
+	Identifier string   `json:"identifier"`
+	Author     string   `json:"author"`
+	Length     Duration `json:"length"`
+	IsStream   bool     `json:"isStream"`
+	Title      string   `json:"title"`
+	URI        *string  `json:"uri"`
+	SourceName string   `json:"sourceName"`
+	Position   Duration `json:"position"`
 }
 
 func (i AudioTrackInfo) MarshalJSON() ([]byte, error) {
@@ -86,7 +67,7 @@ func (t *DefaultAudioTrack) Info() AudioTrackInfo {
 	return t.AudioTrackInfo
 }
 
-func (t *DefaultAudioTrack) SetPosition(position time.Duration) {
+func (t *DefaultAudioTrack) SetPosition(position Duration) {
 	t.AudioTrackInfo.Position = position
 }
 

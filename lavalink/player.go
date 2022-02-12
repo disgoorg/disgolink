@@ -12,13 +12,13 @@ type Player interface {
 	Track() AudioTrack
 	SetTrack(track AudioTrack)
 	Play(track AudioTrack) error
-	PlayAt(track AudioTrack, start time.Duration, end time.Duration) error
+	PlayAt(track AudioTrack, start Duration, end Duration) error
 	Stop() error
 	Destroy() error
 	Pause(paused bool) error
 	Paused() bool
-	Position() time.Duration
-	Seek(position time.Duration) error
+	Position() Duration
+	Seek(position Duration) error
 	Volume() int
 	SetVolume(volume int) error
 	Filters() Filters
@@ -40,23 +40,22 @@ type Player interface {
 }
 
 type PlayerState struct {
-	Time      time.Time     `json:"time"`
-	Position  time.Duration `json:"position"`
-	Connected bool          `json:"connected"`
+	Time      time.Time `json:"time"`
+	Position  Duration  `json:"position"`
+	Connected bool      `json:"connected"`
 }
 
 func (s *PlayerState) UnmarshalJSON(data []byte) error {
+	type playerState PlayerState
 	var v struct {
-		Time      int64 `json:"time"`
-		Position  int64 `json:"position"`
-		Connected bool  `json:"connected"`
+		Time int64 `json:"time"`
+		playerState
 	}
 	if err := json.Unmarshal(data, &v); err != nil {
 		return err
 	}
+	*s = PlayerState(v.playerState)
 	s.Time = time.Unix(v.Time, 0)
-	s.Position = time.Duration(v.Position) * time.Millisecond
-	s.Connected = v.Connected
 	return nil
 }
 
@@ -97,7 +96,7 @@ func (p *DefaultPlayer) Play(track AudioTrack) error {
 		return err
 	}
 
-	if err := p.Node().Send(PlayCommand{
+	if err = p.Node().Send(PlayCommand{
 		GuildID: p.guildID,
 		Track:   t,
 	}); err != nil {
@@ -106,17 +105,17 @@ func (p *DefaultPlayer) Play(track AudioTrack) error {
 	return nil
 }
 
-func (p *DefaultPlayer) PlayAt(track AudioTrack, start time.Duration, end time.Duration) error {
+func (p *DefaultPlayer) PlayAt(track AudioTrack, start Duration, end Duration) error {
 	t, err := p.node.Lavalink().EncodeTrack(track)
 	if err != nil {
 		return err
 	}
 
-	if err := p.Node().Send(PlayCommand{
+	if err = p.Node().Send(PlayCommand{
 		GuildID:   p.guildID,
 		Track:     t,
-		StartTime: start.Milliseconds(),
-		EndTime:   end.Milliseconds(),
+		StartTime: start,
+		EndTime:   end,
 	}); err != nil {
 		return errors.Wrap(err, "error while stopping player")
 	}
@@ -180,12 +179,12 @@ func (p *DefaultPlayer) Paused() bool {
 	return p.paused
 }
 
-func (p *DefaultPlayer) Position() time.Duration {
+func (p *DefaultPlayer) Position() Duration {
 	if p.track == nil {
 		return 0
 	}
 	if p.paused {
-		timeDiff := time.Since(p.state.Time)
+		timeDiff := Duration(time.Since(p.state.Time).Milliseconds())
 		if p.state.Position+timeDiff > p.track.Info().Length {
 			return p.track.Info().Length
 		}
@@ -194,10 +193,10 @@ func (p *DefaultPlayer) Position() time.Duration {
 	return p.state.Position
 }
 
-func (p *DefaultPlayer) Seek(position time.Duration) error {
+func (p *DefaultPlayer) Seek(position Duration) error {
 	if err := p.Node().Send(SeekCommand{
 		GuildID:  p.guildID,
-		Position: position.Milliseconds(),
+		Position: position,
 	}); err != nil {
 		return errors.Wrap(err, "error while seeking player")
 	}

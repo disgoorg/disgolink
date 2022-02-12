@@ -2,7 +2,6 @@ package lavalink
 
 import (
 	"encoding/json"
-	"time"
 
 	"github.com/DisgoOrg/snowflake"
 )
@@ -10,8 +9,8 @@ import (
 type PlayCommand struct {
 	GuildID   snowflake.Snowflake `json:"guildId"`
 	Track     string              `json:"track"`
-	StartTime int64               `json:"startTime,omitempty"`
-	EndTime   int64               `json:"endTime,omitempty"`
+	StartTime Duration            `json:"startTime,omitempty"`
+	EndTime   Duration            `json:"endTime,omitempty"`
 	NoReplace bool                `json:"noReplace,omitempty"`
 	Pause     bool                `json:"pause,omitempty"`
 }
@@ -83,7 +82,7 @@ func (PauseCommand) OpCommand() {}
 
 type SeekCommand struct {
 	GuildID  snowflake.Snowflake `json:"guildId"`
-	Position int64               `json:"position"`
+	Position Duration            `json:"position"`
 }
 
 func (c SeekCommand) MarshalJSON() ([]byte, error) {
@@ -137,20 +136,18 @@ func (VoiceUpdateCommand) Op() OpType { return OpTypeVoiceUpdate }
 func (VoiceUpdateCommand) OpCommand() {}
 
 type ConfigureResumingCommand struct {
-	Key     string        `json:"key"`
-	Timeout time.Duration `json:"timeout"`
+	Key     string `json:"key"`
+	Timeout int    `json:"timeout"`
 }
 
 func (c ConfigureResumingCommand) MarshalJSON() ([]byte, error) {
 	type cmd ConfigureResumingCommand
 	return json.Marshal(struct {
-		Op      OpType `json:"op"`
-		Timeout int64  `json:"timeout"`
+		Op OpType `json:"op"`
 		cmd
 	}{
-		Op:      c.Op(),
-		Timeout: int64(c.Timeout.Seconds()),
-		cmd:     cmd(c),
+		Op:  c.Op(),
+		cmd: cmd(c),
 	})
 }
 func (ConfigureResumingCommand) Op() OpType { return OpTypeConfigureResuming }

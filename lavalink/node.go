@@ -25,7 +25,7 @@ const (
 type Node interface {
 	Lavalink() Lavalink
 	Send(cmd OpCommand) error
-	ConfigureResuming(key string, timeout time.Duration) error
+	ConfigureResuming(key string, timeoutSeconds int) error
 
 	Open(ctx context.Context) error
 	Close()
@@ -106,10 +106,10 @@ func (n *nodeImpl) Send(cmd OpCommand) error {
 	return nil
 }
 
-func (n *nodeImpl) ConfigureResuming(key string, timeout time.Duration) error {
+func (n *nodeImpl) ConfigureResuming(key string, timeoutSeconds int) error {
 	return n.Send(ConfigureResumingCommand{
 		Key:     key,
-		Timeout: timeout,
+		Timeout: timeoutSeconds,
 	})
 }
 
