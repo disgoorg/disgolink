@@ -2,7 +2,6 @@ package lavalink
 
 import (
 	"testing"
-	"time"
 
 	"github.com/stretchr/testify/assert"
 )
@@ -14,7 +13,7 @@ var (
 		AudioTrackInfo: AudioTrackInfo{
 			Identifier: "jdWhJcrrjQs",
 			Author:     "Epitaph Records",
-			Length:     245000 * time.Millisecond,
+			Length:     245000,
 			IsStream:   false,
 			Title:      `Architects - "Animals"`,
 			URI:        &uri,
