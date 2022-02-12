@@ -149,7 +149,7 @@ func (c ConfigureResumingCommand) MarshalJSON() ([]byte, error) {
 		cmd
 	}{
 		Op:      c.Op(),
-		Timeout: c.Timeout.Milliseconds(),
+		Timeout: int64(c.Timeout.Seconds()),
 		cmd:     cmd(c),
 	})
 }

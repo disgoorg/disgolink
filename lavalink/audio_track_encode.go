@@ -80,13 +80,11 @@ func WriteBool(w io.Writer, bool bool) error {
 func WriteString(w io.Writer, str string) error {
 	data := []byte(str)
 
-	size := len(data)
-
-	if size > 65535 {
+	if len(data) > 65535 {
 		return errors.New("string too big")
 	}
 
-	if err := WriteInt16(w, int16(size)); err != nil {
+	if err := WriteInt16(w, int16(len(data))); err != nil {
 		return err
 	}
 	return binary.Write(w, binary.BigEndian, data)
