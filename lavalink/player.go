@@ -18,6 +18,7 @@ type Player interface {
 	Pause(paused bool) error
 	Paused() bool
 	Position() Duration
+	Connected() bool
 	Seek(position Duration) error
 	Volume() int
 	SetVolume(volume int) error
@@ -183,7 +184,7 @@ func (p *DefaultPlayer) Position() Duration {
 	if p.track == nil {
 		return 0
 	}
-	if p.paused {
+	if !p.paused {
 		timeDiff := Duration(time.Since(p.state.Time).Milliseconds())
 		if p.state.Position+timeDiff > p.track.Info().Length {
 			return p.track.Info().Length
@@ -191,6 +192,10 @@ func (p *DefaultPlayer) Position() Duration {
 		return p.state.Position + timeDiff
 	}
 	return p.state.Position
+}
+
+func (p *DefaultPlayer) Connected() bool {
+	return p.state.Connected
 }
 
 func (p *DefaultPlayer) Seek(position Duration) error {

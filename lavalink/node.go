@@ -144,7 +144,7 @@ func (n *nodeImpl) listen() {
 		}
 		_, data, err := n.conn.ReadMessage()
 		if err != nil {
-			if websocket.IsUnexpectedCloseError(err, websocket.CloseGoingAway) {
+			if websocket.IsUnexpectedCloseError(err, websocket.CloseGoingAway, websocket.CloseAbnormalClosure) {
 				n.lavalink.Logger().Errorf("error while reading from lavalink websocket. error: %s", err)
 				n.Close()
 				if err = n.reconnect(); err != nil {

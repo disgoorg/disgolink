@@ -7,7 +7,6 @@ import (
 	"regexp"
 	"strconv"
 	"syscall"
-	"time"
 
 	"github.com/DisgoOrg/disgolink/disgolink"
 	"github.com/DisgoOrg/snowflake"
@@ -93,5 +92,5 @@ func registerNodes() {
 		Secure:      secure,
 		ResumingKey: os.Getenv("lavalink_resuming_key"),
 	})
-	_ = dgolink.BestNode().ConfigureResuming("test", 20*time.Second)
+	_ = dgolink.BestNode().ConfigureResuming("test", 20)
 }

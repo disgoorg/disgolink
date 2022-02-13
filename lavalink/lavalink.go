@@ -29,6 +29,7 @@ type Lavalink interface {
 	DecodeTrack(track string) (AudioTrack, error)
 
 	Player(guildID snowflake.Snowflake) Player
+	PlayerOnNode(name string, guildID snowflake.Snowflake) Player
 	ExistingPlayer(guildID snowflake.Snowflake) Player
 	Players() map[snowflake.Snowflake]Player
 
@@ -199,12 +200,20 @@ func (l *lavalinkImpl) DecodeTrack(str string) (AudioTrack, error) {
 }
 
 func (l *lavalinkImpl) Player(guildID snowflake.Snowflake) Player {
+	return l.PlayerOnNode("", guildID)
+}
+
+func (l *lavalinkImpl) PlayerOnNode(name string, guildID snowflake.Snowflake) Player {
 	l.playersMu.Lock()
 	defer l.playersMu.Unlock()
 	if player, ok := l.players[guildID]; ok {
 		return player
 	}
-	player := NewPlayer(l.BestNode(), guildID)
+	node := l.Node(name)
+	if node == nil {
+		node = l.BestNode()
+	}
+	player := NewPlayer(node, guildID)
 	for _, pl := range l.config.Plugins {
 		if plugin, ok := pl.(PluginEventHandler); ok {
 			plugin.OnNewPlayer(player)
