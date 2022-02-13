@@ -56,7 +56,7 @@ func (s *PlayerState) UnmarshalJSON(data []byte) error {
 		return err
 	}
 	*s = PlayerState(v.playerState)
-	s.Time = time.Unix(v.Time, 0)
+	s.Time = time.UnixMilli(v.Time)
 	return nil
 }
 
@@ -184,14 +184,17 @@ func (p *DefaultPlayer) Position() Duration {
 	if p.track == nil {
 		return 0
 	}
+	position := p.state.Position
 	if !p.paused {
-		timeDiff := Duration(time.Since(p.state.Time).Milliseconds())
-		if p.state.Position+timeDiff > p.track.Info().Length {
-			return p.track.Info().Length
-		}
-		return p.state.Position + timeDiff
+		position += Duration(time.Now().UnixMilli() - p.state.Time.UnixMilli())
 	}
-	return p.state.Position
+	if position > p.track.Info().Length {
+		return p.track.Info().Length
+	}
+	if position < 0 {
+		return 0
+	}
+	return position
 }
 
 func (p *DefaultPlayer) Connected() bool {

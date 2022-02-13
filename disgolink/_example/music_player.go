@@ -21,6 +21,8 @@ func NewMusicPlayer(guildID snowflake.Snowflake) *MusicPlayer {
 	return musicPlayer
 }
 
+var _ lavalink.PlayerEventListener = (*MusicPlayer)(nil)
+
 type MusicPlayer struct {
 	lavalink.Player
 	queue   []lavalink.AudioTrack
@@ -59,7 +61,7 @@ func (p *MusicPlayer) OnPlayerResume(player lavalink.Player) {
 
 }
 func (p *MusicPlayer) OnPlayerUpdate(player lavalink.Player, state lavalink.PlayerState) {
-	log.Infof("player update: %+v", state)
+	log.Infof("player update: %d, %d", state.Position, player.Position())
 }
 func (p *MusicPlayer) OnTrackStart(player lavalink.Player, track lavalink.AudioTrack) {
 
@@ -74,7 +76,7 @@ func (p *MusicPlayer) OnTrackEnd(player lavalink.Player, track lavalink.AudioTra
 func (p *MusicPlayer) OnTrackException(player lavalink.Player, track lavalink.AudioTrack, exception lavalink.FriendlyException) {
 	_, _ = p.channel.CreateMessage(discord.NewMessageCreateBuilder().SetContentf("AudioTrack exception: `%s`, `%+v`", track.Info().Title, exception).Build())
 }
-func (p *MusicPlayer) OnTrackStuck(player lavalink.Player, track lavalink.AudioTrack, thresholdMs int) {
+func (p *MusicPlayer) OnTrackStuck(player lavalink.Player, track lavalink.AudioTrack, thresholdMs lavalink.Duration) {
 	_, _ = p.channel.CreateMessage(discord.NewMessageCreateBuilder().SetContentf("track stuck: `%s`, %d", track.Info().Title, thresholdMs).Build())
 }
 func (p *MusicPlayer) OnWebSocketClosed(player lavalink.Player, code int, reason string, byRemote bool) {
