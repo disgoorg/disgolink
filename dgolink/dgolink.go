@@ -8,10 +8,9 @@ import (
 
 func New(s *discordgo.Session, opts ...lavalink.ConfigOpt) *Link {
 	discordgolink := &Link{
-		Lavalink: lavalink.New(append([]lavalink.ConfigOpt{lavalink.WithHTTPClient(s.Client)}, opts...)...),
+		Lavalink: lavalink.New(append([]lavalink.ConfigOpt{lavalink.WithHTTPClient(s.Client), lavalink.WithUserIDFromBotToken(s.Token)}, opts...)...),
 	}
 
-	s.AddHandler(discordgolink.ReadyHandler)
 	s.AddHandler(discordgolink.VoiceStateUpdateHandler)
 	s.AddHandler(discordgolink.VoiceServerUpdateHandler)
 	return discordgolink
@@ -21,10 +20,6 @@ var _ lavalink.Lavalink = (*Link)(nil)
 
 type Link struct {
 	lavalink.Lavalink
-}
-
-func (l *Link) ReadyHandler(_ *discordgo.Session, ready *discordgo.Ready) {
-	l.SetUserID(snowflake.Snowflake(ready.User.ID))
 }
 
 func (l *Link) VoiceStateUpdateHandler(_ *discordgo.Session, voiceStateUpdate *discordgo.VoiceStateUpdate) {

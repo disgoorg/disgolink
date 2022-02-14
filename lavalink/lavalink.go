@@ -9,7 +9,10 @@ import (
 
 	"github.com/DisgoOrg/log"
 	"github.com/DisgoOrg/snowflake"
+	"github.com/pkg/errors"
 )
+
+var ErrNoUserID = errors.New("no user id has been configured")
 
 type Lavalink interface {
 	Logger() log.Logger
@@ -80,6 +83,9 @@ func (l *lavalinkImpl) Logger() log.Logger {
 }
 
 func (l *lavalinkImpl) AddNode(ctx context.Context, config NodeConfig) (Node, error) {
+	if l.UserID() == "" {
+		return nil, ErrNoUserID
+	}
 	node := &nodeImpl{
 		config:   config,
 		lavalink: l,
