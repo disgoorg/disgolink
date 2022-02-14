@@ -9,7 +9,7 @@ replace (
 
 require (
 	github.com/DisgoOrg/disgolink/dgolink v0.0.0-20220112214621-4d364f10b07e
-	github.com/DisgoOrg/disgolink/lavalink v1.3.2
+	github.com/DisgoOrg/disgolink/lavalink v1.3.3
 	github.com/DisgoOrg/snowflake v1.0.4
 	github.com/bwmarrin/discordgo v0.23.3-0.20211228023845-29269347e820
 )

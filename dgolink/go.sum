@@ -1,5 +1,5 @@
-github.com/DisgoOrg/disgolink/lavalink v1.3.2 h1:HaFjsm9aYqS2X7GVodR73o5UHclEJgkomSYqmWS+q9k=
-github.com/DisgoOrg/disgolink/lavalink v1.3.2/go.mod h1:u14urQSHp9DA41yYi3RnhGLeSw2J0WeN1za2Rr4Kekg=
+github.com/DisgoOrg/disgolink/lavalink v1.3.3 h1:YZgGlAm4bGKJar/Dm9rgdAprH/qMC/A+iI2eD6zbLdg=
+github.com/DisgoOrg/disgolink/lavalink v1.3.3/go.mod h1:u14urQSHp9DA41yYi3RnhGLeSw2J0WeN1za2Rr4Kekg=
 github.com/DisgoOrg/log v1.1.3 h1:UN0ZfmPZ7yhCCDQ7iVvIedvZ2zEexNS5Ek76GBuffOE=
 github.com/DisgoOrg/log v1.1.3/go.mod h1:tSMofXaNhQNvzLRoL4tAiCG9yGY1ES5DLvduh7e9GRU=
 github.com/DisgoOrg/snowflake v1.0.4 h1:hgeXSaXRDVdoNJ0rfHXyVsgxQMzctP346S5WXlBmoOU=
