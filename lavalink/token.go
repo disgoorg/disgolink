@@ -11,6 +11,7 @@ import (
 var ErrInvalidBotToken = errors.New("invalid bot token")
 
 func UserIDFromBotToken(token string) (snowflake.Snowflake, error) {
+	token = strings.TrimPrefix(token, "Bot ")
 	strs := strings.Split(token, ".")
 	if len(strs) == 0 {
 		return "", ErrInvalidBotToken
