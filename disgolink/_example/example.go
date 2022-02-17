@@ -92,5 +92,7 @@ func registerNodes() {
 		Secure:      secure,
 		ResumingKey: os.Getenv("lavalink_resuming_key"),
 	})
-	_ = dgolink.BestNode().ConfigureResuming("test", 20)
+	if os.Getenv("lavalink_resuming_key") != "" {
+		_ = dgolink.BestNode().ConfigureResuming(os.Getenv("lavalink_resuming_key"), 20)
+	}
 }
