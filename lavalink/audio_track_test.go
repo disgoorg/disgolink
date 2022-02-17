@@ -9,7 +9,7 @@ import (
 var (
 	uri          = "https://www.youtube.com/watch?v=jdWhJcrrjQs"
 	testTrackStr = "QAAAfwIAFkFyY2hpdGVjdHMgLSAiQW5pbWFscyIAD0VwaXRhcGggUmVjb3JkcwAAAAAAA70IAAtqZFdoSmNycmpRcwABACtodHRwczovL3d3dy55b3V0dWJlLmNvbS93YXRjaD92PWpkV2hKY3JyalFzAAd5b3V0dWJlAAAAAAAAAAA="
-	testTrack    = &DefaultAudioTrack{
+	testTrack    = &BasicAudioTrack{
 		AudioTrackInfo: AudioTrackInfo{
 			Identifier: "jdWhJcrrjQs",
 			Author:     "Epitaph Records",

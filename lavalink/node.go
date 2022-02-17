@@ -52,7 +52,7 @@ type nodeImpl struct {
 	lavalink   Lavalink
 	conn       *websocket.Conn
 	status     NodeStatus
-	statusMu   sync.Locker
+	statusMu   sync.Mutex
 	stats      Stats
 	available  bool
 	restClient RestClient

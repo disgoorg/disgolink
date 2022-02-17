@@ -132,7 +132,7 @@ func onApplicationCommand(event *events.ApplicationCommandInteractionEvent) {
 					if ok = connect(event, voiceState); !ok {
 						return
 					}
-					musicPlayer.Queue(event, skipSegments, playlist.Tracks...)
+					musicPlayer.Queue(event, skipSegments, playlist.Tracks()...)
 				},
 				func(tracks []lavalink.AudioTrack) {
 					if ok = connect(event, voiceState); !ok {

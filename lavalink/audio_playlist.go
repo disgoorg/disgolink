@@ -1,25 +1,36 @@
 package lavalink
 
-func NewAudioPlaylist(info AudioPlaylistInfo, tracks []AudioTrack) AudioPlaylist {
-	return AudioPlaylist{
-		Info:   info,
-		Tracks: tracks,
+func NewAudioPlaylist(name string, selectedTrackIndex int, tracks []AudioTrack) AudioPlaylist {
+	return &BasicAudioPlaylist{
+		PlaylistName:       name,
+		SelectedTrackIndex: selectedTrackIndex,
+		PlaylistTracks:     tracks,
 	}
 }
 
-type AudioPlaylist struct {
-	Info   AudioPlaylistInfo
-	Tracks []AudioTrack
+type AudioPlaylist interface {
+	Name() string
+	Tracks() []AudioTrack
+	SelectedTrack() AudioTrack
 }
 
-func (p AudioPlaylist) SelectedTrack() AudioTrack {
-	if p.Info.SelectedTrack == -1 || p.Info.SelectedTrack >= len(p.Tracks) {
+type BasicAudioPlaylist struct {
+	PlaylistName       string
+	SelectedTrackIndex int
+	PlaylistTracks     []AudioTrack
+}
+
+func (p *BasicAudioPlaylist) Name() string {
+	return p.PlaylistName
+}
+
+func (p *BasicAudioPlaylist) Tracks() []AudioTrack {
+	return p.PlaylistTracks
+}
+
+func (p *BasicAudioPlaylist) SelectedTrack() AudioTrack {
+	if p.SelectedTrackIndex == -1 || p.SelectedTrackIndex >= len(p.PlaylistTracks) {
 		return nil
 	}
-	return p.Tracks[p.Info.SelectedTrack]
-}
-
-type AudioPlaylistInfo struct {
-	Name          string `json:"name"`
-	SelectedTrack int    `json:"selectedTrack"`
+	return p.PlaylistTracks[p.SelectedTrackIndex]
 }

@@ -26,7 +26,6 @@ type Link interface {
 
 var (
 	_ Link               = (*linkImpl)(nil)
-	_ lavalink.Lavalink  = (*linkImpl)(nil)
 	_ core.EventListener = (*linkImpl)(nil)
 )
 

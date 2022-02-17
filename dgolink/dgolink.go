@@ -8,11 +8,14 @@ import (
 
 func New(s *discordgo.Session, opts ...lavalink.ConfigOpt) *Link {
 	discordgolink := &Link{
-		Lavalink: lavalink.New(append([]lavalink.ConfigOpt{lavalink.WithHTTPClient(s.Client), lavalink.WithUserIDFromBotToken(s.Token)}, opts...)...),
+		Lavalink: lavalink.New(append([]lavalink.ConfigOpt{
+			lavalink.WithHTTPClient(s.Client),
+			lavalink.WithUserIDFromBotToken(s.Token),
+		}, opts...)...),
 	}
 
-	s.AddHandler(discordgolink.VoiceStateUpdateHandler)
-	s.AddHandler(discordgolink.VoiceServerUpdateHandler)
+	s.AddHandler(discordgolink.OnVoiceStateUpdateHandler)
+	s.AddHandler(discordgolink.OnVoiceServerUpdateHandler)
 	return discordgolink
 }
 
@@ -22,19 +25,22 @@ type Link struct {
 	lavalink.Lavalink
 }
 
-func (l *Link) VoiceStateUpdateHandler(_ *discordgo.Session, voiceStateUpdate *discordgo.VoiceStateUpdate) {
-	var channelID *string
+func (l *Link) OnVoiceStateUpdateHandler(_ *discordgo.Session, voiceStateUpdate *discordgo.VoiceStateUpdate) {
+	if snowflake.Snowflake(voiceStateUpdate.UserID) != l.UserID() {
+		return
+	}
+	var channelID *snowflake.Snowflake
 	if voiceStateUpdate.ChannelID != "" {
-		channelID = &voiceStateUpdate.ChannelID
+		channelID = (*snowflake.Snowflake)(&voiceStateUpdate.ChannelID)
 	}
 	l.OnVoiceStateUpdate(lavalink.VoiceStateUpdate{
 		GuildID:   snowflake.Snowflake(voiceStateUpdate.GuildID),
-		ChannelID: (*snowflake.Snowflake)(channelID),
+		ChannelID: channelID,
 		SessionID: voiceStateUpdate.SessionID,
 	})
 }
 
-func (l *Link) VoiceServerUpdateHandler(_ *discordgo.Session, voiceServerUpdate *discordgo.VoiceServerUpdate) {
+func (l *Link) OnVoiceServerUpdateHandler(_ *discordgo.Session, voiceServerUpdate *discordgo.VoiceServerUpdate) {
 	var endpoint *string
 	if voiceServerUpdate.Endpoint != "" {
 		endpoint = &voiceServerUpdate.Endpoint

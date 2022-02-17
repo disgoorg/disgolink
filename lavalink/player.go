@@ -1,7 +1,6 @@
 package lavalink
 
 import (
-	"encoding/json"
 	"time"
 
 	"github.com/DisgoOrg/snowflake"
@@ -39,33 +38,14 @@ type Player interface {
 	RemoveListener(listener interface{})
 }
 
-type PlayerState struct {
-	Time      time.Time `json:"time"`
-	Position  Duration  `json:"position"`
-	Connected bool      `json:"connected"`
-}
-
-func (s *PlayerState) UnmarshalJSON(data []byte) error {
-	type playerState PlayerState
-	var v struct {
-		Time int64 `json:"time"`
-		playerState
-	}
-	if err := json.Unmarshal(data, &v); err != nil {
-		return err
-	}
-	*s = PlayerState(v.playerState)
-	s.Time = time.UnixMilli(v.Time)
-	return nil
-}
-
 var _ Player = (*DefaultPlayer)(nil)
 
-func NewPlayer(node Node, guildID snowflake.Snowflake) Player {
+func NewPlayer(node Node, lavalink Lavalink, guildID snowflake.Snowflake) Player {
 	return &DefaultPlayer{
-		guildID: guildID,
-		volume:  100,
-		node:    node,
+		guildID:  guildID,
+		volume:   100,
+		node:     node,
+		lavalink: lavalink,
 	}
 }
 
@@ -80,6 +60,7 @@ type DefaultPlayer struct {
 	state                 PlayerState
 	filters               Filters
 	node                  Node
+	lavalink              Lavalink
 	listeners             []interface{}
 }
 
@@ -115,7 +96,7 @@ func (p *DefaultPlayer) PlayAt(track AudioTrack, start Duration, end Duration) e
 		StartTime: &start,
 		EndTime:   &end,
 	}); err != nil {
-		return errors.Wrap(err, "error while stopping player")
+		return errors.Wrap(err, "error while playing track")
 	}
 	p.track = track
 	return nil
@@ -124,23 +105,28 @@ func (p *DefaultPlayer) PlayAt(track AudioTrack, start Duration, end Duration) e
 func (p *DefaultPlayer) Stop() error {
 	p.track = nil
 
-	if err := p.Node().Send(StopCommand{GuildID: p.guildID}); err != nil {
+	if p.node == nil {
+		return nil
+	}
+
+	if err := p.node.Send(StopCommand{GuildID: p.guildID}); err != nil {
 		return errors.Wrap(err, "error while stopping player")
 	}
 	return nil
 }
 
 func (p *DefaultPlayer) Destroy() error {
-	p.track = nil
-
-	if err := p.Node().Send(DestroyCommand{GuildID: p.guildID}); err != nil {
-		return errors.Wrap(err, "error while destroying player")
-	}
 	for _, pl := range p.Node().Lavalink().Plugins() {
 		if plugin, ok := pl.(PluginEventHandler); ok {
 			plugin.OnDestroyPlayer(p)
 		}
 	}
+	if p.node != nil {
+		if err := p.node.Send(DestroyCommand{GuildID: p.guildID}); err != nil {
+			return errors.Wrap(err, "error while destroying player")
+		}
+	}
+	p.lavalink.RemovePlayer(p.guildID)
 	return nil
 }
 
@@ -148,12 +134,13 @@ func (p *DefaultPlayer) Pause(pause bool) error {
 	if p.paused == pause {
 		return nil
 	}
-
-	if err := p.Node().Send(PauseCommand{
-		GuildID: p.guildID,
-		Pause:   pause,
-	}); err != nil {
-		return errors.Wrap(err, "error while pausing player")
+	if p.node != nil {
+		if err := p.node.Send(PauseCommand{
+			GuildID: p.guildID,
+			Pause:   pause,
+		}); err != nil {
+			return errors.Wrap(err, "error while pausing player")
+		}
 	}
 
 	p.paused = pause
@@ -199,6 +186,12 @@ func (p *DefaultPlayer) Connected() bool {
 }
 
 func (p *DefaultPlayer) Seek(position Duration) error {
+	if p.Track() == nil {
+		return errors.New("no track is playing")
+	}
+	if p.Track().Info().IsStream {
+		return errors.New("cannot seek streams")
+	}
 	if err := p.Node().Send(SeekCommand{
 		GuildID:  p.guildID,
 		Position: position,
@@ -213,13 +206,16 @@ func (p *DefaultPlayer) Volume() int {
 }
 
 func (p *DefaultPlayer) SetVolume(volume int) error {
+	if p.node == nil {
+		return nil
+	}
 	if volume < 0 {
 		volume = 0
 	}
 	if volume > 1000 {
 		volume = 1000
 	}
-	if err := p.Node().Send(VolumeCommand{
+	if err := p.node.Send(VolumeCommand{
 		GuildID: p.guildID,
 		Volume:  volume,
 	}); err != nil {
@@ -275,6 +271,9 @@ func (p *DefaultPlayer) OnVoiceStateUpdate(voiceStateUpdate VoiceStateUpdate) {
 }
 
 func (p *DefaultPlayer) Node() Node {
+	if p.node == nil {
+		p.node = p.lavalink.BestNode()
+	}
 	return p.node
 }
 
@@ -314,6 +313,9 @@ func (p *DefaultPlayer) RemoveListener(listener interface{}) {
 }
 
 func (p *DefaultPlayer) commitFilters(filters Filters) error {
+	if p.node == nil {
+		return nil
+	}
 	if err := p.node.Send(FiltersCommand{
 		GuildID: p.guildID,
 		Filters: filters,

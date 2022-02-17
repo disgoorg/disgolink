@@ -42,17 +42,17 @@ func (i AudioTrackInfo) MarshalJSON() ([]byte, error) {
 }
 
 func NewAudioTrack(info AudioTrackInfo) AudioTrack {
-	return &DefaultAudioTrack{
+	return &BasicAudioTrack{
 		AudioTrackInfo: info,
 	}
 }
 
-type DefaultAudioTrack struct {
+type BasicAudioTrack struct {
 	AudioTrackInfo AudioTrackInfo `json:"info"`
 	userData       interface{}
 }
 
-func (t *DefaultAudioTrack) UnmarshalJSON(data []byte) error {
+func (t *BasicAudioTrack) UnmarshalJSON(data []byte) error {
 	var v struct {
 		AudioTrack     string         `json:"track"`
 		AudioTrackInfo AudioTrackInfo `json:"info"`
@@ -66,26 +66,26 @@ func (t *DefaultAudioTrack) UnmarshalJSON(data []byte) error {
 	return nil
 }
 
-func (t *DefaultAudioTrack) Info() AudioTrackInfo {
+func (t *BasicAudioTrack) Info() AudioTrackInfo {
 	return t.AudioTrackInfo
 }
 
-func (t *DefaultAudioTrack) SetPosition(position Duration) {
+func (t *BasicAudioTrack) SetPosition(position Duration) {
 	t.AudioTrackInfo.Position = position
 }
 
-func (t *DefaultAudioTrack) SetUserData(userData interface{}) {
+func (t *BasicAudioTrack) SetUserData(userData interface{}) {
 	t.userData = userData
 }
 
-func (t *DefaultAudioTrack) UserData() interface{} {
+func (t *BasicAudioTrack) UserData() interface{} {
 	return t.userData
 }
 
-func (t *DefaultAudioTrack) Clone() AudioTrack {
+func (t *BasicAudioTrack) Clone() AudioTrack {
 	info := t.AudioTrackInfo
 	info.Position = 0
-	return &DefaultAudioTrack{
+	return &BasicAudioTrack{
 		AudioTrackInfo: info,
 		userData:       t.userData,
 	}

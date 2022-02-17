@@ -29,7 +29,7 @@ type MusicPlayer struct {
 	channel core.MessageChannel
 }
 
-func (p *MusicPlayer) Queue(event *events.ApplicationCommandInteractionEvent, skipSegments bool, tracks ...lavalink.AudioTrack) {
+func (p *MusicPlayer) Queue(event *events.ApplicationCommandInteractionEvent, tracks ...lavalink.AudioTrack) {
 	p.channel = event.Channel()
 	for _, track := range tracks {
 		p.queue = append(p.queue, track)

@@ -72,7 +72,7 @@ func (c *restClientImpl) LoadItemHandler(ctx context.Context, identifier string,
 		audioLoaderResultHandler.TrackLoaded(tracks[0])
 
 	case LoadTypePlaylistLoaded:
-		audioLoaderResultHandler.PlaylistLoaded(NewAudioPlaylist(*result.PlaylistInfo, tracks))
+		audioLoaderResultHandler.PlaylistLoaded(NewAudioPlaylist(result.PlaylistInfo.Name, result.PlaylistInfo.SelectedTrack, tracks))
 
 	case LoadTypeSearchResult:
 		audioLoaderResultHandler.SearchResultLoaded(tracks)
