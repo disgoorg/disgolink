@@ -13,10 +13,7 @@ type AudioPlaylist struct {
 }
 
 func (p AudioPlaylist) SelectedTrack() AudioTrack {
-	if p.Info.SelectedTrack == -1 {
-		return nil
-	}
-	if p.Info.SelectedTrack >= len(p.Tracks) {
+	if p.Info.SelectedTrack == -1 || p.Info.SelectedTrack >= len(p.Tracks) {
 		return nil
 	}
 	return p.Tracks[p.Info.SelectedTrack]
