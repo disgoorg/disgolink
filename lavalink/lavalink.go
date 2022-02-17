@@ -41,8 +41,8 @@ type Lavalink interface {
 
 	Close()
 
-	VoiceServerUpdate(voiceServerUpdate VoiceServerUpdate)
-	VoiceStateUpdate(voiceStateUpdate VoiceStateUpdate)
+	OnVoiceServerUpdate(voiceServerUpdate VoiceServerUpdate)
+	OnVoiceStateUpdate(voiceStateUpdate VoiceStateUpdate)
 }
 
 func New(opts ...ConfigOpt) Lavalink {
@@ -143,7 +143,10 @@ func (l lavalinkImpl) BestRestClient() RestClient {
 func (l *lavalinkImpl) RemoveNode(name string) {
 	l.nodesMu.Lock()
 	defer l.nodesMu.Unlock()
-	delete(l.nodes, name)
+	if node, ok := l.nodes[name]; ok {
+		node.Close()
+		delete(l.nodes, name)
+	}
 }
 
 func (l *lavalinkImpl) AddPlugins(plugins ...interface{}) {
@@ -261,23 +264,18 @@ func (l *lavalinkImpl) Close() {
 	}
 }
 
-func (l *lavalinkImpl) VoiceServerUpdate(voiceServerUpdate VoiceServerUpdate) {
+func (l *lavalinkImpl) OnVoiceServerUpdate(voiceServerUpdate VoiceServerUpdate) {
 	player := l.ExistingPlayer(voiceServerUpdate.GuildID)
-	if player == nil || player.LastSessionID() == nil {
+	if player == nil {
 		return
 	}
-	_ = player.Node().Send(VoiceUpdateCommand{
-		GuildID:   voiceServerUpdate.GuildID,
-		SessionID: *player.LastSessionID(),
-		Event:     voiceServerUpdate,
-	})
+	player.OnVoiceServerUpdate(voiceServerUpdate)
 }
 
-func (l *lavalinkImpl) VoiceStateUpdate(voiceStateUpdate VoiceStateUpdate) {
+func (l *lavalinkImpl) OnVoiceStateUpdate(voiceStateUpdate VoiceStateUpdate) {
 	player := l.ExistingPlayer(voiceStateUpdate.GuildID)
 	if player == nil {
 		return
 	}
-	player.SetChannelID(voiceStateUpdate.ChannelID)
-	player.SetLastSessionID(voiceStateUpdate.SessionID)
+	player.OnVoiceStateUpdate(voiceStateUpdate)
 }

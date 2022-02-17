@@ -9,8 +9,8 @@ import (
 type PlayCommand struct {
 	GuildID   snowflake.Snowflake `json:"guildId"`
 	Track     string              `json:"track"`
-	StartTime Duration            `json:"startTime,omitempty"`
-	EndTime   Duration            `json:"endTime,omitempty"`
+	StartTime *Duration           `json:"startTime,omitempty"`
+	EndTime   *Duration           `json:"endTime,omitempty"`
 	NoReplace bool                `json:"noReplace,omitempty"`
 	Pause     bool                `json:"pause,omitempty"`
 }

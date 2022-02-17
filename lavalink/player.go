@@ -10,7 +10,6 @@ import (
 
 type Player interface {
 	Track() AudioTrack
-	SetTrack(track AudioTrack)
 	Play(track AudioTrack) error
 	PlayAt(track AudioTrack, start Duration, end Duration) error
 	Stop() error
@@ -27,14 +26,14 @@ type Player interface {
 
 	GuildID() snowflake.Snowflake
 	ChannelID() *snowflake.Snowflake
-	SetChannelID(channelID *snowflake.Snowflake)
-	LastSessionID() *string
-	SetLastSessionID(sessionID string)
+
+	OnVoiceServerUpdate(voiceServerUpdate VoiceServerUpdate)
+	OnVoiceStateUpdate(voiceStateUpdate VoiceStateUpdate)
 
 	Node() Node
-	SetNode(node Node)
+	ChangeNode(node Node)
 
-	PlayerUpdate(state PlayerState)
+	OnPlayerUpdate(state PlayerState)
 	EmitEvent(caller func(l interface{}))
 	AddListener(listener interface{})
 	RemoveListener(listener interface{})
@@ -71,55 +70,54 @@ func NewPlayer(node Node, guildID snowflake.Snowflake) Player {
 }
 
 type DefaultPlayer struct {
-	guildID       snowflake.Snowflake
-	channelID     *snowflake.Snowflake
-	lastSessionID *string
-	track         AudioTrack
-	volume        int
-	paused        bool
-	state         PlayerState
-	filters       Filters
-	node          Node
-	listeners     []interface{}
+	guildID               snowflake.Snowflake
+	channelID             *snowflake.Snowflake
+	lastSessionID         *string
+	lastVoiceServerUpdate *VoiceServerUpdate
+	track                 AudioTrack
+	volume                int
+	paused                bool
+	state                 PlayerState
+	filters               Filters
+	node                  Node
+	listeners             []interface{}
 }
 
 func (p *DefaultPlayer) Track() AudioTrack {
 	return p.track
 }
 
-func (p *DefaultPlayer) SetTrack(track AudioTrack) {
-	p.track = track
-}
-
 func (p *DefaultPlayer) Play(track AudioTrack) error {
-	t, err := p.node.Lavalink().EncodeTrack(track)
+	encodedTrack, err := p.node.Lavalink().EncodeTrack(track)
 	if err != nil {
 		return err
 	}
 
 	if err = p.Node().Send(PlayCommand{
 		GuildID: p.guildID,
-		Track:   t,
+		Track:   encodedTrack,
 	}); err != nil {
 		return errors.Wrap(err, "error while playing track")
 	}
+	p.track = track
 	return nil
 }
 
 func (p *DefaultPlayer) PlayAt(track AudioTrack, start Duration, end Duration) error {
-	t, err := p.node.Lavalink().EncodeTrack(track)
+	encodedTrack, err := p.node.Lavalink().EncodeTrack(track)
 	if err != nil {
 		return err
 	}
 
 	if err = p.Node().Send(PlayCommand{
 		GuildID:   p.guildID,
-		Track:     t,
-		StartTime: start,
-		EndTime:   end,
+		Track:     encodedTrack,
+		StartTime: &start,
+		EndTime:   &end,
 	}); err != nil {
 		return errors.Wrap(err, "error while stopping player")
 	}
+	p.track = track
 	return nil
 }
 
@@ -164,15 +162,14 @@ func (p *DefaultPlayer) Pause(pause bool) error {
 			if listener, ok := l.(PlayerEventListener); ok {
 				listener.OnPlayerPause(p)
 			}
-
 		})
-	} else {
-		p.EmitEvent(func(l interface{}) {
-			if listener, ok := l.(PlayerEventListener); ok {
-				listener.OnPlayerResume(p)
-			}
-		})
+		return nil
 	}
+	p.EmitEvent(func(l interface{}) {
+		if listener, ok := l.(PlayerEventListener); ok {
+			listener.OnPlayerResume(p)
+		}
+	})
 	return nil
 }
 
@@ -251,27 +248,50 @@ func (p *DefaultPlayer) ChannelID() *snowflake.Snowflake {
 	return p.channelID
 }
 
-func (p *DefaultPlayer) SetChannelID(channelID *snowflake.Snowflake) {
-	p.channelID = channelID
+func (p *DefaultPlayer) OnVoiceServerUpdate(voiceServerUpdate VoiceServerUpdate) {
+	p.lastVoiceServerUpdate = &voiceServerUpdate
+	if err := p.Node().Send(VoiceUpdateCommand{
+		GuildID:   voiceServerUpdate.GuildID,
+		SessionID: *p.lastSessionID,
+		Event:     voiceServerUpdate,
+	}); err != nil {
+		p.node.Lavalink().Logger().Error("error while sending voice server update: ", err)
+	}
 }
 
-func (p *DefaultPlayer) LastSessionID() *string {
-	return p.lastSessionID
-}
-
-func (p *DefaultPlayer) SetLastSessionID(sessionID string) {
-	p.lastSessionID = &sessionID
+func (p *DefaultPlayer) OnVoiceStateUpdate(voiceStateUpdate VoiceStateUpdate) {
+	if voiceStateUpdate.ChannelID == nil {
+		p.channelID = nil
+		if p.Node() != nil {
+			if err := p.Destroy(); err != nil {
+				p.node.Lavalink().Logger().Error("error while destroying player: ", err)
+			}
+			p.node = nil
+		}
+		return
+	}
+	p.channelID = voiceStateUpdate.ChannelID
+	p.lastSessionID = &voiceStateUpdate.SessionID
 }
 
 func (p *DefaultPlayer) Node() Node {
 	return p.node
 }
 
-func (p *DefaultPlayer) SetNode(node Node) {
+func (p *DefaultPlayer) ChangeNode(node Node) {
 	p.node = node
+	if p.lastVoiceServerUpdate != nil {
+		p.OnVoiceServerUpdate(*p.lastVoiceServerUpdate)
+		if track := p.track; track != nil {
+			track.SetPosition(p.Position())
+			if err := p.Play(track); err != nil {
+				p.node.Lavalink().Logger().Error("error while changing node and resuming track: ", err)
+			}
+		}
+	}
 }
 
-func (p *DefaultPlayer) PlayerUpdate(state PlayerState) {
+func (p *DefaultPlayer) OnPlayerUpdate(state PlayerState) {
 	p.state = state
 }
 

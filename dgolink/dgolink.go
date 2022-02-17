@@ -27,7 +27,7 @@ func (l *Link) VoiceStateUpdateHandler(_ *discordgo.Session, voiceStateUpdate *d
 	if voiceStateUpdate.ChannelID != "" {
 		channelID = &voiceStateUpdate.ChannelID
 	}
-	l.VoiceStateUpdate(lavalink.VoiceStateUpdate{
+	l.OnVoiceStateUpdate(lavalink.VoiceStateUpdate{
 		GuildID:   snowflake.Snowflake(voiceStateUpdate.GuildID),
 		ChannelID: (*snowflake.Snowflake)(channelID),
 		SessionID: voiceStateUpdate.SessionID,
@@ -39,7 +39,7 @@ func (l *Link) VoiceServerUpdateHandler(_ *discordgo.Session, voiceServerUpdate 
 	if voiceServerUpdate.Endpoint != "" {
 		endpoint = &voiceServerUpdate.Endpoint
 	}
-	l.VoiceServerUpdate(lavalink.VoiceServerUpdate{
+	l.OnVoiceServerUpdate(lavalink.VoiceServerUpdate{
 		GuildID:  snowflake.Snowflake(voiceServerUpdate.GuildID),
 		Token:    voiceServerUpdate.Token,
 		Endpoint: endpoint,

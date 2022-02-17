@@ -12,6 +12,8 @@ const (
 type AudioTrack interface {
 	Info() AudioTrackInfo
 	SetPosition(position Duration)
+	UserData() interface{}
+	SetUserData(interface{})
 	Clone() AudioTrack
 }
 
@@ -47,6 +49,7 @@ func NewAudioTrack(info AudioTrackInfo) AudioTrack {
 
 type DefaultAudioTrack struct {
 	AudioTrackInfo AudioTrackInfo `json:"info"`
+	userData       interface{}
 }
 
 func (t *DefaultAudioTrack) UnmarshalJSON(data []byte) error {
@@ -71,10 +74,19 @@ func (t *DefaultAudioTrack) SetPosition(position Duration) {
 	t.AudioTrackInfo.Position = position
 }
 
+func (t *DefaultAudioTrack) SetUserData(userData interface{}) {
+	t.userData = userData
+}
+
+func (t *DefaultAudioTrack) UserData() interface{} {
+	return t.userData
+}
+
 func (t *DefaultAudioTrack) Clone() AudioTrack {
 	info := t.AudioTrackInfo
 	info.Position = 0
 	return &DefaultAudioTrack{
 		AudioTrackInfo: info,
+		userData:       t.userData,
 	}
 }

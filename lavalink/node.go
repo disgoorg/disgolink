@@ -200,7 +200,7 @@ func (n *nodeImpl) listen() {
 
 func (n *nodeImpl) onPlayerUpdate(playerUpdate PlayerUpdateOp) {
 	if player := n.lavalink.ExistingPlayer(playerUpdate.GuildID); player != nil {
-		player.PlayerUpdate(playerUpdate.State)
+		player.OnPlayerUpdate(playerUpdate.State)
 		player.EmitEvent(func(l interface{}) {
 			if listener := l.(PlayerEventListener); listener != nil {
 				listener.OnPlayerUpdate(player, playerUpdate.State)
@@ -224,9 +224,9 @@ func (n *nodeImpl) onEvent(event OpEvent) {
 			n.lavalink.Logger().Errorf("error while decoding track: %s", err)
 			return
 		}
+		track.SetUserData(player.Track().UserData())
 		switch ee := e.(type) {
 		case TrackStartEvent:
-			player.SetTrack(track)
 			player.EmitEvent(func(l interface{}) {
 				if listener := l.(PlayerEventListener); listener != nil {
 					listener.OnTrackStart(player, track)
