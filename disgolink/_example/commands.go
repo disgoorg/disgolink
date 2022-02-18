@@ -42,10 +42,6 @@ var commands = []discord.ApplicationCommandCreate{
 					{Name: "SoundCloud", Value: "sc"},
 				},
 			},
-			discord.ApplicationCommandOptionBool{
-				Name:        "skip-segments",
-				Description: "skip sponsorblock segments",
-			},
 		},
 	},
 }
