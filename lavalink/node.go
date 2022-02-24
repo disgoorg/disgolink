@@ -145,10 +145,10 @@ func (n *nodeImpl) listen() {
 		_, data, err := n.conn.ReadMessage()
 		if err != nil {
 			if websocket.IsUnexpectedCloseError(err, websocket.CloseGoingAway, websocket.CloseAbnormalClosure) {
-				n.lavalink.Logger().Errorf("error while reading from lavalink websocket. error: %s", err)
+				n.lavalink.Logger().Error("error while reading from lavalink websocket. error: ", err)
 				n.Close()
 				if err = n.reconnect(); err != nil {
-					n.lavalink.Logger().Errorf("error while reconnecting to lavalink websocket. error: %s", err)
+					n.lavalink.Logger().Error("error while reconnecting to lavalink websocket. error: ", err)
 				}
 			}
 			return
@@ -164,7 +164,7 @@ func (n *nodeImpl) listen() {
 
 		var v UnmarshalOp
 		if err = json.Unmarshal(data, &v); err != nil {
-			n.lavalink.Logger().Errorf("error while unmarshalling op. error: %s", err)
+			n.lavalink.Logger().Error("error while unmarshalling op. error: ", err)
 			continue
 		}
 
