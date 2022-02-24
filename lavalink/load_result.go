@@ -19,13 +19,13 @@ type AudioLoadResultHandler interface {
 }
 
 type LoadResult struct {
-	LoadType     LoadType               `json:"loadType"`
-	PlaylistInfo *RestAudioPlaylistInfo `json:"playlistInfo"`
-	Tracks       []RestAudioTrack       `json:"tracks"`
-	Exception    *FriendlyException     `json:"exception"`
+	LoadType     LoadType           `json:"loadType"`
+	PlaylistInfo *PlaylistInfo      `json:"playlistInfo"`
+	Tracks       []RestAudioTrack   `json:"tracks"`
+	Exception    *FriendlyException `json:"exception"`
 }
 
-type RestAudioPlaylistInfo struct {
+type PlaylistInfo struct {
 	Name          string `json:"name"`
 	SelectedTrack int    `json:"selectedTrack"`
 }

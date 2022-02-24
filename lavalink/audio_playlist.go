@@ -1,7 +1,7 @@
 package lavalink
 
 func NewAudioPlaylist(name string, selectedTrackIndex int, tracks []AudioTrack) AudioPlaylist {
-	return &BasicAudioPlaylist{
+	return BasicAudioPlaylist{
 		PlaylistName:       name,
 		SelectedTrackIndex: selectedTrackIndex,
 		PlaylistTracks:     tracks,
@@ -20,15 +20,15 @@ type BasicAudioPlaylist struct {
 	PlaylistTracks     []AudioTrack
 }
 
-func (p *BasicAudioPlaylist) Name() string {
+func (p BasicAudioPlaylist) Name() string {
 	return p.PlaylistName
 }
 
-func (p *BasicAudioPlaylist) Tracks() []AudioTrack {
+func (p BasicAudioPlaylist) Tracks() []AudioTrack {
 	return p.PlaylistTracks
 }
 
-func (p *BasicAudioPlaylist) SelectedTrack() AudioTrack {
+func (p BasicAudioPlaylist) SelectedTrack() AudioTrack {
 	if p.SelectedTrackIndex == -1 || p.SelectedTrackIndex >= len(p.PlaylistTracks) {
 		return nil
 	}

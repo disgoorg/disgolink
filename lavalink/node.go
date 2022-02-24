@@ -34,7 +34,7 @@ type Node interface {
 	RestClient() RestClient
 	RestURL() string
 	Config() NodeConfig
-	Stats() Stats
+	Stats() *Stats
 	Status() NodeStatus
 }
 
@@ -53,7 +53,7 @@ type nodeImpl struct {
 	conn       *websocket.Conn
 	status     NodeStatus
 	statusMu   sync.Mutex
-	stats      Stats
+	stats      *Stats
 	available  bool
 	restClient RestClient
 }
@@ -117,7 +117,7 @@ func (n *nodeImpl) Status() NodeStatus {
 	return n.status
 }
 
-func (n *nodeImpl) Stats() Stats {
+func (n *nodeImpl) Stats() *Stats {
 	return n.stats
 }
 
@@ -283,7 +283,7 @@ func (n *nodeImpl) onEvent(event OpEvent) {
 }
 
 func (n *nodeImpl) onStatsEvent(stats StatsOp) {
-	n.stats = stats.Stats
+	n.stats = &stats.Stats
 }
 
 func (n *nodeImpl) open(ctx context.Context, delay time.Duration) error {

@@ -3,21 +3,16 @@ package lavalink
 type Stats struct {
 	Players        int         `json:"players"`
 	PlayingPlayers int         `json:"playingPlayers"`
-	Uptime         int         `json:"uptime"`
-	Memory         *Memory     `json:"memory"`
-	CPU            *CPU        `json:"cpu"`
+	Uptime         Duration    `json:"uptime"`
+	Memory         Memory      `json:"memory"`
+	CPU            CPU         `json:"cpu"`
 	FrameStats     *FrameStats `json:"frameStats"`
 }
 
 func (s Stats) Better(stats Stats) bool {
-	sLoad := 0
-	statsLoad := 0
-	if s.CPU != nil {
-		sLoad = int(s.CPU.SystemLoad / float64(s.CPU.Cores) * 100)
-	}
-	if s.CPU != nil {
-		statsLoad = int(stats.CPU.SystemLoad / float64(stats.CPU.Cores) * 100)
-	}
+	sLoad := int(s.CPU.SystemLoad / float64(s.CPU.Cores) * 100)
+	statsLoad := int(stats.CPU.SystemLoad / float64(stats.CPU.Cores) * 100)
+
 	return sLoad > statsLoad
 }
 

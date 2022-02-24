@@ -124,7 +124,7 @@ func (l *lavalinkImpl) BestNode() Node {
 	defer l.nodesMu.Unlock()
 	var bestNode Node
 	for _, node := range l.nodes {
-		if bestNode == nil || node.Stats().Better(bestNode.Stats()) {
+		if bestNode == nil || (node.Stats() != nil && bestNode.Stats() != nil && node.Stats().Better(*bestNode.Stats())) {
 			bestNode = node
 		}
 	}

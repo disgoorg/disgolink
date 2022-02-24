@@ -116,13 +116,13 @@ func (c *restClientImpl) DecodeTracks(ctx context.Context, tracks []string) ([]R
 }
 
 func (c *restClientImpl) parseRestAudioTracks(loadResultTracks []RestAudioTrack) ([]AudioTrack, error) {
-	var tracks []AudioTrack
-	for _, loadResultTrack := range loadResultTracks {
-		track, err := c.node.Lavalink().DecodeTrack(loadResultTrack.Track)
+	tracks := make([]AudioTrack, len(loadResultTracks))
+	for i := range loadResultTracks {
+		decodedTrack, err := c.node.Lavalink().DecodeTrack(loadResultTracks[i].Track)
 		if err != nil {
 			return nil, err
 		}
-		tracks = append(tracks, track)
+		tracks[i] = decodedTrack
 	}
 	return tracks, nil
 }
