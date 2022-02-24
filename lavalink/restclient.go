@@ -1,6 +1,7 @@
 package lavalink
 
 import (
+	"bytes"
 	"context"
 	"encoding/json"
 	"io"
@@ -24,10 +25,12 @@ func (t SearchType) Apply(searchString string) string {
 }
 
 type RestClient interface {
+	Version(ctx context.Context) (string, error)
 	Plugins(ctx context.Context) ([]Plugin, error)
 	LoadItem(ctx context.Context, identifier string) (*LoadResult, error)
 	LoadItemHandler(ctx context.Context, identifier string, audioLoaderResultHandler AudioLoadResultHandler) error
-	Version(ctx context.Context) (string, error)
+	DecodeTrack(ctx context.Context, track string) (*AudioTrackInfo, error)
+	DecodeTracks(ctx context.Context, tracks []string) ([]RestAudioTrack, error)
 }
 
 func newRestClientImpl(node Node, httpClient *http.Client) RestClient {
@@ -37,6 +40,14 @@ func newRestClientImpl(node Node, httpClient *http.Client) RestClient {
 type restClientImpl struct {
 	node       Node
 	httpClient *http.Client
+}
+
+func (c *restClientImpl) Version(ctx context.Context) (string, error) {
+	rawBody, err := c.get(ctx, "/version")
+	if err != nil {
+		return "", err
+	}
+	return string(rawBody), nil
 }
 
 func (c *restClientImpl) Plugins(ctx context.Context) (plugins []Plugin, err error) {
@@ -62,7 +73,7 @@ func (c *restClientImpl) LoadItemHandler(ctx context.Context, identifier string,
 		return err
 	}
 
-	tracks, err := c.parseLoadResultTracks(result.Tracks)
+	tracks, err := c.parseRestAudioTracks(result.Tracks)
 	if err != nil {
 		return err
 	}
@@ -86,15 +97,25 @@ func (c *restClientImpl) LoadItemHandler(ctx context.Context, identifier string,
 	return nil
 }
 
-func (c *restClientImpl) Version(ctx context.Context) (string, error) {
-	rawBody, err := c.get(ctx, "/version")
+func (c *restClientImpl) DecodeTrack(ctx context.Context, track string) (*AudioTrackInfo, error) {
+	var info AudioTrackInfo
+	err := c.getJSON(ctx, "/decodetrack?track="+url.QueryEscape(track), &info)
 	if err != nil {
-		return "", err
+		return nil, err
 	}
-	return string(rawBody), nil
+	return &info, nil
 }
 
-func (c *restClientImpl) parseLoadResultTracks(loadResultTracks []LoadResultAudioTrack) ([]AudioTrack, error) {
+func (c *restClientImpl) DecodeTracks(ctx context.Context, tracks []string) ([]RestAudioTrack, error) {
+	var audioTracks []RestAudioTrack
+	err := c.postJSON(ctx, "/decodetracks", tracks, &audioTracks)
+	if err != nil {
+		return nil, err
+	}
+	return audioTracks, nil
+}
+
+func (c *restClientImpl) parseRestAudioTracks(loadResultTracks []RestAudioTrack) ([]AudioTrack, error) {
 	var tracks []AudioTrack
 	for _, loadResultTrack := range loadResultTracks {
 		track, err := c.node.Lavalink().DecodeTrack(loadResultTrack.Track)
@@ -106,8 +127,8 @@ func (c *restClientImpl) parseLoadResultTracks(loadResultTracks []LoadResultAudi
 	return tracks, nil
 }
 
-func (c *restClientImpl) get(ctx context.Context, path string) ([]byte, error) {
-	rq, err := http.NewRequestWithContext(ctx, http.MethodGet, c.node.RestURL()+path, nil)
+func (c *restClientImpl) do(ctx context.Context, method string, path string, body io.Reader) ([]byte, error) {
+	rq, err := http.NewRequestWithContext(ctx, method, c.node.RestURL()+path, body)
 	if err != nil {
 		return nil, err
 	}
@@ -126,10 +147,26 @@ func (c *restClientImpl) get(ctx context.Context, path string) ([]byte, error) {
 	return rawBody, nil
 }
 
+func (c *restClientImpl) get(ctx context.Context, path string) ([]byte, error) {
+	return c.do(ctx, http.MethodGet, path, nil)
+}
+
 func (c *restClientImpl) getJSON(ctx context.Context, path string, v interface{}) error {
 	rawBody, err := c.get(ctx, path)
 	if err != nil {
 		return err
 	}
 	return json.Unmarshal(rawBody, v)
+}
+
+func (c *restClientImpl) postJSON(ctx context.Context, path string, b interface{}, v interface{}) error {
+	rqBody, err := json.Marshal(b)
+	if err != nil {
+		return err
+	}
+	rsBody, err := c.do(ctx, http.MethodPost, path, bytes.NewReader(rqBody))
+	if err != nil {
+		return err
+	}
+	return json.Unmarshal(rsBody, v)
 }
