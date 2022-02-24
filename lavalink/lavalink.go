@@ -33,6 +33,7 @@ type Lavalink interface {
 
 	Player(guildID snowflake.Snowflake) Player
 	PlayerOnNode(name string, guildID snowflake.Snowflake) Player
+	RestorePlayer(restoreState PlayerRestoreState) (Player, error)
 	ExistingPlayer(guildID snowflake.Snowflake) Player
 	RemovePlayer(guildID snowflake.Snowflake)
 	Players() map[snowflake.Snowflake]Player
@@ -227,6 +228,26 @@ func (l *lavalinkImpl) PlayerOnNode(name string, guildID snowflake.Snowflake) Pl
 	}
 	l.players[guildID] = player
 	return player
+}
+
+func (l *lavalinkImpl) RestorePlayer(restoreState PlayerRestoreState) (Player, error) {
+	l.playersMu.Lock()
+	defer l.playersMu.Unlock()
+	node := l.Node(restoreState.Node)
+	if node == nil {
+		node = l.BestNode()
+	}
+	player, err := newResumingPlayer(node, l, restoreState)
+	if err != nil {
+		return nil, err
+	}
+	for _, pl := range l.config.Plugins {
+		if plugin, ok := pl.(PluginEventHandler); ok {
+			plugin.OnNewPlayer(player)
+		}
+	}
+	l.players[restoreState.GuildID] = player
+	return player, nil
 }
 
 func (l *lavalinkImpl) ExistingPlayer(guildID snowflake.Snowflake) Player {

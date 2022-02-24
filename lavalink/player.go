@@ -1,6 +1,7 @@
 package lavalink
 
 import (
+	"encoding/json"
 	"time"
 
 	"github.com/DisgoOrg/snowflake"
@@ -8,31 +9,31 @@ import (
 )
 
 type Player interface {
-	Track() AudioTrack
+	PlayingTrack() AudioTrack
+	Paused() bool
+	Position() Duration
+	Connected() bool
+	Volume() int
+	Filters() Filters
+	GuildID() snowflake.Snowflake
+	ChannelID() *snowflake.Snowflake
+	Node() Node
+	Export() PlayerRestoreState
+
 	Play(track AudioTrack) error
 	PlayAt(track AudioTrack, start Duration, end Duration) error
 	Stop() error
 	Destroy() error
 	Pause(paused bool) error
-	Paused() bool
-	Position() Duration
-	Connected() bool
 	Seek(position Duration) error
-	Volume() int
 	SetVolume(volume int) error
-	Filters() Filters
 	SetFilters(filters Filters)
-
-	GuildID() snowflake.Snowflake
-	ChannelID() *snowflake.Snowflake
+	ChangeNode(node Node)
 
 	OnVoiceServerUpdate(voiceServerUpdate VoiceServerUpdate)
 	OnVoiceStateUpdate(voiceStateUpdate VoiceStateUpdate)
-
-	Node() Node
-	ChangeNode(node Node)
-
 	OnPlayerUpdate(state PlayerState)
+
 	EmitEvent(caller func(l interface{}))
 	AddListener(listener interface{})
 	RemoveListener(listener interface{})
@@ -47,6 +48,28 @@ func NewPlayer(node Node, lavalink Lavalink, guildID snowflake.Snowflake) Player
 		node:     node,
 		lavalink: lavalink,
 	}
+}
+
+func newResumingPlayer(node Node, lavalink Lavalink, resumeState PlayerRestoreState) (Player, error) {
+	track, err := lavalink.DecodeTrack(resumeState.PlayingTrack)
+	if err != nil {
+		return nil, err
+	}
+	player := &DefaultPlayer{
+		guildID:               resumeState.GuildID,
+		channelID:             resumeState.ChannelID,
+		lastSessionID:         resumeState.LastSessionID,
+		lastVoiceServerUpdate: resumeState.LastVoiceServerUpdate,
+		track:                 track,
+		volume:                resumeState.Volume,
+		paused:                resumeState.Paused,
+		state:                 resumeState.State,
+		filters:               resumeState.Filters,
+		node:                  node,
+		lavalink:              lavalink,
+	}
+	player.Filters().setCommitFunc(player.commitFilters)
+	return player, nil
 }
 
 type DefaultPlayer struct {
@@ -64,7 +87,7 @@ type DefaultPlayer struct {
 	listeners             []interface{}
 }
 
-func (p *DefaultPlayer) Track() AudioTrack {
+func (p *DefaultPlayer) PlayingTrack() AudioTrack {
 	return p.track
 }
 
@@ -186,10 +209,10 @@ func (p *DefaultPlayer) Connected() bool {
 }
 
 func (p *DefaultPlayer) Seek(position Duration) error {
-	if p.Track() == nil {
+	if p.PlayingTrack() == nil {
 		return errors.New("no track is playing")
 	}
-	if p.Track().Info().IsStream {
+	if p.PlayingTrack().Info().IsStream {
 		return errors.New("cannot seek streams")
 	}
 	if err := p.Node().Send(SeekCommand{
@@ -242,6 +265,10 @@ func (p *DefaultPlayer) GuildID() snowflake.Snowflake {
 
 func (p *DefaultPlayer) ChannelID() *snowflake.Snowflake {
 	return p.channelID
+}
+
+func (p *DefaultPlayer) Export() PlayerRestoreState {
+	return PlayerRestoreState{}
 }
 
 func (p *DefaultPlayer) OnVoiceServerUpdate(voiceServerUpdate VoiceServerUpdate) {
@@ -323,4 +350,46 @@ func (p *DefaultPlayer) commitFilters(filters Filters) error {
 		return errors.Wrap(err, "error while setting filters of player")
 	}
 	return nil
+}
+
+type PlayerState struct {
+	Time      Time     `json:"time"`
+	Position  Duration `json:"position"`
+	Connected bool     `json:"connected"`
+}
+
+type PlayerRestoreState struct {
+	PlayingTrack          string               `json:"playing_track"`
+	Paused                bool                 `json:"paused"`
+	State                 PlayerState          `json:"state"`
+	Volume                int                  `json:"volume"`
+	Filters               Filters              `json:"filters"`
+	GuildID               snowflake.Snowflake  `json:"guild_id"`
+	ChannelID             *snowflake.Snowflake `json:"channel_id"`
+	LastSessionID         *string              `json:"last_session_id"`
+	LastVoiceServerUpdate *VoiceServerUpdate   `json:"last_voice_server_update"`
+	Node                  string               `json:"node"`
+}
+
+func (s *PlayerRestoreState) UnmarshalJSON(data []byte) error {
+	type playerRestoreState PlayerRestoreState
+	var v struct {
+		Filters json.RawMessage `json:"filters"`
+		playerRestoreState
+	}
+	var err error
+	if err = json.Unmarshal(data, &v); err != nil {
+		return errors.Wrap(err, "error while unmarshalling player resume state")
+	}
+	*s = PlayerRestoreState(v.playerRestoreState)
+	s.Filters, err = UnmarshalFilters(v.Filters)
+	return err
+}
+
+var UnmarshalFilters = func(data []byte) (Filters, error) {
+	var filters *DefaultFilters
+	if err := json.Unmarshal(data, &filters); err != nil {
+		return nil, errors.Wrap(err, "error while unmarshalling filters")
+	}
+	return filters, nil
 }

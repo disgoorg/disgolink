@@ -129,7 +129,7 @@ func (b *Bot) messageCreateHandler(s *discordgo.Session, e *discordgo.MessageCre
 				b.play(s, e.GuildID, args[1], e.ChannelID, track)
 			},
 			func(playlist lavalink.AudioPlaylist) {
-				b.play(s, e.GuildID, args[1], e.ChannelID, playlist.Tracks...)
+				b.play(s, e.GuildID, args[1], e.ChannelID, playlist.Tracks()...)
 			},
 			func(tracks []lavalink.AudioTrack) {
 				b.play(s, e.GuildID, args[1], e.ChannelID, tracks[0])

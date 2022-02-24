@@ -36,7 +36,7 @@ func (p *MusicPlayer) Queue(event *events.ApplicationCommandInteractionEvent, tr
 	}
 
 	var embed discord.EmbedBuilder
-	if p.Track() == nil {
+	if p.PlayingTrack() == nil {
 		var track lavalink.AudioTrack
 		track, p.queue = p.queue[len(p.queue)-1], p.queue[:len(p.queue)-1]
 		_ = p.Play(track)

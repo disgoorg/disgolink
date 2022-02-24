@@ -224,7 +224,7 @@ func (n *nodeImpl) onEvent(event OpEvent) {
 			n.lavalink.Logger().Errorf("error while decoding track: %s", err)
 			return
 		}
-		track.SetUserData(player.Track().UserData())
+		track.SetUserData(player.PlayingTrack().UserData())
 		switch ee := e.(type) {
 		case TrackStartEvent:
 			player.EmitEvent(func(l interface{}) {
