@@ -328,8 +328,10 @@ func (n *nodeImpl) open(ctx context.Context, delay time.Duration) error {
 		return n.open(ctx, delay)
 	}
 	if n.config.ResumingKey != "" {
-		if rs.Header.Get("Session-Resumed") != "true" {
-			n.lavalink.Logger().Warnf("failed to resume session with key %s", n.config.ResumingKey)
+		if rs.Header.Get("Session-Resumed") == "true" {
+			n.lavalink.Logger().Info("successfully resumed session with key: %s", n.config.ResumingKey)
+		} else {
+			n.lavalink.Logger().Warn("failed to resume session with key: ", n.config.ResumingKey)
 		}
 	}
 
