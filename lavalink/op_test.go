@@ -22,6 +22,10 @@ func TestUnmarshalOp_UnmarshalJSON(t *testing.T) {
 			opType:  OpTypeStats,
 		},
 		{
+			payload: []byte(`{"op":"unknown"}`),
+			opType:  "unknown",
+		},
+		{
 			payload:   []byte(`{"op":"event","type":"TrackStartEvent","guildId":"817327181659111454"}`),
 			opType:    OpTypeEvent,
 			eventType: EventTypeTrackStart,
@@ -45,6 +49,11 @@ func TestUnmarshalOp_UnmarshalJSON(t *testing.T) {
 			payload:   []byte(`{"op":"event","type":"WebSocketClosedEvent","guildId":"817327181659111454"}`),
 			opType:    OpTypeEvent,
 			eventType: EventTypeWebSocketClosed,
+		},
+		{
+			payload:   []byte(`{"op":"event","type":"unknown","guildId":"817327181659111454"}`),
+			opType:    OpTypeEvent,
+			eventType: "unknown",
 		},
 	}
 

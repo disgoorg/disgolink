@@ -82,7 +82,7 @@ func (e *UnmarshalOp) UnmarshalJSON(data []byte) error {
 
 	default:
 		var v UnknownOp
-		err = json.Unmarshal(data, &v.Data)
+		err = json.Unmarshal(data, &v)
 		e.Op = v
 	}
 
