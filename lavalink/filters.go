@@ -25,15 +25,16 @@ type Filters interface {
 
 	Clear() Filters
 	Commit() error
+	setCommitFunc(commitFunc func(filters Filters) error)
 }
 
 func NewFilters(commitFunc func(filters Filters) error) Filters {
-	return &defaultFilters{commitFunc: commitFunc}
+	return &DefaultFilters{commitFunc: commitFunc}
 }
 
-var _ Filters = (*defaultFilters)(nil)
+var _ Filters = (*DefaultFilters)(nil)
 
-type defaultFilters struct {
+type DefaultFilters struct {
 	FilterVolume     *Volume     `json:"volume,omitempty"`
 	FilterEqualizer  *Equalizer  `json:"equalizer,omitempty"`
 	FilterTimescale  *Timescale  `json:"timescale,omitempty"`
@@ -45,103 +46,103 @@ type defaultFilters struct {
 	commitFunc       func(filters Filters) error
 }
 
-func (f *defaultFilters) Volume() *Volume {
+func (f *DefaultFilters) Volume() *Volume {
 	if f.FilterVolume == nil {
 		f.FilterVolume = &DefaultVolume
 	}
 	return f.FilterVolume
 }
 
-func (f *defaultFilters) SetVolume(volume *Volume) Filters {
+func (f *DefaultFilters) SetVolume(volume *Volume) Filters {
 	f.FilterVolume = volume
 	return f
 }
 
-func (f *defaultFilters) Equalizer() *Equalizer {
+func (f *DefaultFilters) Equalizer() *Equalizer {
 	if f.FilterEqualizer == nil {
 		f.FilterEqualizer = new(Equalizer)
 	}
 	return f.FilterEqualizer
 }
 
-func (f *defaultFilters) SetEqualizer(equalizer *Equalizer) Filters {
+func (f *DefaultFilters) SetEqualizer(equalizer *Equalizer) Filters {
 	f.FilterEqualizer = equalizer
 	return f
 }
 
-func (f *defaultFilters) Timescale() *Timescale {
+func (f *DefaultFilters) Timescale() *Timescale {
 	if f.FilterTimescale == nil {
 		f.FilterTimescale = new(Timescale)
 	}
 	return f.FilterTimescale
 }
 
-func (f *defaultFilters) SetTimescale(timescale *Timescale) Filters {
+func (f *DefaultFilters) SetTimescale(timescale *Timescale) Filters {
 	f.FilterTimescale = timescale
 	return f
 }
 
-func (f *defaultFilters) Tremolo() *Tremolo {
+func (f *DefaultFilters) Tremolo() *Tremolo {
 	if f.FilterTremolo == nil {
 		f.FilterTremolo = new(Tremolo)
 	}
 	return f.FilterTremolo
 }
 
-func (f *defaultFilters) SetTremolo(tremolo *Tremolo) Filters {
+func (f *DefaultFilters) SetTremolo(tremolo *Tremolo) Filters {
 	f.FilterTremolo = tremolo
 	return f
 }
 
-func (f *defaultFilters) Vibrato() *Vibrato {
+func (f *DefaultFilters) Vibrato() *Vibrato {
 	if f.FilterVibrato == nil {
 		f.FilterVibrato = new(Vibrato)
 	}
 	return f.FilterVibrato
 }
 
-func (f *defaultFilters) SetVibrato(vibrato *Vibrato) Filters {
+func (f *DefaultFilters) SetVibrato(vibrato *Vibrato) Filters {
 	f.FilterVibrato = vibrato
 	return f
 }
 
-func (f *defaultFilters) Rotation() *Rotation {
+func (f *DefaultFilters) Rotation() *Rotation {
 	if f.FilterRotation == nil {
 		f.FilterRotation = new(Rotation)
 	}
 	return f.FilterRotation
 }
 
-func (f *defaultFilters) SetRotation(rotation *Rotation) Filters {
+func (f *DefaultFilters) SetRotation(rotation *Rotation) Filters {
 	f.FilterRotation = rotation
 	return f
 }
 
-func (f *defaultFilters) Karaoke() *Karaoke {
+func (f *DefaultFilters) Karaoke() *Karaoke {
 	if f.FilterKaraoke == nil {
 		f.FilterKaraoke = new(Karaoke)
 	}
 	return f.FilterKaraoke
 }
 
-func (f *defaultFilters) SetKaraoke(karaoke *Karaoke) Filters {
+func (f *DefaultFilters) SetKaraoke(karaoke *Karaoke) Filters {
 	f.FilterKaraoke = karaoke
 	return f
 }
 
-func (f *defaultFilters) Distortion() *Distortion {
+func (f *DefaultFilters) Distortion() *Distortion {
 	if f.FilterDistortion == nil {
 		f.FilterDistortion = new(Distortion)
 	}
 	return f.FilterDistortion
 }
 
-func (f *defaultFilters) SetDistortion(distortion *Distortion) Filters {
+func (f *DefaultFilters) SetDistortion(distortion *Distortion) Filters {
 	f.FilterDistortion = distortion
 	return f
 }
 
-func (f *defaultFilters) Clear() Filters {
+func (f *DefaultFilters) Clear() Filters {
 	f.FilterVolume = nil
 	f.FilterEqualizer = nil
 	f.FilterTimescale = nil
@@ -153,8 +154,12 @@ func (f *defaultFilters) Clear() Filters {
 	return f
 }
 
-func (f *defaultFilters) Commit() error {
+func (f *DefaultFilters) Commit() error {
 	return f.commitFunc(f)
+}
+
+func (f *DefaultFilters) setCommitFunc(commitFunc func(filters Filters) error) {
+	f.commitFunc = commitFunc
 }
 
 type Distortion struct {
@@ -197,7 +202,7 @@ type Vibrato struct {
 
 type Volume float32
 
-type Equalizer map[int]float32
+type Equalizer [15]float32
 
 type EqBand struct {
 	Band int     `json:"band"`
@@ -206,12 +211,12 @@ type EqBand struct {
 
 // MarshalJSON marshals the map as object array
 func (e Equalizer) MarshalJSON() ([]byte, error) {
-	var bands []EqBand
+	var bands [15]EqBand
 	for band, gain := range e {
-		bands = append(bands, EqBand{
+		bands[band] = EqBand{
 			Band: band,
 			Gain: gain,
-		})
+		}
 	}
 	return json.Marshal(bands)
 }

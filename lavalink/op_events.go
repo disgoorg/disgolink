@@ -18,47 +18,41 @@ func (e *UnmarshalOpEvent) UnmarshalJSON(data []byte) error {
 		return err
 	}
 
-	var (
-		opEvent OpEvent
-		err     error
-	)
+	var err error
 
 	switch eType.Type {
 	case EventTypeTrackStart:
 		var v TrackStartEvent
 		err = json.Unmarshal(data, &v)
-		opEvent = v
+		e.OpEvent = v
 
 	case EventTypeTrackEnd:
 		var v TrackEndEvent
 		err = json.Unmarshal(data, &v)
-		opEvent = v
+		e.OpEvent = v
 
 	case EventTypeTrackException:
 		var v TrackExceptionEvent
 		err = json.Unmarshal(data, &v)
-		opEvent = v
+		e.OpEvent = v
 
 	case EventTypeTrackStuck:
 		var v TrackStuckEvent
 		err = json.Unmarshal(data, &v)
-		opEvent = v
+		e.OpEvent = v
 
 	case EventTypeWebSocketClosed:
 		var v WebsocketClosedEvent
 		err = json.Unmarshal(data, &v)
-		opEvent = v
+		e.OpEvent = v
 
 	default:
-		return nil
+		var v UnknownEvent
+		err = json.Unmarshal(data, &v)
+		e.OpEvent = v
 	}
 
-	if err != nil {
-		return err
-	}
-
-	e.OpEvent = opEvent
-	return nil
+	return err
 }
 
 var (
@@ -95,7 +89,7 @@ type TrackEndEvent struct {
 	Reason      AudioTrackEndReason `json:"reason"`
 }
 
-func (TrackEndEvent) Event() EventType               { return EventTypeTrackStart }
+func (TrackEndEvent) Event() EventType               { return EventTypeTrackEnd }
 func (TrackEndEvent) Op() OpType                     { return OpTypeEvent }
 func (e TrackEndEvent) GuildID() snowflake.Snowflake { return e.GID }
 func (e TrackEndEvent) Track() string                { return e.TrackString }
@@ -107,7 +101,7 @@ type TrackExceptionEvent struct {
 	Exception   FriendlyException   `json:"exception"`
 }
 
-func (TrackExceptionEvent) Event() EventType               { return EventTypeTrackStart }
+func (TrackExceptionEvent) Event() EventType               { return EventTypeTrackException }
 func (TrackExceptionEvent) Op() OpType                     { return OpTypeEvent }
 func (e TrackExceptionEvent) GuildID() snowflake.Snowflake { return e.GID }
 func (e TrackExceptionEvent) Track() string                { return e.TrackString }
@@ -140,7 +134,7 @@ func (WebsocketClosedEvent) OpEvent()                       {}
 type UnknownEvent struct {
 	event   EventType
 	guildID snowflake.Snowflake
-	Data    []byte `json:"-"`
+	Data    []byte
 }
 
 func (e *UnknownEvent) UnmarshalJSON(data []byte) error {
@@ -155,6 +149,10 @@ func (e *UnknownEvent) UnmarshalJSON(data []byte) error {
 	e.guildID = v.GuildID
 	e.Data = data
 	return nil
+}
+
+func (e UnknownEvent) MarshalJSON() ([]byte, error) {
+	return e.Data, nil
 }
 
 func (e UnknownEvent) Event() EventType             { return e.event }

@@ -116,29 +116,25 @@ func onApplicationCommand(event *events.ApplicationCommandInteractionEvent) {
 				musicPlayer = NewMusicPlayer(*event.GuildID)
 				musicPlayers[*event.GuildID] = musicPlayer
 			}
-			skipSegments := false
-			if option := data.Options.Bool("skip-segments"); option != nil {
-				skipSegments = *option
-			}
 
 			_ = musicPlayer.Node().RestClient().LoadItemHandler(context.TODO(), query, lavalink.NewResultHandler(
 				func(track lavalink.AudioTrack) {
 					if ok = connect(event, voiceState); !ok {
 						return
 					}
-					musicPlayer.Queue(event, skipSegments, track)
+					musicPlayer.Queue(event, track)
 				},
 				func(playlist lavalink.AudioPlaylist) {
 					if ok = connect(event, voiceState); !ok {
 						return
 					}
-					musicPlayer.Queue(event, skipSegments, playlist.Tracks...)
+					musicPlayer.Queue(event, playlist.Tracks()...)
 				},
 				func(tracks []lavalink.AudioTrack) {
 					if ok = connect(event, voiceState); !ok {
 						return
 					}
-					musicPlayer.Queue(event, skipSegments, tracks[0])
+					musicPlayer.Queue(event, tracks[0])
 				},
 				func() {
 					_, _ = event.UpdateOriginalMessage(discord.NewMessageUpdateBuilder().SetContent("no tracks found").Build())

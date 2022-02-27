@@ -29,14 +29,14 @@ type MusicPlayer struct {
 	channel core.MessageChannel
 }
 
-func (p *MusicPlayer) Queue(event *events.ApplicationCommandInteractionEvent, skipSegments bool, tracks ...lavalink.AudioTrack) {
+func (p *MusicPlayer) Queue(event *events.ApplicationCommandInteractionEvent, tracks ...lavalink.AudioTrack) {
 	p.channel = event.Channel()
 	for _, track := range tracks {
 		p.queue = append(p.queue, track)
 	}
 
 	var embed discord.EmbedBuilder
-	if p.Track() == nil {
+	if p.PlayingTrack() == nil {
 		var track lavalink.AudioTrack
 		track, p.queue = p.queue[len(p.queue)-1], p.queue[:len(p.queue)-1]
 		_ = p.Play(track)

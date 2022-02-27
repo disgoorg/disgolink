@@ -34,7 +34,7 @@ type Node interface {
 	RestClient() RestClient
 	RestURL() string
 	Config() NodeConfig
-	Stats() Stats
+	Stats() *Stats
 	Status() NodeStatus
 }
 
@@ -52,8 +52,8 @@ type nodeImpl struct {
 	lavalink   Lavalink
 	conn       *websocket.Conn
 	status     NodeStatus
-	statusMu   sync.Locker
-	stats      Stats
+	statusMu   sync.Mutex
+	stats      *Stats
 	available  bool
 	restClient RestClient
 }
@@ -117,7 +117,7 @@ func (n *nodeImpl) Status() NodeStatus {
 	return n.status
 }
 
-func (n *nodeImpl) Stats() Stats {
+func (n *nodeImpl) Stats() *Stats {
 	return n.stats
 }
 
@@ -145,10 +145,10 @@ func (n *nodeImpl) listen() {
 		_, data, err := n.conn.ReadMessage()
 		if err != nil {
 			if websocket.IsUnexpectedCloseError(err, websocket.CloseGoingAway, websocket.CloseAbnormalClosure) {
-				n.lavalink.Logger().Errorf("error while reading from lavalink websocket. error: %s", err)
+				n.lavalink.Logger().Error("error while reading from lavalink websocket. error: ", err)
 				n.Close()
 				if err = n.reconnect(); err != nil {
-					n.lavalink.Logger().Errorf("error while reconnecting to lavalink websocket. error: %s", err)
+					n.lavalink.Logger().Error("error while reconnecting to lavalink websocket. error: ", err)
 				}
 			}
 			return
@@ -164,7 +164,7 @@ func (n *nodeImpl) listen() {
 
 		var v UnmarshalOp
 		if err = json.Unmarshal(data, &v); err != nil {
-			n.lavalink.Logger().Errorf("error while unmarshalling op. error: %s", err)
+			n.lavalink.Logger().Error("error while unmarshalling op. error: ", err)
 			continue
 		}
 
@@ -200,7 +200,7 @@ func (n *nodeImpl) listen() {
 
 func (n *nodeImpl) onPlayerUpdate(playerUpdate PlayerUpdateOp) {
 	if player := n.lavalink.ExistingPlayer(playerUpdate.GuildID); player != nil {
-		player.PlayerUpdate(playerUpdate.State)
+		player.OnPlayerUpdate(playerUpdate.State)
 		player.EmitEvent(func(l interface{}) {
 			if listener := l.(PlayerEventListener); listener != nil {
 				listener.OnPlayerUpdate(player, playerUpdate.State)
@@ -224,9 +224,9 @@ func (n *nodeImpl) onEvent(event OpEvent) {
 			n.lavalink.Logger().Errorf("error while decoding track: %s", err)
 			return
 		}
+		track.SetUserData(player.PlayingTrack().UserData())
 		switch ee := e.(type) {
 		case TrackStartEvent:
-			player.SetTrack(track)
 			player.EmitEvent(func(l interface{}) {
 				if listener := l.(PlayerEventListener); listener != nil {
 					listener.OnTrackStart(player, track)
@@ -283,7 +283,7 @@ func (n *nodeImpl) onEvent(event OpEvent) {
 }
 
 func (n *nodeImpl) onStatsEvent(stats StatsOp) {
-	n.stats = stats.Stats
+	n.stats = &stats.Stats
 }
 
 func (n *nodeImpl) open(ctx context.Context, delay time.Duration) error {
@@ -328,8 +328,10 @@ func (n *nodeImpl) open(ctx context.Context, delay time.Duration) error {
 		return n.open(ctx, delay)
 	}
 	if n.config.ResumingKey != "" {
-		if rs.Header.Get("Session-Resumed") != "true" {
-			n.lavalink.Logger().Warnf("failed to resume session with key %s", n.config.ResumingKey)
+		if rs.Header.Get("Session-Resumed") == "true" {
+			n.lavalink.Logger().Info("successfully resumed session with key: %s", n.config.ResumingKey)
+		} else {
+			n.lavalink.Logger().Warn("failed to resume session with key: ", n.config.ResumingKey)
 		}
 	}
 

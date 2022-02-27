@@ -26,7 +26,6 @@ type Link interface {
 
 var (
 	_ Link               = (*linkImpl)(nil)
-	_ lavalink.Lavalink  = (*linkImpl)(nil)
 	_ core.EventListener = (*linkImpl)(nil)
 )
 
@@ -37,7 +36,7 @@ type linkImpl struct {
 func (l *linkImpl) OnEvent(event core.Event) {
 	switch e := event.(type) {
 	case *events.VoiceServerUpdateEvent:
-		l.VoiceServerUpdate(lavalink.VoiceServerUpdate{
+		l.OnVoiceServerUpdate(lavalink.VoiceServerUpdate{
 			Token:    e.VoiceServerUpdate.Token,
 			GuildID:  e.VoiceServerUpdate.GuildID,
 			Endpoint: e.VoiceServerUpdate.Endpoint,
@@ -47,7 +46,7 @@ func (l *linkImpl) OnEvent(event core.Event) {
 		if e.VoiceState.UserID != l.UserID() {
 			return
 		}
-		l.VoiceStateUpdate(lavalink.VoiceStateUpdate{
+		l.OnVoiceStateUpdate(lavalink.VoiceStateUpdate{
 			GuildID:   e.VoiceState.GuildID,
 			ChannelID: e.VoiceState.ChannelID,
 			SessionID: e.VoiceState.SessionID,

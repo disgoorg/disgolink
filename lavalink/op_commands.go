@@ -9,8 +9,8 @@ import (
 type PlayCommand struct {
 	GuildID   snowflake.Snowflake `json:"guildId"`
 	Track     string              `json:"track"`
-	StartTime Duration            `json:"startTime,omitempty"`
-	EndTime   Duration            `json:"endTime,omitempty"`
+	StartTime *Duration           `json:"startTime,omitempty"`
+	EndTime   *Duration           `json:"endTime,omitempty"`
 	NoReplace bool                `json:"noReplace,omitempty"`
 	Pause     bool                `json:"pause,omitempty"`
 }
@@ -159,14 +159,23 @@ type FiltersCommand struct {
 }
 
 func (c FiltersCommand) MarshalJSON() ([]byte, error) {
-	type cmd FiltersCommand
-	return json.Marshal(struct {
-		Op OpType `json:"op"`
-		cmd
+	b1, err := json.Marshal(struct {
+		Op      OpType              `json:"op"`
+		GuildID snowflake.Snowflake `json:"guildId"`
 	}{
-		Op:  c.Op(),
-		cmd: cmd(c),
+		Op:      c.Op(),
+		GuildID: c.GuildID,
 	})
+	if err != nil {
+		return nil, err
+	}
+
+	b2, err := json.Marshal(c.Filters)
+	if err != nil {
+		return nil, err
+	}
+
+	return append(b1[:len(b1)-1], append([]byte(","), b2[1:]...)...), nil
 }
 func (FiltersCommand) Op() OpType { return OpTypeFilters }
 func (FiltersCommand) OpCommand() {}

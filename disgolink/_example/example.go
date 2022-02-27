@@ -84,7 +84,7 @@ func connect(event *events.ApplicationCommandInteractionEvent, voiceState *core.
 
 func registerNodes() {
 	secure, _ := strconv.ParseBool(os.Getenv("lavalink_secure"))
-	dgolink.AddNode(context.TODO(), lavalink.NodeConfig{
+	_, _ = dgolink.AddNode(context.TODO(), lavalink.NodeConfig{
 		Name:        "test",
 		Host:        os.Getenv("lavalink_host"),
 		Port:        os.Getenv("lavalink_port"),

@@ -33,7 +33,9 @@ type Lavalink interface {
 
 	Player(guildID snowflake.Snowflake) Player
 	PlayerOnNode(name string, guildID snowflake.Snowflake) Player
+	RestorePlayer(restoreState PlayerRestoreState) (Player, error)
 	ExistingPlayer(guildID snowflake.Snowflake) Player
+	RemovePlayer(guildID snowflake.Snowflake)
 	Players() map[snowflake.Snowflake]Player
 
 	UserID() snowflake.Snowflake
@@ -41,8 +43,8 @@ type Lavalink interface {
 
 	Close()
 
-	VoiceServerUpdate(voiceServerUpdate VoiceServerUpdate)
-	VoiceStateUpdate(voiceStateUpdate VoiceStateUpdate)
+	OnVoiceServerUpdate(voiceServerUpdate VoiceServerUpdate)
+	OnVoiceStateUpdate(voiceStateUpdate VoiceStateUpdate)
 }
 
 func New(opts ...ConfigOpt) Lavalink {
@@ -56,12 +58,9 @@ func New(opts ...ConfigOpt) Lavalink {
 		config.HTTPClient = &http.Client{Timeout: 20 * time.Second}
 	}
 	return &lavalinkImpl{
-		config:    *config,
-		pluginsMu: &sync.Mutex{},
-		nodesMu:   &sync.Mutex{},
-		nodes:     map[string]Node{},
-		playersMu: &sync.Mutex{},
-		players:   map[snowflake.Snowflake]Player{},
+		config:  *config,
+		nodes:   map[string]Node{},
+		players: map[snowflake.Snowflake]Player{},
 	}
 }
 
@@ -69,12 +68,12 @@ var _ Lavalink = (*lavalinkImpl)(nil)
 
 type lavalinkImpl struct {
 	config    Config
-	pluginsMu sync.Locker
+	pluginsMu sync.Mutex
 
-	nodesMu sync.Locker
+	nodesMu sync.Mutex
 	nodes   map[string]Node
 
-	playersMu sync.Locker
+	playersMu sync.Mutex
 	players   map[snowflake.Snowflake]Player
 }
 
@@ -89,7 +88,6 @@ func (l *lavalinkImpl) AddNode(ctx context.Context, config NodeConfig) (Node, er
 	node := &nodeImpl{
 		config:   config,
 		lavalink: l,
-		statusMu: &sync.Mutex{},
 		status:   Disconnected,
 	}
 	node.restClient = newRestClientImpl(node, l.config.HTTPClient)
@@ -126,14 +124,14 @@ func (l *lavalinkImpl) BestNode() Node {
 	defer l.nodesMu.Unlock()
 	var bestNode Node
 	for _, node := range l.nodes {
-		if bestNode == nil || node.Stats().Better(bestNode.Stats()) {
+		if bestNode == nil || (node.Stats() != nil && bestNode.Stats() != nil && node.Stats().Better(*bestNode.Stats())) {
 			bestNode = node
 		}
 	}
 	return bestNode
 }
 
-func (l lavalinkImpl) BestRestClient() RestClient {
+func (l *lavalinkImpl) BestRestClient() RestClient {
 	if node := l.BestNode(); node != nil {
 		return node.RestClient()
 	}
@@ -143,7 +141,10 @@ func (l lavalinkImpl) BestRestClient() RestClient {
 func (l *lavalinkImpl) RemoveNode(name string) {
 	l.nodesMu.Lock()
 	defer l.nodesMu.Unlock()
-	delete(l.nodes, name)
+	if node, ok := l.nodes[name]; ok {
+		node.Close()
+		delete(l.nodes, name)
+	}
 }
 
 func (l *lavalinkImpl) AddPlugins(plugins ...interface{}) {
@@ -219,7 +220,7 @@ func (l *lavalinkImpl) PlayerOnNode(name string, guildID snowflake.Snowflake) Pl
 	if node == nil {
 		node = l.BestNode()
 	}
-	player := NewPlayer(node, guildID)
+	player := NewPlayer(node, l, guildID)
 	for _, pl := range l.config.Plugins {
 		if plugin, ok := pl.(PluginEventHandler); ok {
 			plugin.OnNewPlayer(player)
@@ -229,10 +230,36 @@ func (l *lavalinkImpl) PlayerOnNode(name string, guildID snowflake.Snowflake) Pl
 	return player
 }
 
+func (l *lavalinkImpl) RestorePlayer(restoreState PlayerRestoreState) (Player, error) {
+	l.playersMu.Lock()
+	defer l.playersMu.Unlock()
+	node := l.Node(restoreState.Node)
+	if node == nil {
+		node = l.BestNode()
+	}
+	player, err := newResumingPlayer(node, l, restoreState)
+	if err != nil {
+		return nil, err
+	}
+	for _, pl := range l.config.Plugins {
+		if plugin, ok := pl.(PluginEventHandler); ok {
+			plugin.OnNewPlayer(player)
+		}
+	}
+	l.players[restoreState.GuildID] = player
+	return player, nil
+}
+
 func (l *lavalinkImpl) ExistingPlayer(guildID snowflake.Snowflake) Player {
 	l.playersMu.Lock()
 	defer l.playersMu.Unlock()
 	return l.players[guildID]
+}
+
+func (l *lavalinkImpl) RemovePlayer(guildID snowflake.Snowflake) {
+	l.playersMu.Lock()
+	defer l.playersMu.Unlock()
+	delete(l.players, guildID)
 }
 
 func (l *lavalinkImpl) Players() map[snowflake.Snowflake]Player {
@@ -261,23 +288,18 @@ func (l *lavalinkImpl) Close() {
 	}
 }
 
-func (l *lavalinkImpl) VoiceServerUpdate(voiceServerUpdate VoiceServerUpdate) {
+func (l *lavalinkImpl) OnVoiceServerUpdate(voiceServerUpdate VoiceServerUpdate) {
 	player := l.ExistingPlayer(voiceServerUpdate.GuildID)
-	if player == nil || player.LastSessionID() == nil {
+	if player == nil {
 		return
 	}
-	_ = player.Node().Send(VoiceUpdateCommand{
-		GuildID:   voiceServerUpdate.GuildID,
-		SessionID: *player.LastSessionID(),
-		Event:     voiceServerUpdate,
-	})
+	player.OnVoiceServerUpdate(voiceServerUpdate)
 }
 
-func (l *lavalinkImpl) VoiceStateUpdate(voiceStateUpdate VoiceStateUpdate) {
+func (l *lavalinkImpl) OnVoiceStateUpdate(voiceStateUpdate VoiceStateUpdate) {
 	player := l.ExistingPlayer(voiceStateUpdate.GuildID)
 	if player == nil {
 		return
 	}
-	player.SetChannelID(voiceStateUpdate.ChannelID)
-	player.SetLastSessionID(voiceStateUpdate.SessionID)
+	player.OnVoiceStateUpdate(voiceStateUpdate)
 }

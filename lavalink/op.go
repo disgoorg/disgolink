@@ -62,39 +62,31 @@ func (e *UnmarshalOp) UnmarshalJSON(data []byte) error {
 		return err
 	}
 
-	var (
-		op  Op
-		err error
-	)
+	var err error
 
 	switch opType.Op {
 	case OpTypePlayerUpdate:
 		var v PlayerUpdateOp
 		err = json.Unmarshal(data, &v)
-		op = v
+		e.Op = v
 
 	case OpTypeEvent:
 		var v UnmarshalOpEvent
 		err = json.Unmarshal(data, &v)
-		op = v.OpEvent
+		e.Op = v.OpEvent
 
 	case OpTypeStats:
 		var v StatsOp
 		err = json.Unmarshal(data, &v)
-		op = v
+		e.Op = v
 
 	default:
 		var v UnknownOp
 		err = json.Unmarshal(data, &v)
-		op = v
+		e.Op = v
 	}
 
-	if err != nil {
-		return err
-	}
-
-	e.Op = op
-	return nil
+	return err
 }
 
 type PlayerUpdateOp struct {
@@ -112,7 +104,7 @@ func (StatsOp) Op() OpType { return OpTypeStats }
 
 type UnknownOp struct {
 	op   OpType
-	Data []byte `json:"-"`
+	Data []byte
 }
 
 func (o *UnknownOp) UnmarshalJSON(data []byte) error {
@@ -125,6 +117,10 @@ func (o *UnknownOp) UnmarshalJSON(data []byte) error {
 	o.op = v.Op
 	o.Data = data
 	return nil
+}
+
+func (o UnknownOp) MarshalJSON() ([]byte, error) {
+	return o.Data, nil
 }
 
 func (o UnknownOp) Op() OpType { return o.op }

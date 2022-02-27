@@ -1,6 +1,8 @@
 package lavalink
 
-import "github.com/DisgoOrg/snowflake"
+import (
+	"github.com/DisgoOrg/snowflake"
+)
 
 type VoiceServerUpdate struct {
 	Token    string              `json:"token"`
