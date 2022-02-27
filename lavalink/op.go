@@ -104,7 +104,7 @@ func (StatsOp) Op() OpType { return OpTypeStats }
 
 type UnknownOp struct {
 	op   OpType
-	Data []byte `json:"-"`
+	Data []byte
 }
 
 func (o *UnknownOp) UnmarshalJSON(data []byte) error {

@@ -95,7 +95,7 @@ type TrackEndEvent struct {
 	Reason      AudioTrackEndReason `json:"reason"`
 }
 
-func (TrackEndEvent) Event() EventType               { return EventTypeTrackStart }
+func (TrackEndEvent) Event() EventType               { return EventTypeTrackEnd }
 func (TrackEndEvent) Op() OpType                     { return OpTypeEvent }
 func (e TrackEndEvent) GuildID() snowflake.Snowflake { return e.GID }
 func (e TrackEndEvent) Track() string                { return e.TrackString }
@@ -107,7 +107,7 @@ type TrackExceptionEvent struct {
 	Exception   FriendlyException   `json:"exception"`
 }
 
-func (TrackExceptionEvent) Event() EventType               { return EventTypeTrackStart }
+func (TrackExceptionEvent) Event() EventType               { return EventTypeTrackException }
 func (TrackExceptionEvent) Op() OpType                     { return OpTypeEvent }
 func (e TrackExceptionEvent) GuildID() snowflake.Snowflake { return e.GID }
 func (e TrackExceptionEvent) Track() string                { return e.TrackString }
@@ -140,7 +140,7 @@ func (WebsocketClosedEvent) OpEvent()                       {}
 type UnknownEvent struct {
 	event   EventType
 	guildID snowflake.Snowflake
-	Data    []byte `json:"-"`
+	Data    []byte
 }
 
 func (e *UnknownEvent) UnmarshalJSON(data []byte) error {
@@ -155,6 +155,10 @@ func (e *UnknownEvent) UnmarshalJSON(data []byte) error {
 	e.guildID = v.GuildID
 	e.Data = data
 	return nil
+}
+
+func (e UnknownEvent) MarshalJSON() ([]byte, error) {
+	return e.Data, nil
 }
 
 func (e UnknownEvent) Event() EventType             { return e.event }

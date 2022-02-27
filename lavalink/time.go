@@ -10,7 +10,7 @@ type Time struct {
 }
 
 func (t Time) MarshalJSON() ([]byte, error) {
-	return []byte(strconv.Quote(strconv.FormatInt(t.UnixMilli(), 10))), nil
+	return []byte(strconv.FormatInt(t.UnixMilli(), 10)), nil
 }
 
 func (t *Time) UnmarshalJSON(data []byte) error {
@@ -19,16 +19,10 @@ func (t *Time) UnmarshalJSON(data []byte) error {
 		return nil
 	}
 
-	timestampStr, err := strconv.Unquote(string(data))
+	timestamp, err := strconv.ParseInt(string(data), 10, 64)
 	if err != nil {
 		return err
 	}
-	timestamp, err := strconv.ParseInt(timestampStr, 10, 64)
-	if err != nil {
-		return err
-	}
-	*t = Time{
-		Time: time.UnixMilli(timestamp),
-	}
+	*t = Time{Time: time.UnixMilli(timestamp)}
 	return nil
 }
