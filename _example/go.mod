@@ -5,7 +5,7 @@ go 1.17
 replace github.com/DisgoOrg/disgolink/lavalink => ../lavalink
 
 require (
-	github.com/DisgoOrg/disgolink/lavalink v1.3.3
+	github.com/DisgoOrg/disgolink/lavalink v1.4.0
 	github.com/DisgoOrg/snowflake v1.0.4
 )
 
