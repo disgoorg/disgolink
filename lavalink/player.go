@@ -51,10 +51,14 @@ func NewPlayer(node Node, lavalink Lavalink, guildID snowflake.Snowflake) Player
 }
 
 func newResumingPlayer(node Node, lavalink Lavalink, resumeState PlayerRestoreState) (Player, error) {
-	track, err := lavalink.DecodeTrack(resumeState.PlayingTrack)
-	if err != nil {
-		return nil, err
+	var track AudioTrack
+	if resumeState.PlayingTrack != nil {
+		var err error
+		if track, err = lavalink.DecodeTrack(*resumeState.PlayingTrack); err != nil {
+			return nil, err
+		}
 	}
+
 	player := &DefaultPlayer{
 		guildID:               resumeState.GuildID,
 		channelID:             resumeState.ChannelID,
@@ -68,7 +72,11 @@ func newResumingPlayer(node Node, lavalink Lavalink, resumeState PlayerRestoreSt
 		node:                  node,
 		lavalink:              lavalink,
 	}
-	player.Filters().setCommitFunc(player.commitFilters)
+
+	if resumeState.Filters != nil {
+		resumeState.Filters.setCommitFunc(player.commitFilters)
+	}
+
 	return player, nil
 }
 
@@ -359,7 +367,7 @@ type PlayerState struct {
 }
 
 type PlayerRestoreState struct {
-	PlayingTrack          string               `json:"playing_track"`
+	PlayingTrack          *string              `json:"playing_track"`
 	Paused                bool                 `json:"paused"`
 	State                 PlayerState          `json:"state"`
 	Volume                int                  `json:"volume"`
