@@ -2,10 +2,8 @@ module github.com/DisgoOrg/disgolink/dgolink
 
 go 1.17
 
-replace github.com/DisgoOrg/disgolink/lavalink => ../lavalink
-
 require (
-	github.com/DisgoOrg/disgolink/lavalink v1.4.0
+	github.com/DisgoOrg/disgolink/lavalink v1.4.1
 	github.com/DisgoOrg/snowflake v1.0.4
 	github.com/bwmarrin/discordgo v0.23.3-0.20211228023845-29269347e820
 )
