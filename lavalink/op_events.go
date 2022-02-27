@@ -18,47 +18,41 @@ func (e *UnmarshalOpEvent) UnmarshalJSON(data []byte) error {
 		return err
 	}
 
-	var (
-		opEvent OpEvent
-		err     error
-	)
+	var err error
 
 	switch eType.Type {
 	case EventTypeTrackStart:
 		var v TrackStartEvent
 		err = json.Unmarshal(data, &v)
-		opEvent = v
+		e.OpEvent = v
 
 	case EventTypeTrackEnd:
 		var v TrackEndEvent
 		err = json.Unmarshal(data, &v)
-		opEvent = v
+		e.OpEvent = v
 
 	case EventTypeTrackException:
 		var v TrackExceptionEvent
 		err = json.Unmarshal(data, &v)
-		opEvent = v
+		e.OpEvent = v
 
 	case EventTypeTrackStuck:
 		var v TrackStuckEvent
 		err = json.Unmarshal(data, &v)
-		opEvent = v
+		e.OpEvent = v
 
 	case EventTypeWebSocketClosed:
 		var v WebsocketClosedEvent
 		err = json.Unmarshal(data, &v)
-		opEvent = v
+		e.OpEvent = v
 
 	default:
-		return nil
+		var v UnknownEvent
+		err = json.Unmarshal(data, &v)
+		e.OpEvent = v
 	}
 
-	if err != nil {
-		return err
-	}
-
-	e.OpEvent = opEvent
-	return nil
+	return err
 }
 
 var (
