@@ -7,8 +7,8 @@ import (
 	"sync"
 	"time"
 
-	"github.com/DisgoOrg/log"
-	"github.com/DisgoOrg/snowflake"
+	"github.com/disgoorg/log"
+	"github.com/disgoorg/snowflake"
 	"github.com/pkg/errors"
 )
 

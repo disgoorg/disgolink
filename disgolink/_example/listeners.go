@@ -6,13 +6,13 @@ import (
 	"math/rand"
 	"time"
 
-	"github.com/DisgoOrg/disgo/core/events"
-	"github.com/DisgoOrg/disgo/discord"
-	"github.com/DisgoOrg/disgolink/lavalink"
+	"github.com/disgoorg/disgo/discord"
+	"github.com/disgoorg/disgo/events"
+	"github.com/disgoorg/disgolink/lavalink"
 )
 
 func checkMusicPlayer(event *events.ApplicationCommandInteractionEvent) *MusicPlayer {
-	musicPlayer, ok := musicPlayers[*event.GuildID]
+	musicPlayer, ok := musicPlayers[*event.GuildID()]
 	if !ok {
 		_ = event.CreateMessage(discord.NewMessageCreateBuilder().SetEphemeral(true).SetContent("No MusicPlayer found for this guild").Build())
 		return nil
@@ -22,7 +22,7 @@ func checkMusicPlayer(event *events.ApplicationCommandInteractionEvent) *MusicPl
 
 func onApplicationCommand(event *events.ApplicationCommandInteractionEvent) {
 	data := event.SlashCommandInteractionData()
-	switch data.CommandName {
+	switch data.CommandName() {
 	case "shuffle":
 		musicPlayer := checkMusicPlayer(event)
 		if musicPlayers == nil {
@@ -87,18 +87,17 @@ func onApplicationCommand(event *events.ApplicationCommandInteractionEvent) {
 		_ = event.CreateMessage(discord.NewMessageCreateBuilder().SetContent(message + " music").Build())
 
 	case "play":
-		voiceState := event.Member.VoiceState()
-
-		if voiceState == nil || voiceState.ChannelID == nil {
+		voiceState, ok := event.Client().Caches().VoiceStates().Get(*event.GuildID(), event.Member().GuildID)
+		if !ok || voiceState.ChannelID == nil {
 			_ = event.CreateMessage(discord.NewMessageCreateBuilder().SetEphemeral(true).SetContent("Please join a VoiceChannel to use this command").Build())
 			return
 		}
 		go func() {
 			_ = event.DeferCreateMessage(false)
 
-			query := *data.Options.String("query")
-			if searchProvider := data.Options.String("search-provider"); searchProvider != nil {
-				switch *searchProvider {
+			query := data.String("query")
+			if searchProvider, ok := data.OptString("search-provider"); ok {
+				switch searchProvider {
 				case "yt":
 					query = lavalink.SearchTypeYoutube.Apply(query)
 				case "ytm":
@@ -111,10 +110,10 @@ func onApplicationCommand(event *events.ApplicationCommandInteractionEvent) {
 					query = lavalink.SearchTypeYoutube.Apply(query)
 				}
 			}
-			musicPlayer, ok := musicPlayers[*event.GuildID]
+			musicPlayer, ok := musicPlayers[*event.GuildID()]
 			if !ok {
-				musicPlayer = NewMusicPlayer(*event.GuildID)
-				musicPlayers[*event.GuildID] = musicPlayer
+				musicPlayer = NewMusicPlayer(event.Client(), *event.GuildID())
+				musicPlayers[*event.GuildID()] = musicPlayer
 			}
 
 			_ = musicPlayer.Node().RestClient().LoadItemHandler(context.TODO(), query, lavalink.NewResultHandler(
@@ -137,10 +136,10 @@ func onApplicationCommand(event *events.ApplicationCommandInteractionEvent) {
 					musicPlayer.Queue(event, tracks[0])
 				},
 				func() {
-					_, _ = event.UpdateOriginalMessage(discord.NewMessageUpdateBuilder().SetContent("no tracks found").Build())
+					_, _ = event.Client().Rest().InteractionService().UpdateInteractionResponse(event.ApplicationID(), event.Token(), discord.NewMessageUpdateBuilder().SetContent("no tracks found").Build())
 				},
 				func(e lavalink.FriendlyException) {
-					_, _ = event.UpdateOriginalMessage(discord.NewMessageUpdateBuilder().SetContent("error while loading track:\n" + e.Error()).Build())
+					_, _ = event.Client().Rest().InteractionService().UpdateInteractionResponse(event.ApplicationID(), event.Token(), discord.NewMessageUpdateBuilder().SetContent("error while loading track:\n"+e.Error()).Build())
 				},
 			))
 		}()

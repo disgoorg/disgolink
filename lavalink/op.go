@@ -3,7 +3,7 @@ package lavalink
 import (
 	"encoding/json"
 
-	"github.com/DisgoOrg/snowflake"
+	"github.com/disgoorg/snowflake"
 )
 
 type OpType string

@@ -4,7 +4,7 @@ import (
 	"encoding/base64"
 	"strings"
 
-	"github.com/DisgoOrg/snowflake"
+	"github.com/disgoorg/snowflake"
 	"github.com/pkg/errors"
 )
 

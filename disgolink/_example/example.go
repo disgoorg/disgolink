@@ -8,16 +8,16 @@ import (
 	"strconv"
 	"syscall"
 
-	"github.com/DisgoOrg/disgolink/disgolink"
-	"github.com/DisgoOrg/snowflake"
-
-	"github.com/DisgoOrg/disgo/core"
-	"github.com/DisgoOrg/disgo/core/bot"
-	"github.com/DisgoOrg/disgo/core/events"
-	"github.com/DisgoOrg/disgo/discord"
-	"github.com/DisgoOrg/disgo/gateway"
-	"github.com/DisgoOrg/disgolink/lavalink"
-	"github.com/DisgoOrg/log"
+	"github.com/disgoorg/disgo"
+	"github.com/disgoorg/disgo/bot"
+	"github.com/disgoorg/disgo/cache"
+	"github.com/disgoorg/disgo/discord"
+	"github.com/disgoorg/disgo/events"
+	"github.com/disgoorg/disgo/gateway"
+	"github.com/disgoorg/disgolink/disgolink"
+	"github.com/disgoorg/disgolink/lavalink"
+	"github.com/disgoorg/log"
+	"github.com/disgoorg/snowflake"
 )
 
 var (
@@ -25,7 +25,7 @@ var (
 
 	token        = os.Getenv("disgolink_token")
 	guildID      = snowflake.GetSnowflakeEnv("guild_id")
-	disgo        *core.Bot
+	client       bot.Client
 	dgolink      disgolink.Link
 	musicPlayers = map[snowflake.Snowflake]*MusicPlayer{}
 )
@@ -36,9 +36,9 @@ func main() {
 	log.Info("starting _example...")
 
 	var err error
-	disgo, err = bot.New(token,
-		bot.WithGatewayOpts(gateway.WithGatewayIntents(discord.GatewayIntentGuilds|discord.GatewayIntentGuildVoiceStates)),
-		bot.WithCacheOpts(core.WithCacheFlags(core.CacheFlagsDefault)),
+	client, err = disgo.New(token,
+		bot.WithGatewayConfigOpts(gateway.WithGatewayIntents(discord.GatewayIntentGuilds|discord.GatewayIntentGuildVoiceStates)),
+		bot.WithCacheConfigOpts(cache.WithCacheFlags(cache.FlagsDefault)),
 		bot.WithEventListeners(&events.ListenerAdapter{
 			OnApplicationCommandInteraction: onApplicationCommand,
 		}),
@@ -48,19 +48,19 @@ func main() {
 		return
 	}
 
-	defer disgo.Close(context.TODO())
+	defer client.Close(context.TODO())
 
-	dgolink = disgolink.New(disgo)
+	dgolink = disgolink.New(client)
 	registerNodes()
 
 	defer dgolink.Close()
 
-	_, err = disgo.SetGuildCommands(guildID, commands)
+	_, err = client.Rest().ApplicationService().SetGuildCommands(client.ApplicationID(), guildID, commands)
 	if err != nil {
 		log.Errorf("error while registering guild commands: %s", err)
 	}
 
-	err = disgo.ConnectGateway(context.TODO())
+	err = client.ConnectGateway(context.TODO())
 	if err != nil {
 		log.Fatalf("error while connecting to discord: %s", err)
 	}
@@ -71,11 +71,9 @@ func main() {
 	<-s
 }
 
-func connect(event *events.ApplicationCommandInteractionEvent, voiceState *core.VoiceState) bool {
-	channel := voiceState.Channel()
-	err := channel.Connect(context.TODO())
-	if err != nil {
-		_, _ = event.UpdateOriginalMessage(discord.NewMessageUpdateBuilder().SetContent("error while connecting to channel:\n" + err.Error()).Build())
+func connect(event *events.ApplicationCommandInteractionEvent, voiceState discord.VoiceState) bool {
+	if err := event.Client().Connect(context.TODO(), voiceState.GuildID, *voiceState.ChannelID); err != nil {
+		_, _ = event.Client().Rest().InteractionService().UpdateInteractionResponse(event.ApplicationID(), event.Token(), discord.NewMessageUpdateBuilder().SetContent("error while connecting to channel:\n"+err.Error()).Build())
 		log.Errorf("error while connecting to channel: %s", err)
 		return false
 	}

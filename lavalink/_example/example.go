@@ -9,8 +9,8 @@ import (
 	"strings"
 	"syscall"
 
-	"github.com/DisgoOrg/disgolink/lavalink"
-	"github.com/DisgoOrg/snowflake"
+	"github.com/disgoorg/disgolink/lavalink"
+	"github.com/disgoorg/snowflake"
 )
 
 var (
@@ -48,7 +48,7 @@ func (b *Bot) messageCreateHandler() {
 			b.Play(guildID, snowflake.Snowflake(args[1]), channelID, track)
 		},
 		func(playlist lavalink.AudioPlaylist) {
-			b.Play(guildID, snowflake.Snowflake(args[1]), channelID, playlist.Tracks[0])
+			b.Play(guildID, snowflake.Snowflake(args[1]), channelID, playlist.Tracks()[0])
 		},
 		func(tracks []lavalink.AudioTrack) {
 			b.Play(guildID, snowflake.Snowflake(args[1]), channelID, tracks[0])

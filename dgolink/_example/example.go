@@ -11,10 +11,10 @@ import (
 	"sync"
 	"syscall"
 
-	"github.com/DisgoOrg/disgolink/dgolink"
-	"github.com/DisgoOrg/disgolink/lavalink"
-	"github.com/DisgoOrg/snowflake"
 	"github.com/bwmarrin/discordgo"
+	"github.com/disgoorg/disgolink/dgolink"
+	"github.com/disgoorg/disgolink/lavalink"
+	"github.com/disgoorg/snowflake"
 )
 
 var (

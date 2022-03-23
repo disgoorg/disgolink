@@ -7,7 +7,7 @@ import (
 
 //goland:noinspection GoUnusedConst
 const (
-	GitHub = "https://github.com/DisgoOrg/disgolink"
+	GitHub = "https://github.com/disgoorg/disgolink"
 	Name   = "disgolink"
 )
 

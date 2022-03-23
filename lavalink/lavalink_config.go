@@ -3,8 +3,8 @@ package lavalink
 import (
 	"net/http"
 
-	"github.com/DisgoOrg/log"
-	"github.com/DisgoOrg/snowflake"
+	"github.com/disgoorg/log"
+	"github.com/disgoorg/snowflake"
 )
 
 type Config struct {

@@ -1,30 +1,30 @@
 package main
 
-import "github.com/DisgoOrg/disgo/discord"
+import "github.com/disgoorg/disgo/discord"
 
 var commands = []discord.ApplicationCommandCreate{
 	discord.SlashCommandCreate{
-		Name:              "shuffle",
+		CommandName:       "shuffle",
 		Description:       "shuffles the current queue",
 		DefaultPermission: true,
 	},
 	discord.SlashCommandCreate{
-		Name:              "filter",
+		CommandName:       "filter",
 		Description:       "applies some filters",
 		DefaultPermission: true,
 	},
 	discord.SlashCommandCreate{
-		Name:              "pause",
+		CommandName:       "pause",
 		Description:       "pauses the music",
 		DefaultPermission: true,
 	},
 	discord.SlashCommandCreate{
-		Name:              "queue",
+		CommandName:       "queue",
 		Description:       "shows you all tracks in queue",
 		DefaultPermission: true,
 	},
 	discord.SlashCommandCreate{
-		Name:              "play",
+		CommandName:       "play",
 		Description:       "plays some music",
 		DefaultPermission: true,
 		Options: []discord.ApplicationCommandOption{

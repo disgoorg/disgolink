@@ -1,9 +1,9 @@
 package dgolink
 
 import (
-	"github.com/DisgoOrg/disgolink/lavalink"
-	"github.com/DisgoOrg/snowflake"
 	"github.com/bwmarrin/discordgo"
+	"github.com/disgoorg/disgolink/lavalink"
+	"github.com/disgoorg/snowflake"
 )
 
 func New(s *discordgo.Session, opts ...lavalink.ConfigOpt) *Link {

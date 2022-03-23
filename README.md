@@ -1,8 +1,8 @@
-[![Go Reference](https://pkg.go.dev/badge/github.com/DisgoOrg/disgolink.svg)](https://pkg.go.dev/github.com/DisgoOrg/disgolink)
-[![Go Report](https://goreportcard.com/badge/github.com/DisgoOrg/disgolink)](https://goreportcard.com/report/github.com/DisgoOrg/disgolink)
-[![Go Version](https://img.shields.io/github/go-mod/go-version/DisgoOrg/disgolink?filename=lavalink%2Fgo.mod)](https://golang.org/doc/devel/release.html)
-[![License](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](https://github.com/DisgoOrg/disgolink/blob/master/LICENSE)
-[![Disgo Version](https://img.shields.io/github/v/release/DisgoOrg/disgolink?label=release)](https://github.com/DisgoOrg/disgolink/releases/latest)
+[![Go Reference](https://pkg.go.dev/badge/github.com/disgoorg/disgolink.svg)](https://pkg.go.dev/github.com/disgoorg/disgolink)
+[![Go Report](https://goreportcard.com/badge/github.com/disgoorg/disgolink)](https://goreportcard.com/report/github.com/disgoorg/disgolink)
+[![Go Version](https://img.shields.io/github/go-mod/go-version/disgoorg/disgolink?filename=lavalink%2Fgo.mod)](https://golang.org/doc/devel/release.html)
+[![License](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](https://github.com/disgoorg/disgolink/blob/master/LICENSE)
+[![Disgo Version](https://img.shields.io/github/v/release/disgoorg/disgolink?label=release)](https://github.com/disgoorg/disgolink/releases/latest)
 [![Disgo Discord](https://discord.com/api/guilds/817327181659111454/widget.png)](https://discord.gg/NFmvZYmZMF)
 
 <img align="right" src="/.github/disgolink.png" width=192 alt="discord gopher">
@@ -20,19 +20,19 @@ There are 3 packages depending on which go lib you use get a different package
 #### lavalink(non specific implementation)
 
 ```sh
-go get github.com/DisgoOrg/disgolink/lavalink
+go get github.com/disgoorg/disgolink/lavalink
 ```
 
-#### disgolink([disgo](https://github.com/DisgoOrg/disgo) implementation)
+#### disgolink([disgo](https://github.com/disgoorg/disgo) implementation)
 
 ```sh
-go get github.com/DisgoOrg/disgolink/disgolink
+go get github.com/disgoorg/disgolink/disgolink
 ```
 
 #### dgolink([discordgo](https://github.com/bwmarrin/discordgo) implementation)
 
 ```sh
-go get github.com/DisgoOrg/disgolink/dgolink
+go get github.com/disgoorg/disgolink/dgolink
 ```
 
 ### Building a Lavalink instance
@@ -40,7 +40,7 @@ go get github.com/DisgoOrg/disgolink/dgolink
 #### lavalink
 
 ```go
-import "github.com/DisgoOrg/disgolink/lavalink"
+import "github.com/disgoorg/disgolink/lavalink"
 
 link := lavalink.New(lavalink.WithUserID("user_id_here"))
 ```
@@ -48,7 +48,7 @@ link := lavalink.New(lavalink.WithUserID("user_id_here"))
 #### disgolink
 
 ```go
-import "github.com/DisgoOrg/disgolink/dgolink"
+import "github.com/disgoorg/disgolink/dgolink"
 
 link := dgolink.New(session)
 ```
@@ -56,7 +56,7 @@ link := dgolink.New(session)
 #### dgolink
 
 ```go
-import "github.com/DisgoOrg/disgolink/lavalink"
+import "github.com/disgoorg/disgolink/lavalink"
 
 link := disgolink.New(disgo)
 ```
@@ -64,9 +64,9 @@ link := disgolink.New(disgo)
 ## Examples
 
 You can find examples under 
-* lavalink:  [_example](https://github.com/DisgoOrg/disgolink/tree/master/_example)
-* disgolink: [_example](https://github.com/DisgoOrg/disgolink/tree/master/disgolink/_example)
-* dgolink:   [_examples](https://github.com/DisgoOrg/disgolink/tree/master/dgolink/_example)
+* lavalink:  [_example](https://github.com/disgoorg/disgolink/tree/master/_example)
+* disgolink: [_example](https://github.com/disgoorg/disgolink/tree/master/disgolink/_example)
+* dgolink:   [_examples](https://github.com/disgoorg/disgolink/tree/master/dgolink/_example)
 
 ## Troubleshooting
 
@@ -78,5 +78,5 @@ Contributions are welcomed but for bigger changes please first reach out via [Di
 
 ## License
 
-Distributed under the [![License](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](https://github.com/DisgoOrg/disgolink/blob/master/LICENSE). See LICENSE for more information.
+Distributed under the [![License](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](https://github.com/disgoorg/disgolink/blob/master/LICENSE). See LICENSE for more information.
 

@@ -1,7 +1,7 @@
 package lavalink
 
 import (
-	"github.com/DisgoOrg/snowflake"
+	"github.com/disgoorg/snowflake"
 )
 
 type VoiceServerUpdate struct {

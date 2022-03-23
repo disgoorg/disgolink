@@ -3,19 +3,19 @@ package main
 import (
 	"fmt"
 
-	"github.com/DisgoOrg/disgo/core/events"
-	"github.com/DisgoOrg/disgo/discord"
-	"github.com/DisgoOrg/disgolink/lavalink"
-	"github.com/DisgoOrg/log"
-	"github.com/DisgoOrg/snowflake"
-
-	"github.com/DisgoOrg/disgo/core"
+	"github.com/disgoorg/disgo/bot"
+	"github.com/disgoorg/disgo/discord"
+	"github.com/disgoorg/disgo/events"
+	"github.com/disgoorg/disgolink/lavalink"
+	"github.com/disgoorg/log"
+	"github.com/disgoorg/snowflake"
 )
 
-func NewMusicPlayer(guildID snowflake.Snowflake) *MusicPlayer {
+func NewMusicPlayer(client bot.Client, guildID snowflake.Snowflake) *MusicPlayer {
 	player := dgolink.Player(guildID)
 	musicPlayer := &MusicPlayer{
 		Player: player,
+		client: client,
 	}
 	player.AddListener(musicPlayer)
 	return musicPlayer
@@ -25,12 +25,13 @@ var _ lavalink.PlayerEventListener = (*MusicPlayer)(nil)
 
 type MusicPlayer struct {
 	lavalink.Player
-	queue   []lavalink.AudioTrack
-	channel core.MessageChannel
+	queue     []lavalink.AudioTrack
+	client    bot.Client
+	channelID snowflake.Snowflake
 }
 
 func (p *MusicPlayer) Queue(event *events.ApplicationCommandInteractionEvent, tracks ...lavalink.AudioTrack) {
-	p.channel = event.Channel()
+	p.channelID = event.ChannelID()
 	for _, track := range tracks {
 		p.queue = append(p.queue, track)
 	}
@@ -48,8 +49,8 @@ func (p *MusicPlayer) Queue(event *events.ApplicationCommandInteractionEvent, tr
 	} else {
 		embed.SetDescriptionf("queued %d tracks", len(tracks))
 	}
-	embed.SetFooter("executed by "+event.Member.EffectiveName(), event.User.EffectiveAvatarURL(1024))
-	if _, err := event.UpdateOriginalMessage(discord.NewMessageUpdateBuilder().SetEmbeds(embed.Build()).Build()); err != nil {
+	embed.SetFooter("executed by "+event.Member().EffectiveName(), event.User().EffectiveAvatarURL())
+	if _, err := event.Client().Rest().InteractionService().UpdateInteractionResponse(event.ApplicationID(), event.Token(), discord.NewMessageUpdateBuilder().SetEmbeds(embed.Build()).Build()); err != nil {
 		log.Errorf("error while edit original: %s", err)
 	}
 }
@@ -74,11 +75,11 @@ func (p *MusicPlayer) OnTrackEnd(player lavalink.Player, track lavalink.AudioTra
 	}
 }
 func (p *MusicPlayer) OnTrackException(player lavalink.Player, track lavalink.AudioTrack, exception lavalink.FriendlyException) {
-	_, _ = p.channel.CreateMessage(discord.NewMessageCreateBuilder().SetContentf("AudioTrack exception: `%s`, `%+v`", track.Info().Title, exception).Build())
+	_, _ = p.client.Rest().ChannelService().CreateMessage(p.channelID, discord.NewMessageCreateBuilder().SetContentf("AudioTrack exception: `%s`, `%+v`", track.Info().Title, exception).Build())
 }
 func (p *MusicPlayer) OnTrackStuck(player lavalink.Player, track lavalink.AudioTrack, thresholdMs lavalink.Duration) {
-	_, _ = p.channel.CreateMessage(discord.NewMessageCreateBuilder().SetContentf("track stuck: `%s`, %d", track.Info().Title, thresholdMs).Build())
+	_, _ = p.client.Rest().ChannelService().CreateMessage(p.channelID, discord.NewMessageCreateBuilder().SetContentf("track stuck: `%s`, %d", track.Info().Title, thresholdMs).Build())
 }
 func (p *MusicPlayer) OnWebSocketClosed(player lavalink.Player, code int, reason string, byRemote bool) {
-	_, _ = p.channel.CreateMessage(discord.NewMessageCreateBuilder().SetContentf("websocket closed: `%d`, `%s`, `%t`", code, reason, byRemote).Build())
+	_, _ = p.client.Rest().ChannelService().CreateMessage(p.channelID, discord.NewMessageCreateBuilder().SetContentf("websocket closed: `%d`, `%s`, `%t`", code, reason, byRemote).Build())
 }
