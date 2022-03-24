@@ -136,10 +136,10 @@ func onApplicationCommand(event *events.ApplicationCommandInteractionEvent) {
 					musicPlayer.Queue(event, tracks[0])
 				},
 				func() {
-					_, _ = event.Client().Rest().InteractionService().UpdateInteractionResponse(event.ApplicationID(), event.Token(), discord.NewMessageUpdateBuilder().SetContent("no tracks found").Build())
+					_, _ = event.Client().Rest().Interactions().UpdateInteractionResponse(event.ApplicationID(), event.Token(), discord.NewMessageUpdateBuilder().SetContent("no tracks found").Build())
 				},
 				func(e lavalink.FriendlyException) {
-					_, _ = event.Client().Rest().InteractionService().UpdateInteractionResponse(event.ApplicationID(), event.Token(), discord.NewMessageUpdateBuilder().SetContent("error while loading track:\n"+e.Error()).Build())
+					_, _ = event.Client().Rest().Interactions().UpdateInteractionResponse(event.ApplicationID(), event.Token(), discord.NewMessageUpdateBuilder().SetContent("error while loading track:\n"+e.Error()).Build())
 				},
 			))
 		}()
