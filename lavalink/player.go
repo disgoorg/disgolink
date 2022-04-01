@@ -2,10 +2,11 @@ package lavalink
 
 import (
 	"encoding/json"
+	"errors"
+	"fmt"
 	"time"
 
 	"github.com/disgoorg/snowflake"
-	"github.com/pkg/errors"
 )
 
 type Player interface {
@@ -109,7 +110,7 @@ func (p *DefaultPlayer) Play(track AudioTrack) error {
 		GuildID: p.guildID,
 		Track:   encodedTrack,
 	}); err != nil {
-		return errors.Wrap(err, "error while playing track")
+		return fmt.Errorf("error while playing track: %w", err)
 	}
 	p.track = track
 	return nil
@@ -127,7 +128,7 @@ func (p *DefaultPlayer) PlayAt(track AudioTrack, start Duration, end Duration) e
 		StartTime: &start,
 		EndTime:   &end,
 	}); err != nil {
-		return errors.Wrap(err, "error while playing track")
+		return fmt.Errorf("error while playing track: %w", err)
 	}
 	p.track = track
 	return nil
@@ -141,7 +142,7 @@ func (p *DefaultPlayer) Stop() error {
 	}
 
 	if err := p.node.Send(StopCommand{GuildID: p.guildID}); err != nil {
-		return errors.Wrap(err, "error while stopping player")
+		return fmt.Errorf("error while stopping player: %w", err)
 	}
 	return nil
 }
@@ -154,7 +155,7 @@ func (p *DefaultPlayer) Destroy() error {
 	}
 	if p.node != nil {
 		if err := p.node.Send(DestroyCommand{GuildID: p.guildID}); err != nil {
-			return errors.Wrap(err, "error while destroying player")
+			return fmt.Errorf("error while destroying player: %w", err)
 		}
 	}
 	p.lavalink.RemovePlayer(p.guildID)
@@ -170,7 +171,7 @@ func (p *DefaultPlayer) Pause(pause bool) error {
 			GuildID: p.guildID,
 			Pause:   pause,
 		}); err != nil {
-			return errors.Wrap(err, "error while pausing player")
+			return fmt.Errorf("error while pausing player: %w", err)
 		}
 	}
 
@@ -227,7 +228,7 @@ func (p *DefaultPlayer) Seek(position Duration) error {
 		GuildID:  p.guildID,
 		Position: position,
 	}); err != nil {
-		return errors.Wrap(err, "error while seeking player")
+		return fmt.Errorf("error while seeking player: %w", err)
 	}
 	return nil
 }
@@ -250,7 +251,7 @@ func (p *DefaultPlayer) SetVolume(volume int) error {
 		GuildID: p.guildID,
 		Volume:  volume,
 	}); err != nil {
-		return errors.Wrap(err, "error while setting volume of player")
+		return fmt.Errorf("error while setting volume of player: %w", err)
 	}
 	p.volume = volume
 	return nil
@@ -355,7 +356,7 @@ func (p *DefaultPlayer) commitFilters(filters Filters) error {
 		GuildID: p.guildID,
 		Filters: filters,
 	}); err != nil {
-		return errors.Wrap(err, "error while setting filters of player")
+		return fmt.Errorf("error while setting filters of player: %w", err)
 	}
 	return nil
 }
@@ -387,7 +388,7 @@ func (s *PlayerRestoreState) UnmarshalJSON(data []byte) error {
 	}
 	var err error
 	if err = json.Unmarshal(data, &v); err != nil {
-		return errors.Wrap(err, "error while unmarshalling player resume state")
+		return fmt.Errorf("error while unmarshalling player resume state: %w", err)
 	}
 	*s = PlayerRestoreState(v.playerRestoreState)
 	s.Filters, err = UnmarshalFilters(v.Filters)
@@ -397,7 +398,7 @@ func (s *PlayerRestoreState) UnmarshalJSON(data []byte) error {
 var UnmarshalFilters = func(data []byte) (Filters, error) {
 	var filters *DefaultFilters
 	if err := json.Unmarshal(data, &filters); err != nil {
-		return nil, errors.Wrap(err, "error while unmarshalling filters")
+		return nil, fmt.Errorf("error while unmarshalling filters: %w", err)
 	}
 	return filters, nil
 }

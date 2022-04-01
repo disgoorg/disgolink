@@ -9,7 +9,6 @@ import (
 	"time"
 
 	"github.com/gorilla/websocket"
-	"github.com/pkg/errors"
 )
 
 type NodeStatus string
@@ -88,7 +87,7 @@ func (n *nodeImpl) Send(cmd OpCommand) error {
 	defer n.statusMu.Unlock()
 
 	if n.status != Connected {
-		return errors.Errorf("node is %s and cannot send a cmd to the node", n.status)
+		return fmt.Errorf("node is %s and cannot send a cmd to the node", n.status)
 	}
 	data, err := json.Marshal(cmd)
 	if err != nil {
@@ -100,7 +99,7 @@ func (n *nodeImpl) Send(cmd OpCommand) error {
 		}
 	}
 	if err = n.conn.WriteMessage(websocket.TextMessage, data); err != nil {
-		return errors.Wrap(err, "error while sending to lavalink websocket")
+		return fmt.Errorf("error while sending to lavalink websocket: %w", err)
 	}
 
 	return nil

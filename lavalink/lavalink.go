@@ -2,6 +2,7 @@ package lavalink
 
 import (
 	"context"
+	"errors"
 	"io"
 	"net/http"
 	"sync"
@@ -9,7 +10,6 @@ import (
 
 	"github.com/disgoorg/log"
 	"github.com/disgoorg/snowflake"
-	"github.com/pkg/errors"
 )
 
 var ErrNoUserID = errors.New("no user id has been configured")

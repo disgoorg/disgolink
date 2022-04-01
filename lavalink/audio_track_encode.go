@@ -4,9 +4,8 @@ import (
 	"bytes"
 	"encoding/base64"
 	"encoding/binary"
+	"errors"
 	"io"
-
-	"github.com/pkg/errors"
 )
 
 type CustomTrackEncoder func(track AudioTrack, w io.Writer) error

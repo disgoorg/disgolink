@@ -2,7 +2,6 @@ package lavalink
 
 type AudioTrackEndReason string
 
-//goland:noinspection GoUnusedConst
 const (
 	AudioTrackEndReasonFinished   AudioTrackEndReason = "FINISHED"
 	AudioTrackEndReasonLoadFailed AudioTrackEndReason = "LOAD_FAILED"

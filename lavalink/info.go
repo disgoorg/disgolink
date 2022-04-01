@@ -5,13 +5,11 @@ import (
 	"strings"
 )
 
-//goland:noinspection GoUnusedConst
 const (
-	GitHub = "https://github.com/disgoorg/disgolink"
 	Name   = "disgolink"
+	GitHub = "https://github.com/disgoorg/" + Name
 )
 
-//goland:noinspection GoUnusedGlobalVariable
 var (
 	Version = getVersion()
 )

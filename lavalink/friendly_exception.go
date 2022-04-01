@@ -14,7 +14,6 @@ func (e FriendlyException) Error() string {
 
 type Severity string
 
-//goland:noinspection GoUnusedConst
 const (
 	SeverityCommon     Severity = "COMMON"
 	SeveritySuspicious Severity = "SUSPICIOUS"

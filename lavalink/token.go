@@ -2,10 +2,10 @@ package lavalink
 
 import (
 	"encoding/base64"
+	"errors"
 	"strings"
 
 	"github.com/disgoorg/snowflake"
-	"github.com/pkg/errors"
 )
 
 var ErrInvalidBotToken = errors.New("invalid bot token")
