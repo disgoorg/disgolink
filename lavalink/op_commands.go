@@ -11,8 +11,9 @@ type PlayCommand struct {
 	Track     string              `json:"track"`
 	StartTime *Duration           `json:"startTime,omitempty"`
 	EndTime   *Duration           `json:"endTime,omitempty"`
-	NoReplace bool                `json:"noReplace,omitempty"`
-	Pause     bool                `json:"pause,omitempty"`
+	NoReplace *bool               `json:"noReplace,omitempty"`
+	Pause     *bool               `json:"pause,omitempty"`
+	Volume    *int                `json:"volume,omitempty"`
 }
 
 func (c PlayCommand) MarshalJSON() ([]byte, error) {

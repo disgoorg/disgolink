@@ -22,6 +22,7 @@ type Player interface {
 	Export() PlayerRestoreState
 
 	Play(track AudioTrack) error
+	PlayTrack(track AudioTrack, options PlayOptions) error
 	PlayAt(track AudioTrack, start Duration, end Duration) error
 	Stop() error
 	Destroy() error
@@ -38,6 +39,14 @@ type Player interface {
 	EmitEvent(caller func(l interface{}))
 	AddListener(listener interface{})
 	RemoveListener(listener interface{})
+}
+
+type PlayOptions struct {
+	StartTime Duration
+	EndTime   Duration
+	NoReplace bool
+	Pause     bool
+	Volume    int
 }
 
 var _ Player = (*DefaultPlayer)(nil)
@@ -98,6 +107,43 @@ type DefaultPlayer struct {
 
 func (p *DefaultPlayer) PlayingTrack() AudioTrack {
 	return p.track
+}
+
+func (p *DefaultPlayer) PlayTrack(track AudioTrack, options PlayOptions) error {
+	encodedTrack, err := p.node.Lavalink().EncodeTrack(track)
+	if err != nil {
+		return err
+	}
+
+	cmd := PlayCommand{
+		GuildID: p.guildID,
+		Track:   encodedTrack,
+	}
+	if options.StartTime != 0 {
+		cmd.StartTime = &options.StartTime
+	}
+	if options.EndTime != 0 {
+		cmd.EndTime = &options.EndTime
+	}
+	if options.NoReplace {
+		cmd.NoReplace = &options.NoReplace
+	}
+	if options.Pause {
+		cmd.Pause = &options.Pause
+	}
+	if options.Volume != 0 {
+		cmd.Volume = &options.Volume
+	}
+
+	if err = p.Node().Send(cmd); err != nil {
+		return fmt.Errorf("error while playing track: %w", err)
+	}
+	p.track = track
+	p.paused = options.Pause
+	if options.Volume != 0 {
+		p.volume = options.Volume
+	}
+	return nil
 }
 
 func (p *DefaultPlayer) Play(track AudioTrack) error {

@@ -87,7 +87,7 @@ func onApplicationCommand(event *events.ApplicationCommandInteractionEvent) {
 		_ = event.CreateMessage(discord.NewMessageCreateBuilder().SetContent(message + " music").Build())
 
 	case "play":
-		voiceState, ok := event.Client().Caches().VoiceStates().Get(*event.GuildID(), event.Member().GuildID)
+		voiceState, ok := event.Client().Caches().VoiceStates().Get(*event.GuildID(), event.Member().User.ID)
 		if !ok || voiceState.ChannelID == nil {
 			_ = event.CreateMessage(discord.NewMessageCreateBuilder().SetEphemeral(true).SetContent("Please join a VoiceChannel to use this command").Build())
 			return
