@@ -165,11 +165,13 @@ To see what you can do with plugins see [here](https://github.com/disgoorg/disgo
 
 You register plugins when creating the link instance like this
 ```go
-link := lavalink.New(lavalink.WithUserID("user_id_here"), lavalink.WithPlugins(yourPlugin)) // general
+link := lavalink.New(lavalink.WithUserID("user_id_here"), lavalink.WithPlugins(yourPlugin))
 
-link := disgolink.New(client, lavalink.WithPlugins(yourPlugin)) // DisGo
+// DisGo
+link := disgolink.New(client, lavalink.WithPlugins(yourPlugin)) 
 
-link := dgolink.New(session, lavalink.WithPlugins(yourPlugin)) // DiscordGo
+// DiscordGo
+link := dgolink.New(session, lavalink.WithPlugins(yourPlugin))
 ```
 
 Here is a list of plugins(you can pr your own to here):
