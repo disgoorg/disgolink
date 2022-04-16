@@ -24,7 +24,7 @@ This Library uses the [Disgo Snowflake](https://github.com/disgoorg/snowflake) p
 
 ### Installing
 
-For `DisGo` and `DiscordGo` there is a sub module which simplifies the usage of DisGolink a bit. You can skip those if you want and directly get the Lavalink Client via
+For [DisGo](https://github.com/disgoorg/disgo) and [DiscordGo](https://github.com/bwmarrin/discordgo) there is a sub module which simplifies the usage of DisGolink a bit. You can skip those if you want and directly get the Lavalink Client via
 
 ```sh
 go get github.com/disgoorg/disgolink/lavalink
