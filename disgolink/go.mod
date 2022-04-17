@@ -4,7 +4,7 @@ go 1.18
 
 require (
 	github.com/disgoorg/disgo v0.8.8
-	github.com/disgoorg/disgolink/lavalink v1.5.2
+	github.com/disgoorg/disgolink/lavalink v1.5.3
 )
 
 require (

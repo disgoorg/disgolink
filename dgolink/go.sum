@@ -1,8 +1,8 @@
 github.com/bwmarrin/discordgo v0.24.0 h1:Gw4MYxqHdvhO99A3nXnSLy97z5pmIKHZVJ1JY5ZDPqY=
 github.com/bwmarrin/discordgo v0.24.0/go.mod h1:NJZpH+1AfhIcyQsPeuBKsUtYrRnjkyu0kIVMCHkZtRY=
 github.com/davecgh/go-spew v1.1.0 h1:ZDRjVQ15GmhC3fiQ8ni8+OwkZQO4DARzQgrnXU1Liz8=
-github.com/disgoorg/disgolink/lavalink v1.5.2 h1:DWKEskUCd3osxiLo6eaKjzSyZh8SJoYu+59pDh4v9fw=
-github.com/disgoorg/disgolink/lavalink v1.5.2/go.mod h1:gQ/ehyTfqfUnrPGjgECDaQOUai/ft9YmlPth7TTUJkI=
+github.com/disgoorg/disgolink/lavalink v1.5.3 h1:lBridoXvsLxgQK7rTCJsInN9NHk9QYPnaLSB8uw0fUA=
+github.com/disgoorg/disgolink/lavalink v1.5.3/go.mod h1:gQ/ehyTfqfUnrPGjgECDaQOUai/ft9YmlPth7TTUJkI=
 github.com/disgoorg/log v1.2.0 h1:sqlXnu/ZKAlIlHV9IO+dbMto7/hCQ474vlIdMWk8QKo=
 github.com/disgoorg/log v1.2.0/go.mod h1:3x1KDG6DI1CE2pDwi3qlwT3wlXpeHW/5rVay+1qDqOo=
 github.com/disgoorg/snowflake v1.1.0 h1:uVF9QqI31uqo0kzbZahwvjaYQxn40SUfFK5pCNzfjYQ=
