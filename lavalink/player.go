@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"runtime/debug"
 	"time"
 
 	"github.com/disgoorg/snowflake"
@@ -377,6 +378,12 @@ func (p *DefaultPlayer) OnPlayerUpdate(state PlayerState) {
 }
 
 func (p *DefaultPlayer) EmitEvent(caller func(l interface{})) {
+	defer func() {
+		if r := recover(); r != nil {
+			p.lavalink.Logger().Errorf("recovered from panic in event listener: %#v\nstack: %s", r, string(debug.Stack()))
+			return
+		}
+	}()
 	for _, listener := range p.listeners {
 		caller(listener)
 	}
