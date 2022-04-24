@@ -10,7 +10,7 @@ func New(client bot.Client, opts ...lavalink.ConfigOpt) Link {
 	dgolink := &linkImpl{
 		Lavalink: lavalink.New(append([]lavalink.ConfigOpt{
 			lavalink.WithLogger(client.Logger()),
-			lavalink.WithHTTPClient(client.Rest().RestClient().HTTPClient()),
+			lavalink.WithHTTPClient(client.Rest().HTTPClient()),
 			lavalink.WithUserID(client.ApplicationID()),
 		}, opts...)...),
 	}
