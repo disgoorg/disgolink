@@ -48,12 +48,12 @@ func EncodeToString(track AudioTrack, customTrackEncoder CustomTrackEncoder) (st
 		return
 	}
 
-	output := new(bytes.Buffer)
+	output := bytes.NewBuffer(make([]byte, 0, 4+w.Len()))
 	if err = WriteInt32(output, int32(w.Len())|trackInfoVersioned<<30); err != nil {
 		return
 	}
 
-	if _, err = output.Write(w.Bytes()); err != nil {
+	if _, err = w.WriteTo(output); err != nil {
 		return
 	}
 
