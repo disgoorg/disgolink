@@ -170,11 +170,11 @@ func (n *nodeImpl) listen() {
 		switch op := v.Op.(type) {
 		case UnknownOp:
 			for _, pl := range n.Lavalink().Plugins() {
-				if plugin, ok := pl.(OpExtension); ok {
+				if plugin, ok := pl.(OpPlugin); ok {
 					plugin.OnOpInvocation(n, op.Data)
 				}
-				if plugin, ok := pl.(OpExtensions); ok {
-					for _, ext := range plugin.OpExtensions() {
+				if plugin, ok := pl.(OpPlugins); ok {
+					for _, ext := range plugin.OpPlugins() {
 						if ext.Op() == op.Op() {
 							ext.OnOpInvocation(n, op.Data)
 						}
@@ -200,7 +200,7 @@ func (n *nodeImpl) listen() {
 func (n *nodeImpl) onPlayerUpdate(playerUpdate PlayerUpdateOp) {
 	if player := n.lavalink.ExistingPlayer(playerUpdate.GuildID); player != nil {
 		player.OnPlayerUpdate(playerUpdate.State)
-		player.EmitEvent(func(l interface{}) {
+		player.EmitEvent(func(l any) {
 			if listener := l.(PlayerEventListener); listener != nil {
 				listener.OnPlayerUpdate(player, playerUpdate.State)
 			}
@@ -228,28 +228,28 @@ func (n *nodeImpl) onEvent(event OpEvent) {
 		}
 		switch ee := e.(type) {
 		case TrackStartEvent:
-			player.EmitEvent(func(l interface{}) {
+			player.EmitEvent(func(l any) {
 				if listener := l.(PlayerEventListener); listener != nil {
 					listener.OnTrackStart(player, track)
 				}
 			})
 
 		case TrackEndEvent:
-			player.EmitEvent(func(l interface{}) {
+			player.EmitEvent(func(l any) {
 				if listener := l.(PlayerEventListener); listener != nil {
 					listener.OnTrackEnd(player, track, ee.Reason)
 				}
 			})
 
 		case TrackExceptionEvent:
-			player.EmitEvent(func(l interface{}) {
+			player.EmitEvent(func(l any) {
 				if listener := l.(PlayerEventListener); listener != nil {
 					listener.OnTrackException(player, track, ee.Exception)
 				}
 			})
 
 		case TrackStuckEvent:
-			player.EmitEvent(func(l interface{}) {
+			player.EmitEvent(func(l any) {
 				if listener := l.(PlayerEventListener); listener != nil {
 					listener.OnTrackStuck(player, track, ee.ThresholdMs)
 				}
@@ -257,7 +257,7 @@ func (n *nodeImpl) onEvent(event OpEvent) {
 		}
 
 	case WebsocketClosedEvent:
-		player.EmitEvent(func(l interface{}) {
+		player.EmitEvent(func(l any) {
 			if listener := l.(PlayerEventListener); listener != nil {
 				listener.OnWebSocketClosed(player, e.Code, e.Reason, e.ByRemote)
 			}
@@ -265,11 +265,11 @@ func (n *nodeImpl) onEvent(event OpEvent) {
 
 	case UnknownEvent:
 		for _, pl := range n.Lavalink().Plugins() {
-			if plugin, ok := pl.(EventExtension); ok {
+			if plugin, ok := pl.(EventPlugin); ok {
 				plugin.OnEventInvocation(n, e.Data)
 			}
-			if plugin, ok := pl.(EventExtensions); ok {
-				for _, ext := range plugin.EventExtensions() {
+			if plugin, ok := pl.(EventPlugins); ok {
+				for _, ext := range plugin.EventPlugins() {
 					if ext.Event() == e.Event() {
 						ext.OnEventInvocation(n, e.Data)
 					}

@@ -13,7 +13,7 @@ type CustomTrackEncoder func(track AudioTrack, w io.Writer) error
 func EncodeToString(track AudioTrack, customTrackEncoder CustomTrackEncoder) (str string, err error) {
 	w := new(bytes.Buffer)
 
-	if err = w.WriteByte(byte(trackInfoVersion)); err != nil {
+	if err = WriteInt8(w, trackInfoVersion); err != nil {
 		return
 	}
 	if err = WriteString(w, track.Info().Title); err != nil {
@@ -48,12 +48,12 @@ func EncodeToString(track AudioTrack, customTrackEncoder CustomTrackEncoder) (st
 		return
 	}
 
-	output := bytes.NewBuffer(make([]byte, 0, 8+w.Len()))
+	output := bytes.NewBuffer(make([]byte, 0, 4+w.Len()))
 	if err = WriteInt32(output, int32(w.Len())|trackInfoVersioned<<30); err != nil {
 		return
 	}
 
-	if err = binary.Write(output, binary.LittleEndian, w.Bytes()); err != nil {
+	if _, err = w.WriteTo(output); err != nil {
 		return
 	}
 
@@ -72,6 +72,10 @@ func WriteInt16(w io.Writer, i int16) error {
 	return binary.Write(w, binary.BigEndian, i)
 }
 
+func WriteInt8(w io.Writer, i int8) error {
+	return binary.Write(w, binary.BigEndian, i)
+}
+
 func WriteBool(w io.Writer, bool bool) error {
 	return binary.Write(w, binary.BigEndian, bool)
 }
@@ -86,7 +90,8 @@ func WriteString(w io.Writer, str string) error {
 	if err := WriteInt16(w, int16(len(data))); err != nil {
 		return err
 	}
-	return binary.Write(w, binary.BigEndian, data)
+	_, err := w.Write(data) //binary.Write(w, binary.BigEndian, data)
+	return err
 }
 
 func WriteNullableString(w io.Writer, str *string) error {

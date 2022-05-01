@@ -37,9 +37,9 @@ type Player interface {
 	OnVoiceStateUpdate(voiceStateUpdate VoiceStateUpdate)
 	OnPlayerUpdate(state PlayerState)
 
-	EmitEvent(caller func(l interface{}))
-	AddListener(listener interface{})
-	RemoveListener(listener interface{})
+	EmitEvent(caller func(l any))
+	AddListener(listener any)
+	RemoveListener(listener any)
 }
 
 type PlayOptions struct {
@@ -103,7 +103,7 @@ type DefaultPlayer struct {
 	filters               Filters
 	node                  Node
 	lavalink              Lavalink
-	listeners             []interface{}
+	listeners             []any
 }
 
 func (p *DefaultPlayer) PlayingTrack() AudioTrack {
@@ -224,14 +224,14 @@ func (p *DefaultPlayer) Pause(pause bool) error {
 
 	p.paused = pause
 	if pause {
-		p.EmitEvent(func(l interface{}) {
+		p.EmitEvent(func(l any) {
 			if listener, ok := l.(PlayerEventListener); ok {
 				listener.OnPlayerPause(p)
 			}
 		})
 		return nil
 	}
-	p.EmitEvent(func(l interface{}) {
+	p.EmitEvent(func(l any) {
 		if listener, ok := l.(PlayerEventListener); ok {
 			listener.OnPlayerResume(p)
 		}
@@ -377,7 +377,7 @@ func (p *DefaultPlayer) OnPlayerUpdate(state PlayerState) {
 	p.state = state
 }
 
-func (p *DefaultPlayer) EmitEvent(caller func(l interface{})) {
+func (p *DefaultPlayer) EmitEvent(caller func(l any)) {
 	defer func() {
 		if r := recover(); r != nil {
 			p.lavalink.Logger().Errorf("recovered from panic in event listener: %#v\nstack: %s", r, string(debug.Stack()))
@@ -389,11 +389,11 @@ func (p *DefaultPlayer) EmitEvent(caller func(l interface{})) {
 	}
 }
 
-func (p *DefaultPlayer) AddListener(listener interface{}) {
+func (p *DefaultPlayer) AddListener(listener any) {
 	p.listeners = append(p.listeners, listener)
 }
 
-func (p *DefaultPlayer) RemoveListener(listener interface{}) {
+func (p *DefaultPlayer) RemoveListener(listener any) {
 	for i, l := range p.listeners {
 		if l == listener {
 			p.listeners = append(p.listeners[:i], p.listeners[i+1:]...)

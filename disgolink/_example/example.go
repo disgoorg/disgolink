@@ -55,7 +55,7 @@ func main() {
 
 	defer dgolink.Close()
 
-	_, err = client.Rest().Applications().SetGuildCommands(client.ApplicationID(), guildID, commands)
+	_, err = client.Rest().SetGuildCommands(client.ApplicationID(), guildID, commands)
 	if err != nil {
 		log.Errorf("error while registering guild commands: %s", err)
 	}
@@ -73,7 +73,7 @@ func main() {
 
 func connect(event *events.ApplicationCommandInteractionEvent, voiceState discord.VoiceState) bool {
 	if err := event.Client().Connect(context.TODO(), voiceState.GuildID, *voiceState.ChannelID); err != nil {
-		_, _ = event.Client().Rest().Interactions().UpdateInteractionResponse(event.ApplicationID(), event.Token(), discord.NewMessageUpdateBuilder().SetContent("error while connecting to channel:\n"+err.Error()).Build())
+		_, _ = event.Client().Rest().UpdateInteractionResponse(event.ApplicationID(), event.Token(), discord.NewMessageUpdateBuilder().SetContent("error while connecting to channel:\n"+err.Error()).Build())
 		log.Errorf("error while connecting to channel: %s", err)
 		return false
 	}

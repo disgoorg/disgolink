@@ -15,25 +15,31 @@ func DecodeString(str string, customTrackInfoDecoder CustomTrackInfoDecoder) (tr
 		return
 	}
 
-	r := bytes.NewReader(data)
+	var (
+		r     = bytes.NewReader(data)
+		info  AudioTrackInfo
+		value int32
+	)
 
-	info := AudioTrackInfo{}
-	var value int32
 	if value, err = ReadInt32(r); err != nil {
 		return
 	}
+
 	flags := int32(int64(value) & 0xC0000000 >> 30)
-	//messageSize := value & 0x3FFFFFFF
+	messageSize := int64(value) & 0x3FFFFFFF
+	if messageSize == 0 {
+		return nil, nil
+	}
 
 	var version int32
 	if flags&trackInfoVersioned == 0 {
 		version = 1
 	} else {
-		var v byte
-		if v, err = r.ReadByte(); err != nil {
+		var v uint8
+		if v, err = ReadUInt8(r); err != nil {
 			return
 		}
-		version = int32(v & 0xFF)
+		version = int32(v)
 	}
 
 	if info.Title, err = ReadString(r); err != nil {
@@ -69,13 +75,14 @@ func DecodeString(str string, customTrackInfoDecoder CustomTrackInfoDecoder) (tr
 			return
 		}
 	}
-	if track == nil {
-		track = NewAudioTrack(info)
-	}
 
 	var position int64
 	if position, err = ReadInt64(r); err != nil {
 		return
+	}
+
+	if track == nil {
+		track = NewAudioTrack(info)
 	}
 	track.SetPosition(Duration(position))
 
@@ -94,7 +101,7 @@ func ReadInt16(r io.Reader) (i int16, err error) {
 	return i, binary.Read(r, binary.BigEndian, &i)
 }
 
-func ReadInt8(r io.Reader) (i int8, err error) {
+func ReadUInt8(r io.Reader) (i uint8, err error) {
 	return i, binary.Read(r, binary.BigEndian, &i)
 }
 

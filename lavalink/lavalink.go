@@ -24,9 +24,9 @@ type Lavalink interface {
 	BestRestClient() RestClient
 	RemoveNode(name string)
 
-	AddPlugins(plugins ...interface{})
-	Plugins() []interface{}
-	RemovePlugins(plugins ...interface{})
+	AddPlugins(plugins ...any)
+	Plugins() []any
+	RemovePlugins(plugins ...any)
 
 	EncodeTrack(track AudioTrack) (string, error)
 	DecodeTrack(track string) (AudioTrack, error)
@@ -48,7 +48,7 @@ type Lavalink interface {
 }
 
 func New(opts ...ConfigOpt) Lavalink {
-	config := &Config{}
+	config := DefaultConfig()
 	config.Apply(opts)
 
 	if config.Logger == nil {
@@ -147,7 +147,7 @@ func (l *lavalinkImpl) RemoveNode(name string) {
 	}
 }
 
-func (l *lavalinkImpl) AddPlugins(plugins ...interface{}) {
+func (l *lavalinkImpl) AddPlugins(plugins ...any) {
 	l.pluginsMu.Lock()
 	defer l.pluginsMu.Unlock()
 	for _, plugin := range plugins {
@@ -155,10 +155,10 @@ func (l *lavalinkImpl) AddPlugins(plugins ...interface{}) {
 	}
 }
 
-func (l *lavalinkImpl) Plugins() []interface{} {
+func (l *lavalinkImpl) Plugins() []any {
 	l.pluginsMu.Lock()
 	defer l.pluginsMu.Unlock()
-	plugins := make([]interface{}, len(l.config.Plugins))
+	plugins := make([]any, len(l.config.Plugins))
 	i := 0
 	for _, plugin := range l.config.Plugins {
 		plugins[i] = plugin
@@ -167,7 +167,7 @@ func (l *lavalinkImpl) Plugins() []interface{} {
 	return plugins
 }
 
-func (l *lavalinkImpl) RemovePlugins(plugins ...interface{}) {
+func (l *lavalinkImpl) RemovePlugins(plugins ...any) {
 	l.pluginsMu.Lock()
 	defer l.pluginsMu.Unlock()
 	for _, plugin := range plugins {
@@ -183,7 +183,7 @@ func (l *lavalinkImpl) RemovePlugins(plugins ...interface{}) {
 func (l *lavalinkImpl) EncodeTrack(track AudioTrack) (string, error) {
 	return EncodeToString(track, func(track AudioTrack, w io.Writer) error {
 		for _, pl := range l.Plugins() {
-			if plugin, ok := pl.(SourceExtension); ok {
+			if plugin, ok := pl.(SourcePlugin); ok {
 				if plugin.SourceName() == track.Info().SourceName {
 					return plugin.Encode(track, w)
 				}
@@ -196,7 +196,7 @@ func (l *lavalinkImpl) EncodeTrack(track AudioTrack) (string, error) {
 func (l *lavalinkImpl) DecodeTrack(str string) (AudioTrack, error) {
 	return DecodeString(str, func(info AudioTrackInfo, r io.Reader) (AudioTrack, error) {
 		for _, pl := range l.Plugins() {
-			if plugin, ok := pl.(SourceExtension); ok {
+			if plugin, ok := pl.(SourcePlugin); ok {
 				if plugin.SourceName() == info.SourceName {
 					return plugin.Decode(info, r)
 				}
