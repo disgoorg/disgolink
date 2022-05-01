@@ -1,8 +1,8 @@
 github.com/davecgh/go-spew v1.1.0 h1:ZDRjVQ15GmhC3fiQ8ni8+OwkZQO4DARzQgrnXU1Liz8=
-github.com/disgoorg/disgo v0.8.11-0.20220423124039-fc85eed0e142 h1:hNXWIh2We8YVxstVroz/aSNzCHAa4Qiq9ILZ74VcN4o=
-github.com/disgoorg/disgo v0.8.11-0.20220423124039-fc85eed0e142/go.mod h1:F5Qj4yeX3auG0JiEY3pP5nRSUjBsbuhITTAslNsIOvA=
-github.com/disgoorg/disgolink/lavalink v1.5.4 h1:nqhOBHdo7qWz0D16oh5G1z8rtfIVW2LJcsaVTV8XHJc=
-github.com/disgoorg/disgolink/lavalink v1.5.4/go.mod h1:gQ/ehyTfqfUnrPGjgECDaQOUai/ft9YmlPth7TTUJkI=
+github.com/disgoorg/disgo v0.8.11-0.20220430142413-be50405c2a91 h1:vjBwIECUwFJ5H9EPZaY27Spy2UviMX1/Z1H05FE7AMA=
+github.com/disgoorg/disgo v0.8.11-0.20220430142413-be50405c2a91/go.mod h1:F5Qj4yeX3auG0JiEY3pP5nRSUjBsbuhITTAslNsIOvA=
+github.com/disgoorg/disgolink/lavalink v1.6.0 h1:HwyqPkxZppCxKy0oHX5irrszfADzFozDclczrBen2P4=
+github.com/disgoorg/disgolink/lavalink v1.6.0/go.mod h1:gQ/ehyTfqfUnrPGjgECDaQOUai/ft9YmlPth7TTUJkI=
 github.com/disgoorg/log v1.2.0 h1:sqlXnu/ZKAlIlHV9IO+dbMto7/hCQ474vlIdMWk8QKo=
 github.com/disgoorg/log v1.2.0/go.mod h1:3x1KDG6DI1CE2pDwi3qlwT3wlXpeHW/5rVay+1qDqOo=
 github.com/disgoorg/snowflake v1.1.0 h1:uVF9QqI31uqo0kzbZahwvjaYQxn40SUfFK5pCNzfjYQ=
