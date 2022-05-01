@@ -7,25 +7,25 @@ type Plugin struct {
 	Version string `json:"version"`
 }
 
-type OpExtensions interface {
-	OpExtensions() []OpExtension
+type OpPlugins interface {
+	OpPlugins() []OpPlugin
 }
 
-type OpExtension interface {
+type OpPlugin interface {
 	Op() OpType
 	OnOpInvocation(node Node, data []byte)
 }
 
-type EventExtensions interface {
-	EventExtensions() []EventExtension
+type EventPlugins interface {
+	EventPlugins() []EventPlugin
 }
 
-type EventExtension interface {
+type EventPlugin interface {
 	Event() EventType
 	OnEventInvocation(node Node, data []byte)
 }
 
-type SourceExtension interface {
+type SourcePlugin interface {
 	SourceName() string
 	Encode(track AudioTrack, w io.Writer) error
 	Decode(info AudioTrackInfo, r io.Reader) (AudioTrack, error)

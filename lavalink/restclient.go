@@ -150,7 +150,7 @@ func (c *restClientImpl) get(ctx context.Context, path string) ([]byte, error) {
 	return c.do(ctx, http.MethodGet, path, nil)
 }
 
-func (c *restClientImpl) getJSON(ctx context.Context, path string, v interface{}) error {
+func (c *restClientImpl) getJSON(ctx context.Context, path string, v any) error {
 	rawBody, err := c.get(ctx, path)
 	if err != nil {
 		return err
@@ -158,7 +158,7 @@ func (c *restClientImpl) getJSON(ctx context.Context, path string, v interface{}
 	return json.Unmarshal(rawBody, v)
 }
 
-func (c *restClientImpl) postJSON(ctx context.Context, path string, b interface{}, v interface{}) error {
+func (c *restClientImpl) postJSON(ctx context.Context, path string, b any, v any) error {
 	rqBody, err := json.Marshal(b)
 	if err != nil {
 		return err

@@ -50,7 +50,7 @@ func (p *MusicPlayer) Queue(event *events.ApplicationCommandInteractionEvent, tr
 		embed.SetDescriptionf("queued %d tracks", len(tracks))
 	}
 	embed.SetFooter("executed by "+event.Member().EffectiveName(), event.User().EffectiveAvatarURL())
-	if _, err := event.Client().Rest().Interactions().UpdateInteractionResponse(event.ApplicationID(), event.Token(), discord.NewMessageUpdateBuilder().SetEmbeds(embed.Build()).Build()); err != nil {
+	if _, err := event.Client().Rest().UpdateInteractionResponse(event.ApplicationID(), event.Token(), discord.NewMessageUpdateBuilder().SetEmbeds(embed.Build()).Build()); err != nil {
 		log.Errorf("error while edit original: %s", err)
 	}
 }
@@ -75,11 +75,11 @@ func (p *MusicPlayer) OnTrackEnd(player lavalink.Player, track lavalink.AudioTra
 	}
 }
 func (p *MusicPlayer) OnTrackException(player lavalink.Player, track lavalink.AudioTrack, exception lavalink.FriendlyException) {
-	_, _ = p.client.Rest().Channels().CreateMessage(p.channelID, discord.NewMessageCreateBuilder().SetContentf("AudioTrack exception: `%s`, `%+v`", track.Info().Title, exception).Build())
+	_, _ = p.client.Rest().CreateMessage(p.channelID, discord.NewMessageCreateBuilder().SetContentf("AudioTrack exception: `%s`, `%+v`", track.Info().Title, exception).Build())
 }
 func (p *MusicPlayer) OnTrackStuck(player lavalink.Player, track lavalink.AudioTrack, thresholdMs lavalink.Duration) {
-	_, _ = p.client.Rest().Channels().CreateMessage(p.channelID, discord.NewMessageCreateBuilder().SetContentf("track stuck: `%s`, %d", track.Info().Title, thresholdMs).Build())
+	_, _ = p.client.Rest().CreateMessage(p.channelID, discord.NewMessageCreateBuilder().SetContentf("track stuck: `%s`, %d", track.Info().Title, thresholdMs).Build())
 }
 func (p *MusicPlayer) OnWebSocketClosed(player lavalink.Player, code int, reason string, byRemote bool) {
-	_, _ = p.client.Rest().Channels().CreateMessage(p.channelID, discord.NewMessageCreateBuilder().SetContentf("websocket closed: `%d`, `%s`, `%t`", code, reason, byRemote).Build())
+	_, _ = p.client.Rest().CreateMessage(p.channelID, discord.NewMessageCreateBuilder().SetContentf("websocket closed: `%d`, `%s`, `%t`", code, reason, byRemote).Build())
 }

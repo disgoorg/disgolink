@@ -2,7 +2,7 @@ package lavalink
 
 const (
 	trackInfoVersioned int32 = 1
-	trackInfoVersion   int32 = 2
+	trackInfoVersion   int8  = 2
 )
 
 type AudioTrackInfo struct {
@@ -25,14 +25,14 @@ func NewAudioTrack(info AudioTrackInfo) AudioTrack {
 type AudioTrack interface {
 	Info() AudioTrackInfo
 	SetPosition(position Duration)
-	UserData() interface{}
-	SetUserData(interface{})
+	UserData() any
+	SetUserData(any)
 	Clone() AudioTrack
 }
 
 type BasicAudioTrack struct {
 	AudioTrackInfo AudioTrackInfo `json:"info"`
-	userData       interface{}
+	userData       any
 }
 
 func (t *BasicAudioTrack) Info() AudioTrackInfo {
@@ -43,11 +43,11 @@ func (t *BasicAudioTrack) SetPosition(position Duration) {
 	t.AudioTrackInfo.Position = position
 }
 
-func (t *BasicAudioTrack) SetUserData(userData interface{}) {
+func (t *BasicAudioTrack) SetUserData(userData any) {
 	t.userData = userData
 }
 
-func (t *BasicAudioTrack) UserData() interface{} {
+func (t *BasicAudioTrack) UserData() any {
 	return t.userData
 }
 

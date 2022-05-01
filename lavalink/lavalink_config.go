@@ -2,16 +2,25 @@ package lavalink
 
 import (
 	"net/http"
+	"time"
 
 	"github.com/disgoorg/log"
 	"github.com/disgoorg/snowflake"
 )
 
+func DefaultConfig() *Config {
+	return &Config{
+		Logger:     log.Default(),
+		HTTPClient: &http.Client{Timeout: 10 * time.Second},
+		Plugins:    []any{NewHTTPSourcePlugin()},
+	}
+}
+
 type Config struct {
 	Logger     log.Logger
 	HTTPClient *http.Client
 	UserID     snowflake.Snowflake
-	Plugins    []interface{}
+	Plugins    []any
 }
 
 type ConfigOpt func(config *Config)
@@ -50,7 +59,7 @@ func WithUserIDFromBotToken(botToken string) ConfigOpt {
 	return WithUserID(token)
 }
 
-func WithPlugins(plugins ...interface{}) ConfigOpt {
+func WithPlugins(plugins ...any) ConfigOpt {
 	return func(config *Config) {
 		config.Plugins = append(config.Plugins, plugins...)
 	}
