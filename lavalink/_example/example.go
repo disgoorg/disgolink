@@ -10,7 +10,7 @@ import (
 	"syscall"
 
 	"github.com/disgoorg/disgolink/lavalink"
-	"github.com/disgoorg/snowflake"
+	"github.com/disgoorg/snowflake/v2"
 )
 
 var (
@@ -18,7 +18,7 @@ var (
 )
 
 func main() {
-	bot := &Bot{Link: lavalink.New(lavalink.WithUserID("0123456789"))}
+	bot := &Bot{Link: lavalink.New(lavalink.WithUserID(01234567))}
 	bot.registerNodes()
 
 	sc := make(chan os.Signal, 1)
@@ -32,8 +32,8 @@ type Bot struct {
 
 func (b *Bot) messageCreateHandler() {
 	command := "!play channelID url"
-	channelID := snowflake.Snowflake("")
-	guildID := snowflake.Snowflake("")
+	channelID := snowflake.ID(0)
+	guildID := snowflake.ID(0)
 	args := strings.Split(command, " ")
 	if len(args) < 3 {
 		// TODO: send error message
@@ -45,13 +45,16 @@ func (b *Bot) messageCreateHandler() {
 	}
 	_ = b.Link.BestRestClient().LoadItemHandler(context.TODO(), query, lavalink.NewResultHandler(
 		func(track lavalink.AudioTrack) {
-			b.Play(guildID, snowflake.Snowflake(args[1]), channelID, track)
+			id, _ := snowflake.Parse(args[1])
+			b.Play(guildID, id, channelID, track)
 		},
 		func(playlist lavalink.AudioPlaylist) {
-			b.Play(guildID, snowflake.Snowflake(args[1]), channelID, playlist.Tracks()[0])
+			id, _ := snowflake.Parse(args[1])
+			b.Play(guildID, id, channelID, playlist.Tracks()[0])
 		},
 		func(tracks []lavalink.AudioTrack) {
-			b.Play(guildID, snowflake.Snowflake(args[1]), channelID, tracks[0])
+			id, _ := snowflake.Parse(args[1])
+			b.Play(guildID, id, channelID, tracks[0])
 		},
 		func() {
 			// TODO: send error message
@@ -62,7 +65,7 @@ func (b *Bot) messageCreateHandler() {
 	))
 }
 
-func (b *Bot) Play(guildID snowflake.Snowflake, voiceChannelID snowflake.Snowflake, channelID snowflake.Snowflake, track lavalink.AudioTrack) {
+func (b *Bot) Play(guildID snowflake.ID, voiceChannelID snowflake.ID, channelID snowflake.ID, track lavalink.AudioTrack) {
 	// TODO: join voice channel
 
 	if err := b.Link.Player(guildID).Play(track); err != nil {
