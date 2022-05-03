@@ -17,17 +17,17 @@ import (
 	"github.com/disgoorg/disgolink/disgolink"
 	"github.com/disgoorg/disgolink/lavalink"
 	"github.com/disgoorg/log"
-	"github.com/disgoorg/snowflake"
+	"github.com/disgoorg/snowflake/v2"
 )
 
 var (
 	URLPattern = regexp.MustCompile("^https?://[-a-zA-Z0-9+&@#/%?=~_|!:,.;]*[-a-zA-Z0-9+&@#/%=~_|]?")
 
 	token        = os.Getenv("disgolink_token")
-	guildID      = snowflake.GetSnowflakeEnv("guild_id")
+	guildID      = snowflake.GetEnv("guild_id")
 	client       bot.Client
 	dgolink      disgolink.Link
-	musicPlayers = map[snowflake.Snowflake]*MusicPlayer{}
+	musicPlayers = map[snowflake.ID]*MusicPlayer{}
 )
 
 func main() {

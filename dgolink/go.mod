@@ -4,8 +4,8 @@ go 1.18
 
 require (
 	github.com/bwmarrin/discordgo v0.24.0
-	github.com/disgoorg/disgolink/lavalink v1.6.0
-	github.com/disgoorg/snowflake v1.1.0
+	github.com/disgoorg/disgolink/lavalink v1.6.1-0.20220502235445-476e7c6ac385
+	github.com/disgoorg/snowflake/v2 v2.0.0
 )
 
 require (
