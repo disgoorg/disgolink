@@ -3,7 +3,7 @@ module github.com/disgoorg/disgolink/disgolink
 go 1.18
 
 require (
-	github.com/disgoorg/disgo v0.9.1-0.20220502233708-70e6fa8a9b8f
+	github.com/disgoorg/disgo v0.10.0
 	github.com/disgoorg/disgolink/lavalink v1.6.1-0.20220502235445-476e7c6ac385
 )
 
