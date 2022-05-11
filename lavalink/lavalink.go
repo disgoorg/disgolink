@@ -9,7 +9,7 @@ import (
 	"time"
 
 	"github.com/disgoorg/log"
-	"github.com/disgoorg/snowflake"
+	"github.com/disgoorg/snowflake/v2"
 )
 
 var ErrNoUserID = errors.New("no user id has been configured")
@@ -31,15 +31,15 @@ type Lavalink interface {
 	EncodeTrack(track AudioTrack) (string, error)
 	DecodeTrack(track string) (AudioTrack, error)
 
-	Player(guildID snowflake.Snowflake) Player
-	PlayerOnNode(name string, guildID snowflake.Snowflake) Player
+	Player(guildID snowflake.ID) Player
+	PlayerOnNode(name string, guildID snowflake.ID) Player
 	RestorePlayer(restoreState PlayerRestoreState) (Player, error)
-	ExistingPlayer(guildID snowflake.Snowflake) Player
-	RemovePlayer(guildID snowflake.Snowflake)
-	Players() map[snowflake.Snowflake]Player
+	ExistingPlayer(guildID snowflake.ID) Player
+	RemovePlayer(guildID snowflake.ID)
+	Players() map[snowflake.ID]Player
 
-	UserID() snowflake.Snowflake
-	SetUserID(userID snowflake.Snowflake)
+	UserID() snowflake.ID
+	SetUserID(userID snowflake.ID)
 
 	Close()
 
@@ -60,7 +60,7 @@ func New(opts ...ConfigOpt) Lavalink {
 	return &lavalinkImpl{
 		config:  *config,
 		nodes:   map[string]Node{},
-		players: map[snowflake.Snowflake]Player{},
+		players: map[snowflake.ID]Player{},
 	}
 }
 
@@ -74,7 +74,7 @@ type lavalinkImpl struct {
 	nodes   map[string]Node
 
 	playersMu sync.Mutex
-	players   map[snowflake.Snowflake]Player
+	players   map[snowflake.ID]Player
 }
 
 func (l *lavalinkImpl) Logger() log.Logger {
@@ -82,7 +82,7 @@ func (l *lavalinkImpl) Logger() log.Logger {
 }
 
 func (l *lavalinkImpl) AddNode(ctx context.Context, config NodeConfig) (Node, error) {
-	if l.UserID() == "" {
+	if l.UserID() == 0 {
 		return nil, ErrNoUserID
 	}
 	node := &nodeImpl{
@@ -206,11 +206,11 @@ func (l *lavalinkImpl) DecodeTrack(str string) (AudioTrack, error) {
 	})
 }
 
-func (l *lavalinkImpl) Player(guildID snowflake.Snowflake) Player {
+func (l *lavalinkImpl) Player(guildID snowflake.ID) Player {
 	return l.PlayerOnNode("", guildID)
 }
 
-func (l *lavalinkImpl) PlayerOnNode(name string, guildID snowflake.Snowflake) Player {
+func (l *lavalinkImpl) PlayerOnNode(name string, guildID snowflake.ID) Player {
 	l.playersMu.Lock()
 	defer l.playersMu.Unlock()
 	if player, ok := l.players[guildID]; ok {
@@ -250,33 +250,33 @@ func (l *lavalinkImpl) RestorePlayer(restoreState PlayerRestoreState) (Player, e
 	return player, nil
 }
 
-func (l *lavalinkImpl) ExistingPlayer(guildID snowflake.Snowflake) Player {
+func (l *lavalinkImpl) ExistingPlayer(guildID snowflake.ID) Player {
 	l.playersMu.Lock()
 	defer l.playersMu.Unlock()
 	return l.players[guildID]
 }
 
-func (l *lavalinkImpl) RemovePlayer(guildID snowflake.Snowflake) {
+func (l *lavalinkImpl) RemovePlayer(guildID snowflake.ID) {
 	l.playersMu.Lock()
 	defer l.playersMu.Unlock()
 	delete(l.players, guildID)
 }
 
-func (l *lavalinkImpl) Players() map[snowflake.Snowflake]Player {
+func (l *lavalinkImpl) Players() map[snowflake.ID]Player {
 	l.playersMu.Lock()
 	defer l.playersMu.Unlock()
-	players := make(map[snowflake.Snowflake]Player, len(l.players))
+	players := make(map[snowflake.ID]Player, len(l.players))
 	for guildID, player := range l.players {
 		players[guildID] = player
 	}
 	return players
 }
 
-func (l *lavalinkImpl) UserID() snowflake.Snowflake {
+func (l *lavalinkImpl) UserID() snowflake.ID {
 	return l.config.UserID
 }
 
-func (l *lavalinkImpl) SetUserID(userID snowflake.Snowflake) {
+func (l *lavalinkImpl) SetUserID(userID snowflake.ID) {
 	l.config.UserID = userID
 }
 

@@ -8,10 +8,10 @@ import (
 	"github.com/disgoorg/disgo/events"
 	"github.com/disgoorg/disgolink/lavalink"
 	"github.com/disgoorg/log"
-	"github.com/disgoorg/snowflake"
+	"github.com/disgoorg/snowflake/v2"
 )
 
-func NewMusicPlayer(client bot.Client, guildID snowflake.Snowflake) *MusicPlayer {
+func NewMusicPlayer(client bot.Client, guildID snowflake.ID) *MusicPlayer {
 	player := dgolink.Player(guildID)
 	musicPlayer := &MusicPlayer{
 		Player: player,
@@ -27,7 +27,7 @@ type MusicPlayer struct {
 	lavalink.Player
 	queue     []lavalink.AudioTrack
 	client    bot.Client
-	channelID snowflake.Snowflake
+	channelID snowflake.ID
 }
 
 func (p *MusicPlayer) Queue(event *events.ApplicationCommandInteractionEvent, tracks ...lavalink.AudioTrack) {

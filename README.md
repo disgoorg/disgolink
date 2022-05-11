@@ -16,7 +16,7 @@ While DisGoLink can be used with any [Discord](https://discord.com) Library [Dis
 * [DiscordGo](https://github.com/bwmarrin/discordgo) `string`
 * [Arikawa](https://github.com/diamondburned/arikawa) `type Snowflake uint64`
 * [Disgord](https://github.com/andersfylling/disgord) `type Snowflake uint64`
-* [DisGo](https://github.com/disgoorg/disgo) `type Snowflake string`
+* [DisGo](https://github.com/disgoorg/disgo) `type ID uint64`
 
 This Library uses the [Disgo Snowflake](https://github.com/disgoorg/snowflake) package like DisGo
 

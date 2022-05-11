@@ -7,7 +7,7 @@ import (
 	"runtime/debug"
 	"time"
 
-	"github.com/disgoorg/snowflake"
+	"github.com/disgoorg/snowflake/v2"
 )
 
 type Player interface {
@@ -17,8 +17,8 @@ type Player interface {
 	Connected() bool
 	Volume() int
 	Filters() Filters
-	GuildID() snowflake.Snowflake
-	ChannelID() *snowflake.Snowflake
+	GuildID() snowflake.ID
+	ChannelID() *snowflake.ID
 	Node() Node
 	Export() PlayerRestoreState
 
@@ -52,7 +52,7 @@ type PlayOptions struct {
 
 var _ Player = (*DefaultPlayer)(nil)
 
-func NewPlayer(node Node, lavalink Lavalink, guildID snowflake.Snowflake) Player {
+func NewPlayer(node Node, lavalink Lavalink, guildID snowflake.ID) Player {
 	return &DefaultPlayer{
 		guildID:  guildID,
 		volume:   100,
@@ -92,8 +92,8 @@ func newResumingPlayer(node Node, lavalink Lavalink, resumeState PlayerRestoreSt
 }
 
 type DefaultPlayer struct {
-	guildID               snowflake.Snowflake
-	channelID             *snowflake.Snowflake
+	guildID               snowflake.ID
+	channelID             *snowflake.ID
 	lastSessionID         *string
 	lastVoiceServerUpdate *VoiceServerUpdate
 	track                 AudioTrack
@@ -315,11 +315,11 @@ func (p *DefaultPlayer) SetFilters(filters Filters) {
 	p.filters = filters
 }
 
-func (p *DefaultPlayer) GuildID() snowflake.Snowflake {
+func (p *DefaultPlayer) GuildID() snowflake.ID {
 	return p.guildID
 }
 
-func (p *DefaultPlayer) ChannelID() *snowflake.Snowflake {
+func (p *DefaultPlayer) ChannelID() *snowflake.ID {
 	return p.channelID
 }
 
@@ -421,16 +421,16 @@ type PlayerState struct {
 }
 
 type PlayerRestoreState struct {
-	PlayingTrack          *string              `json:"playing_track"`
-	Paused                bool                 `json:"paused"`
-	State                 PlayerState          `json:"state"`
-	Volume                int                  `json:"volume"`
-	Filters               Filters              `json:"filters"`
-	GuildID               snowflake.Snowflake  `json:"guild_id"`
-	ChannelID             *snowflake.Snowflake `json:"channel_id"`
-	LastSessionID         *string              `json:"last_session_id"`
-	LastVoiceServerUpdate *VoiceServerUpdate   `json:"last_voice_server_update"`
-	Node                  string               `json:"node"`
+	PlayingTrack          *string            `json:"playing_track"`
+	Paused                bool               `json:"paused"`
+	State                 PlayerState        `json:"state"`
+	Volume                int                `json:"volume"`
+	Filters               Filters            `json:"filters"`
+	GuildID               snowflake.ID       `json:"guild_id"`
+	ChannelID             *snowflake.ID      `json:"channel_id"`
+	LastSessionID         *string            `json:"last_session_id"`
+	LastVoiceServerUpdate *VoiceServerUpdate `json:"last_voice_server_update"`
+	Node                  string             `json:"node"`
 }
 
 func (s *PlayerRestoreState) UnmarshalJSON(data []byte) error {

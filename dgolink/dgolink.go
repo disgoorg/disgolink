@@ -3,7 +3,7 @@ package dgolink
 import (
 	"github.com/bwmarrin/discordgo"
 	"github.com/disgoorg/disgolink/lavalink"
-	"github.com/disgoorg/snowflake"
+	"github.com/disgoorg/snowflake/v2"
 )
 
 func New(s *discordgo.Session, opts ...lavalink.ConfigOpt) *Link {
@@ -26,15 +26,30 @@ type Link struct {
 }
 
 func (l *Link) OnVoiceStateUpdateHandler(_ *discordgo.Session, voiceStateUpdate *discordgo.VoiceStateUpdate) {
-	if snowflake.Snowflake(voiceStateUpdate.UserID) != l.UserID() {
+	userID, err := snowflake.Parse(voiceStateUpdate.UserID)
+	if err != nil {
+		l.Logger().Error("Failed to parse user ID: ", err)
 		return
 	}
-	var channelID *snowflake.Snowflake
+	if userID != l.UserID() {
+		return
+	}
+	var channelID *snowflake.ID
 	if voiceStateUpdate.ChannelID != "" {
-		channelID = (*snowflake.Snowflake)(&voiceStateUpdate.ChannelID)
+		id, err := snowflake.Parse(voiceStateUpdate.ChannelID)
+		if err != nil {
+			l.Logger().Error("Failed to parse channel ID: ", err)
+			return
+		}
+		channelID = &id
+	}
+	guildID, err := snowflake.Parse(voiceStateUpdate.GuildID)
+	if err != nil {
+		l.Logger().Error("Failed to parse guild ID: ", err)
+		return
 	}
 	l.OnVoiceStateUpdate(lavalink.VoiceStateUpdate{
-		GuildID:   snowflake.Snowflake(voiceStateUpdate.GuildID),
+		GuildID:   guildID,
 		ChannelID: channelID,
 		SessionID: voiceStateUpdate.SessionID,
 	})
@@ -45,8 +60,14 @@ func (l *Link) OnVoiceServerUpdateHandler(_ *discordgo.Session, voiceServerUpdat
 	if voiceServerUpdate.Endpoint != "" {
 		endpoint = &voiceServerUpdate.Endpoint
 	}
+
+	guildID, err := snowflake.Parse(voiceServerUpdate.GuildID)
+	if err != nil {
+		l.Logger().Error("Failed to parse guild ID: ", err)
+		return
+	}
 	l.OnVoiceServerUpdate(lavalink.VoiceServerUpdate{
-		GuildID:  snowflake.Snowflake(voiceServerUpdate.GuildID),
+		GuildID:  guildID,
 		Token:    voiceServerUpdate.Token,
 		Endpoint: endpoint,
 	})

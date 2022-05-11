@@ -5,20 +5,20 @@ import (
 	"errors"
 	"strings"
 
-	"github.com/disgoorg/snowflake"
+	"github.com/disgoorg/snowflake/v2"
 )
 
 var ErrInvalidBotToken = errors.New("invalid bot token")
 
-func UserIDFromBotToken(token string) (snowflake.Snowflake, error) {
+func UserIDFromBotToken(token string) (snowflake.ID, error) {
 	token = strings.TrimPrefix(token, "Bot ")
 	strs := strings.Split(token, ".")
 	if len(strs) == 0 {
-		return "", ErrInvalidBotToken
+		return 0, ErrInvalidBotToken
 	}
 	byteID, err := base64.StdEncoding.DecodeString(strs[0])
 	if err != nil {
-		return "", err
+		return 0, err
 	}
-	return snowflake.Snowflake(byteID), nil
+	return snowflake.Parse(string(byteID))
 }

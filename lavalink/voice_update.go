@@ -1,17 +1,17 @@
 package lavalink
 
 import (
-	"github.com/disgoorg/snowflake"
+	"github.com/disgoorg/snowflake/v2"
 )
 
 type VoiceServerUpdate struct {
-	Token    string              `json:"token"`
-	GuildID  snowflake.Snowflake `json:"guildId"`
-	Endpoint *string             `json:"endpoint"`
+	Token    string       `json:"token"`
+	GuildID  snowflake.ID `json:"guildId"`
+	Endpoint *string      `json:"endpoint"`
 }
 
 type VoiceStateUpdate struct {
-	GuildID   snowflake.Snowflake  `json:"guild_id"`
-	ChannelID *snowflake.Snowflake `json:"channel_id"`
-	SessionID string               `json:"session_id"`
+	GuildID   snowflake.ID  `json:"guild_id"`
+	ChannelID *snowflake.ID `json:"channel_id"`
+	SessionID string        `json:"session_id"`
 }

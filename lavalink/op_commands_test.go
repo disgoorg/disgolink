@@ -18,7 +18,7 @@ func TestConfigureResumingCommand_MarshalJSON(t *testing.T) {
 
 func TestFiltersCommand_MarshalJSON(t *testing.T) {
 	data, err := json.Marshal(FiltersCommand{
-		GuildID: "1234",
+		GuildID: 1234,
 		Filters: &DefaultFilters{
 			FilterTimescale: &Timescale{
 				Speed: 2,

@@ -3,17 +3,17 @@ package lavalink
 import (
 	"encoding/json"
 
-	"github.com/disgoorg/snowflake"
+	"github.com/disgoorg/snowflake/v2"
 )
 
 type PlayCommand struct {
-	GuildID   snowflake.Snowflake `json:"guildId"`
-	Track     string              `json:"track"`
-	StartTime *Duration           `json:"startTime,omitempty"`
-	EndTime   *Duration           `json:"endTime,omitempty"`
-	NoReplace *bool               `json:"noReplace,omitempty"`
-	Pause     *bool               `json:"pause,omitempty"`
-	Volume    *int                `json:"volume,omitempty"`
+	GuildID   snowflake.ID `json:"guildId"`
+	Track     string       `json:"track"`
+	StartTime *Duration    `json:"startTime,omitempty"`
+	EndTime   *Duration    `json:"endTime,omitempty"`
+	NoReplace *bool        `json:"noReplace,omitempty"`
+	Pause     *bool        `json:"pause,omitempty"`
+	Volume    *int         `json:"volume,omitempty"`
 }
 
 func (c PlayCommand) MarshalJSON() ([]byte, error) {
@@ -30,7 +30,7 @@ func (PlayCommand) Op() OpType { return OpTypePlay }
 func (PlayCommand) OpCommand() {}
 
 type StopCommand struct {
-	GuildID snowflake.Snowflake `json:"guildId"`
+	GuildID snowflake.ID `json:"guildId"`
 }
 
 func (c StopCommand) MarshalJSON() ([]byte, error) {
@@ -47,7 +47,7 @@ func (StopCommand) Op() OpType { return OpTypeStop }
 func (StopCommand) OpCommand() {}
 
 type DestroyCommand struct {
-	GuildID snowflake.Snowflake `json:"guildId"`
+	GuildID snowflake.ID `json:"guildId"`
 }
 
 func (c DestroyCommand) MarshalJSON() ([]byte, error) {
@@ -64,8 +64,8 @@ func (DestroyCommand) Op() OpType { return OpTypeDestroy }
 func (DestroyCommand) OpCommand() {}
 
 type PauseCommand struct {
-	GuildID snowflake.Snowflake `json:"guildId"`
-	Pause   bool                `json:"pause"`
+	GuildID snowflake.ID `json:"guildId"`
+	Pause   bool         `json:"pause"`
 }
 
 func (c PauseCommand) MarshalJSON() ([]byte, error) {
@@ -82,8 +82,8 @@ func (PauseCommand) Op() OpType { return OpTypePause }
 func (PauseCommand) OpCommand() {}
 
 type SeekCommand struct {
-	GuildID  snowflake.Snowflake `json:"guildId"`
-	Position Duration            `json:"position"`
+	GuildID  snowflake.ID `json:"guildId"`
+	Position Duration     `json:"position"`
 }
 
 func (c SeekCommand) MarshalJSON() ([]byte, error) {
@@ -100,8 +100,8 @@ func (SeekCommand) Op() OpType { return OpTypeSeek }
 func (SeekCommand) OpCommand() {}
 
 type VolumeCommand struct {
-	GuildID snowflake.Snowflake `json:"guildId"`
-	Volume  int                 `json:"volume"`
+	GuildID snowflake.ID `json:"guildId"`
+	Volume  int          `json:"volume"`
 }
 
 func (c VolumeCommand) MarshalJSON() ([]byte, error) {
@@ -118,9 +118,9 @@ func (VolumeCommand) Op() OpType { return OpTypeVolume }
 func (VolumeCommand) OpCommand() {}
 
 type VoiceUpdateCommand struct {
-	GuildID   snowflake.Snowflake `json:"guildId"`
-	SessionID string              `json:"sessionId"`
-	Event     VoiceServerUpdate   `json:"event"`
+	GuildID   snowflake.ID      `json:"guildId"`
+	SessionID string            `json:"sessionId"`
+	Event     VoiceServerUpdate `json:"event"`
 }
 
 func (c VoiceUpdateCommand) MarshalJSON() ([]byte, error) {
@@ -155,14 +155,14 @@ func (ConfigureResumingCommand) Op() OpType { return OpTypeConfigureResuming }
 func (ConfigureResumingCommand) OpCommand() {}
 
 type FiltersCommand struct {
-	GuildID snowflake.Snowflake `json:"guildId"`
+	GuildID snowflake.ID `json:"guildId"`
 	Filters
 }
 
 func (c FiltersCommand) MarshalJSON() ([]byte, error) {
 	b1, err := json.Marshal(struct {
-		Op      OpType              `json:"op"`
-		GuildID snowflake.Snowflake `json:"guildId"`
+		Op      OpType       `json:"op"`
+		GuildID snowflake.ID `json:"guildId"`
 	}{
 		Op:      c.Op(),
 		GuildID: c.GuildID,
