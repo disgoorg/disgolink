@@ -14,6 +14,7 @@ import (
 	"github.com/bwmarrin/discordgo"
 	"github.com/disgoorg/disgolink/dgolink"
 	"github.com/disgoorg/disgolink/lavalink"
+	"github.com/disgoorg/snowflake/v2"
 )
 
 var (
@@ -153,7 +154,7 @@ func (b *Bot) play(s *discordgo.Session, guildID string, voiceChannelID string, 
 	manager, ok := b.PlayerManagers[guildID]
 	if !ok {
 		manager = &PlayerManager{
-			Player:        b.Link.Player(snowflake.ID(guildID)),
+			Player:        b.Link.Player(snowflake.MustParse(guildID)),
 			RepeatingMode: RepeatingModeOff,
 		}
 		b.PlayerManagers[guildID] = manager
