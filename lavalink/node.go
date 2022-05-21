@@ -161,13 +161,8 @@ loop:
 		}
 		_, data, err := n.conn.ReadMessage()
 		if err != nil {
-			reconnect := true
-			if errors.Is(err, net.ErrClosed) {
-				// we closed the connection manually, so we don't want to reconnect
-				reconnect = false
-			}
 			n.Close()
-			if reconnect {
+			if !errors.Is(err, net.ErrClosed) {
 				go n.reconnect(context.TODO())
 			}
 			break loop
