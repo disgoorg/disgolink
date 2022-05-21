@@ -3,7 +3,9 @@ package lavalink
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
+	"net"
 	"net/http"
 	"sync"
 	"time"
@@ -120,37 +122,50 @@ func (n *nodeImpl) Stats() *Stats {
 	return n.stats
 }
 
-func (n *nodeImpl) reconnect() error {
+func (n *nodeImpl) reconnect(ctx context.Context) {
+	if err := n.reconnectTry(ctx, 0, time.Second); err != nil {
+		n.lavalink.Logger().Error("failed to reconnect to node: ", err)
+	}
+}
+
+func (n *nodeImpl) reconnectTry(ctx context.Context, try int, delay time.Duration) error {
 	n.statusMu.Lock()
 	defer n.statusMu.Unlock()
-
 	n.status = Reconnecting
-	if err := n.open(context.TODO(), 0); err != nil {
+
+	timer := time.NewTimer(time.Duration(try) * delay)
+	defer timer.Stop()
+	select {
+	case <-ctx.Done():
+		timer.Stop()
+		return ctx.Err()
+	case <-timer.C:
+	}
+
+	n.lavalink.Logger().Debug("reconnecting gateway...")
+	if err := n.open(ctx); err != nil {
+		n.lavalink.Logger().Error("failed to reconnect node. error: ", err)
 		n.status = Disconnected
-		return err
+		return n.reconnectTry(ctx, try+1, delay)
 	}
 	n.status = Connected
 	return nil
 }
 
 func (n *nodeImpl) listen() {
-	defer func() {
-		n.lavalink.Logger().Info("shut down listen goroutine")
-	}()
+	defer n.lavalink.Logger().Debug("shutting down listen goroutine")
+loop:
 	for {
 		if n.conn == nil {
 			return
 		}
 		_, data, err := n.conn.ReadMessage()
 		if err != nil {
-			if websocket.IsUnexpectedCloseError(err, websocket.CloseGoingAway, websocket.CloseAbnormalClosure) {
-				n.lavalink.Logger().Error("error while reading from lavalink websocket. error: ", err)
-				n.Close()
-				if err = n.reconnect(); err != nil {
-					n.lavalink.Logger().Error("error while reconnecting to lavalink websocket. error: ", err)
-				}
+			n.Close()
+			if !errors.Is(err, net.ErrClosed) {
+				go n.reconnect(context.TODO())
 			}
-			return
+			break loop
 		}
 
 		n.lavalink.Logger().Trace("received: ", string(data))
@@ -287,7 +302,7 @@ func (n *nodeImpl) onStatsEvent(stats StatsOp) {
 	n.stats = &stats.Stats
 }
 
-func (n *nodeImpl) open(ctx context.Context, delay time.Duration) error {
+func (n *nodeImpl) open(ctx context.Context) error {
 	select {
 	case <-ctx.Done():
 		return ctx.Err()
@@ -312,21 +327,7 @@ func (n *nodeImpl) open(ctx context.Context, delay time.Duration) error {
 	)
 	n.conn, rs, err = websocket.DefaultDialer.DialContext(ctx, fmt.Sprintf("%s://%s:%s", scheme, n.config.Host, n.config.Port), header)
 	if err != nil {
-		n.lavalink.Logger().Warnf("error while connecting to lavalink websocket, retrying in %f seconds: %s", delay.Seconds(), err)
-		if delay > 0 {
-			select {
-			case <-ctx.Done():
-				return ctx.Err()
-			case <-time.After(delay):
-			}
-
-		} else {
-			delay = 1 * time.Second
-		}
-		if delay < 30*time.Second {
-			delay *= 2
-		}
-		return n.open(ctx, delay)
+		return err
 	}
 	if n.config.ResumingKey != "" {
 		if rs.Header.Get("Session-Resumed") == "true" {
@@ -352,7 +353,7 @@ func (n *nodeImpl) Open(ctx context.Context) error {
 	defer n.statusMu.Unlock()
 
 	n.status = Connecting
-	if err := n.open(ctx, 0); err != nil {
+	if err := n.open(ctx); err != nil {
 		n.status = Disconnected
 		return err
 	}
