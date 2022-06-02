@@ -71,7 +71,7 @@ func main() {
 	<-s
 }
 
-func connect(event *events.ApplicationCommandInteractionEvent, voiceState discord.VoiceState) bool {
+func connect(event *events.ApplicationCommandInteractionCreate, voiceState discord.VoiceState) bool {
 	if err := event.Client().Connect(context.TODO(), voiceState.GuildID, *voiceState.ChannelID); err != nil {
 		_, _ = event.Client().Rest().UpdateInteractionResponse(event.ApplicationID(), event.Token(), discord.NewMessageUpdateBuilder().SetContent("error while connecting to channel:\n"+err.Error()).Build())
 		log.Errorf("error while connecting to channel: %s", err)

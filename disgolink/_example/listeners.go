@@ -11,7 +11,7 @@ import (
 	"github.com/disgoorg/disgolink/lavalink"
 )
 
-func checkMusicPlayer(event *events.ApplicationCommandInteractionEvent) *MusicPlayer {
+func checkMusicPlayer(event *events.ApplicationCommandInteractionCreate) *MusicPlayer {
 	musicPlayer, ok := musicPlayers[*event.GuildID()]
 	if !ok {
 		_ = event.CreateMessage(discord.NewMessageCreateBuilder().SetEphemeral(true).SetContent("No MusicPlayer found for this guild").Build())
@@ -20,7 +20,7 @@ func checkMusicPlayer(event *events.ApplicationCommandInteractionEvent) *MusicPl
 	return musicPlayer
 }
 
-func onApplicationCommand(event *events.ApplicationCommandInteractionEvent) {
+func onApplicationCommand(event *events.ApplicationCommandInteractionCreate) {
 	data := event.SlashCommandInteractionData()
 	switch data.CommandName() {
 	case "shuffle":
