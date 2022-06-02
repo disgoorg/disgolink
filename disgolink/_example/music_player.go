@@ -30,7 +30,7 @@ type MusicPlayer struct {
 	channelID snowflake.ID
 }
 
-func (p *MusicPlayer) Queue(event *events.ApplicationCommandInteractionEvent, tracks ...lavalink.AudioTrack) {
+func (p *MusicPlayer) Queue(event *events.ApplicationCommandInteractionCreate, tracks ...lavalink.AudioTrack) {
 	p.channelID = event.ChannelID()
 	for _, track := range tracks {
 		p.queue = append(p.queue, track)

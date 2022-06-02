@@ -35,14 +35,14 @@ type linkImpl struct {
 
 func (l *linkImpl) OnEvent(event bot.Event) {
 	switch e := event.(type) {
-	case *events.VoiceServerUpdateEvent:
+	case *events.VoiceServerUpdate:
 		l.OnVoiceServerUpdate(lavalink.VoiceServerUpdate{
 			Token:    e.VoiceServerUpdate.Token,
 			GuildID:  e.VoiceServerUpdate.GuildID,
 			Endpoint: e.VoiceServerUpdate.Endpoint,
 		})
 
-	case *events.GuildVoiceStateUpdateEvent:
+	case *events.GuildVoiceStateUpdate:
 		if e.VoiceState.UserID != l.UserID() {
 			return
 		}
