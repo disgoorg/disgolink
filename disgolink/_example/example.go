@@ -37,7 +37,7 @@ func main() {
 
 	var err error
 	client, err = disgo.New(token,
-		bot.WithGatewayConfigOpts(gateway.WithGatewayIntents(discord.GatewayIntentGuilds|discord.GatewayIntentGuildVoiceStates)),
+		bot.WithGatewayConfigOpts(gateway.WithIntents(gateway.IntentGuilds|gateway.IntentGuildVoiceStates)),
 		bot.WithCacheConfigOpts(cache.WithCacheFlags(cache.FlagVoiceStates)),
 		bot.WithEventListeners(&events.ListenerAdapter{
 			OnApplicationCommandInteraction: onApplicationCommand,

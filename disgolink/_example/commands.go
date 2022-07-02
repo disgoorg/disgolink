@@ -24,12 +24,12 @@ var commands = []discord.ApplicationCommandCreate{
 		Description: "plays some music",
 		Options: []discord.ApplicationCommandOption{
 			discord.ApplicationCommandOptionString{
-				Name:        "query",
+				OptionName:  "query",
 				Description: "what to play",
 				Required:    true,
 			},
 			discord.ApplicationCommandOptionString{
-				Name:        "search-provider",
+				OptionName:  "search-provider",
 				Description: "where to search",
 				Choices: []discord.ApplicationCommandOptionChoiceString{
 					{Name: "YouTube", Value: "yt"},

@@ -37,9 +37,9 @@ func (l *linkImpl) OnEvent(event bot.Event) {
 	switch e := event.(type) {
 	case *events.VoiceServerUpdate:
 		l.OnVoiceServerUpdate(lavalink.VoiceServerUpdate{
-			Token:    e.VoiceServerUpdate.Token,
-			GuildID:  e.VoiceServerUpdate.GuildID,
-			Endpoint: e.VoiceServerUpdate.Endpoint,
+			Token:    e.Token,
+			GuildID:  e.GuildID,
+			Endpoint: e.Endpoint,
 		})
 
 	case *events.GuildVoiceStateUpdate:
