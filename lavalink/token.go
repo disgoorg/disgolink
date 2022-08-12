@@ -16,7 +16,7 @@ func UserIDFromBotToken(token string) (snowflake.ID, error) {
 	if len(strs) == 0 {
 		return 0, ErrInvalidBotToken
 	}
-	byteID, err := base64.StdEncoding.DecodeString(strs[0])
+	byteID, err := base64.RawStdEncoding.DecodeString(strs[0])
 	if err != nil {
 		return 0, err
 	}
