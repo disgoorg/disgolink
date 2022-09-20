@@ -25,13 +25,13 @@ const (
 
 type Node interface {
 	Lavalink() Lavalink
-	Send(cmd OpCommand) error
 	ConfigureResuming(key string, timeoutSeconds int) error
 
 	Open(ctx context.Context) error
 	Close()
 
 	Name() string
+	SessionID() string
 	RestClient() RestClient
 	RestURL() string
 	Config() NodeConfig
@@ -50,6 +50,7 @@ type NodeConfig struct {
 
 type nodeImpl struct {
 	config     NodeConfig
+	sessionID  string
 	lavalink   Lavalink
 	conn       *websocket.Conn
 	status     NodeStatus
@@ -78,6 +79,10 @@ func (n *nodeImpl) Config() NodeConfig {
 
 func (n *nodeImpl) RestClient() RestClient {
 	return n.restClient
+}
+
+func (n *nodeImpl) SessionID() string {
+	return n.sessionID
 }
 
 func (n *nodeImpl) Name() string {
@@ -197,6 +202,9 @@ loop:
 				}
 			}
 
+		case ReadyOp:
+			n.onReady(op)
+
 		case PlayerUpdateOp:
 			n.onPlayerUpdate(op)
 
@@ -210,6 +218,19 @@ loop:
 			n.lavalink.Logger().Warnf("unexpected op received: %T, data: ", op, string(data))
 		}
 	}
+}
+
+func (n *nodeImpl) onReady(ready ReadyOp) {
+	n.sessionID = ready.SessionID
+	println("session id: ", n.sessionID)
+	if n.config.ResumingKey == "" {
+		return
+	}
+	if ready.Resumed {
+		n.lavalink.Logger().Info("successfully resumed session with key: %s", n.config.ResumingKey)
+		return
+	}
+	n.lavalink.Logger().Warn("failed to resume session with key: ", n.config.ResumingKey)
 }
 
 func (n *nodeImpl) onPlayerUpdate(playerUpdate PlayerUpdateOp) {
@@ -321,20 +342,10 @@ func (n *nodeImpl) open(ctx context.Context) error {
 		header.Add("Resume-Key", n.config.ResumingKey)
 	}
 
-	var (
-		err error
-		rs  *http.Response
-	)
-	n.conn, rs, err = websocket.DefaultDialer.DialContext(ctx, fmt.Sprintf("%s://%s:%s", scheme, n.config.Host, n.config.Port), header)
+	var err error
+	n.conn, _, err = websocket.DefaultDialer.DialContext(ctx, fmt.Sprintf("%s://%s:%s", scheme, n.config.Host, n.config.Port), header)
 	if err != nil {
 		return err
-	}
-	if n.config.ResumingKey != "" {
-		if rs.Header.Get("Session-Resumed") == "true" {
-			n.lavalink.Logger().Info("successfully resumed session with key: %s", n.config.ResumingKey)
-		} else {
-			n.lavalink.Logger().Warn("failed to resume session with key: ", n.config.ResumingKey)
-		}
 	}
 
 	go n.listen()

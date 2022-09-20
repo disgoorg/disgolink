@@ -116,23 +116,20 @@ func onApplicationCommand(event *events.ApplicationCommandInteractionCreate) {
 				musicPlayers[*event.GuildID()] = musicPlayer
 			}
 
+			if ok = connect(event, voiceState); !ok {
+				return
+			}
+
+			time.Sleep(1 * time.Second)
+
 			_ = musicPlayer.Node().RestClient().LoadItemHandler(context.TODO(), query, lavalink.NewResultHandler(
 				func(track lavalink.AudioTrack) {
-					if ok = connect(event, voiceState); !ok {
-						return
-					}
 					musicPlayer.Queue(event, track)
 				},
 				func(playlist lavalink.AudioPlaylist) {
-					if ok = connect(event, voiceState); !ok {
-						return
-					}
 					musicPlayer.Queue(event, playlist.Tracks()...)
 				},
 				func(tracks []lavalink.AudioTrack) {
-					if ok = connect(event, voiceState); !ok {
-						return
-					}
 					musicPlayer.Queue(event, tracks[0])
 				},
 				func() {

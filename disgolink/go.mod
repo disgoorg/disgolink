@@ -2,8 +2,12 @@ module github.com/disgoorg/disgolink/disgolink
 
 go 1.18
 
+replace (
+	github.com/disgoorg/disgolink/lavalink => ../lavalink
+)
+
 require (
-	github.com/disgoorg/disgo v0.13.1
+	github.com/disgoorg/disgo v0.13.20
 	github.com/disgoorg/disgolink/lavalink v1.7.1
 )
 

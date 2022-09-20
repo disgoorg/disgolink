@@ -1,6 +1,7 @@
 package lavalink
 
 import (
+	"context"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -116,27 +117,26 @@ func (p *DefaultPlayer) PlayTrack(track AudioTrack, options PlayOptions) error {
 		return err
 	}
 
-	cmd := PlayCommand{
-		GuildID: p.guildID,
-		Track:   encodedTrack,
+	payload := UpdatePlayerPayload{
+		Track: &encodedTrack,
 	}
 	if options.StartTime != 0 {
-		cmd.StartTime = &options.StartTime
+		payload.StartTime = options.StartTime
 	}
 	if options.EndTime != 0 {
-		cmd.EndTime = &options.EndTime
+		payload.EndTime = options.EndTime
 	}
 	if options.NoReplace {
-		cmd.NoReplace = &options.NoReplace
+		payload.NoReplace = options.NoReplace
 	}
 	if options.Pause {
-		cmd.Pause = &options.Pause
+		payload.Pause = &options.Pause
 	}
 	if options.Volume != 0 {
-		cmd.Volume = &options.Volume
+		payload.Volume = &options.Volume
 	}
 
-	if err = p.Node().Send(cmd); err != nil {
+	if err = p.node.RestClient().UpdatePlayer(context.TODO(), p.guildID, payload); err != nil {
 		return fmt.Errorf("error while playing track: %w", err)
 	}
 	p.track = track
@@ -153,9 +153,8 @@ func (p *DefaultPlayer) Play(track AudioTrack) error {
 		return err
 	}
 
-	if err = p.Node().Send(PlayCommand{
-		GuildID: p.guildID,
-		Track:   encodedTrack,
+	if err = p.node.RestClient().UpdatePlayer(context.TODO(), p.guildID, UpdatePlayerPayload{
+		Track: &encodedTrack,
 	}); err != nil {
 		return fmt.Errorf("error while playing track: %w", err)
 	}
@@ -169,11 +168,10 @@ func (p *DefaultPlayer) PlayAt(track AudioTrack, start Duration, end Duration) e
 		return err
 	}
 
-	if err = p.Node().Send(PlayCommand{
-		GuildID:   p.guildID,
-		Track:     encodedTrack,
-		StartTime: &start,
-		EndTime:   &end,
+	if err = p.node.RestClient().UpdatePlayer(context.TODO(), p.guildID, UpdatePlayerPayload{
+		Track:     &encodedTrack,
+		StartTime: start,
+		EndTime:   end,
 	}); err != nil {
 		return fmt.Errorf("error while playing track: %w", err)
 	}
@@ -188,20 +186,24 @@ func (p *DefaultPlayer) Stop() error {
 		return nil
 	}
 
-	if err := p.node.Send(StopCommand{GuildID: p.guildID}); err != nil {
+	track := ""
+
+	if err := p.node.RestClient().UpdatePlayer(context.TODO(), p.guildID, UpdatePlayerPayload{
+		Track: &track,
+	}); err != nil {
 		return fmt.Errorf("error while stopping player: %w", err)
 	}
 	return nil
 }
 
 func (p *DefaultPlayer) Destroy() error {
-	for _, pl := range p.Node().Lavalink().Plugins() {
+	for _, pl := range p.node.Lavalink().Plugins() {
 		if plugin, ok := pl.(PluginEventHandler); ok {
 			plugin.OnDestroyPlayer(p)
 		}
 	}
 	if p.node != nil {
-		if err := p.node.Send(DestroyCommand{GuildID: p.guildID}); err != nil {
+		if err := p.node.RestClient().DestroyPlayer(context.TODO(), p.guildID); err != nil {
 			return fmt.Errorf("error while destroying player: %w", err)
 		}
 	}
@@ -214,9 +216,8 @@ func (p *DefaultPlayer) Pause(pause bool) error {
 		return nil
 	}
 	if p.node != nil {
-		if err := p.node.Send(PauseCommand{
-			GuildID: p.guildID,
-			Pause:   pause,
+		if err := p.node.RestClient().UpdatePlayer(context.TODO(), p.guildID, UpdatePlayerPayload{
+			Pause: &pause,
 		}); err != nil {
 			return fmt.Errorf("error while pausing player: %w", err)
 		}
@@ -271,9 +272,8 @@ func (p *DefaultPlayer) Seek(position Duration) error {
 	if p.PlayingTrack().Info().IsStream {
 		return errors.New("cannot seek streams")
 	}
-	if err := p.Node().Send(SeekCommand{
-		GuildID:  p.guildID,
-		Position: position,
+	if err := p.node.RestClient().UpdatePlayer(context.TODO(), p.guildID, UpdatePlayerPayload{
+		Position: &position,
 	}); err != nil {
 		return fmt.Errorf("error while seeking player: %w", err)
 	}
@@ -294,9 +294,8 @@ func (p *DefaultPlayer) SetVolume(volume int) error {
 	if volume > 1000 {
 		volume = 1000
 	}
-	if err := p.node.Send(VolumeCommand{
-		GuildID: p.guildID,
-		Volume:  volume,
+	if err := p.node.RestClient().UpdatePlayer(context.TODO(), p.guildID, UpdatePlayerPayload{
+		Volume: &volume,
 	}); err != nil {
 		return fmt.Errorf("error while setting volume of player: %w", err)
 	}
@@ -329,10 +328,9 @@ func (p *DefaultPlayer) Export() PlayerRestoreState {
 
 func (p *DefaultPlayer) OnVoiceServerUpdate(voiceServerUpdate VoiceServerUpdate) {
 	p.lastVoiceServerUpdate = &voiceServerUpdate
-	if err := p.Node().Send(VoiceUpdateCommand{
-		GuildID:   voiceServerUpdate.GuildID,
+	if err := p.node.RestClient().UpdatePlayer(context.TODO(), p.guildID, UpdatePlayerPayload{
+		Event:     &voiceServerUpdate,
 		SessionID: *p.lastSessionID,
-		Event:     voiceServerUpdate,
 	}); err != nil {
 		p.node.Lavalink().Logger().Error("error while sending voice server update: ", err)
 	}
@@ -341,7 +339,7 @@ func (p *DefaultPlayer) OnVoiceServerUpdate(voiceServerUpdate VoiceServerUpdate)
 func (p *DefaultPlayer) OnVoiceStateUpdate(voiceStateUpdate VoiceStateUpdate) {
 	if voiceStateUpdate.ChannelID == nil {
 		p.channelID = nil
-		if p.Node() != nil {
+		if p.node != nil {
 			if err := p.Destroy(); err != nil {
 				p.node.Lavalink().Logger().Error("error while destroying player: ", err)
 			}
@@ -405,9 +403,8 @@ func (p *DefaultPlayer) commitFilters(filters Filters) error {
 	if p.node == nil {
 		return nil
 	}
-	if err := p.node.Send(FiltersCommand{
-		GuildID: p.guildID,
-		Filters: filters,
+	if err := p.node.RestClient().UpdatePlayer(context.TODO(), p.guildID, UpdatePlayerPayload{
+		Filters: &filters,
 	}); err != nil {
 		return fmt.Errorf("error while setting filters of player: %w", err)
 	}

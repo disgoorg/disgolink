@@ -5,9 +5,12 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
+	"fmt"
 	"io"
 	"net/http"
 	"net/url"
+
+	"github.com/disgoorg/snowflake/v2"
 )
 
 type SearchType string
@@ -23,6 +26,29 @@ func (t SearchType) Apply(searchString string) string {
 	return string(t) + ":" + searchString
 }
 
+type UpdatePlayerPayload struct {
+	Track     *string  `json:"track,omitempty"`
+	StartTime Duration `json:"startTime,omitempty"`
+	EndTime   Duration `json:"endTime,omitempty"`
+	NoReplace bool     `json:"noReplace,omitempty"`
+
+	Volume *int `json:"volume,omitempty"`
+
+	Position *Duration `json:"position,omitempty"`
+
+	Pause *bool `json:"pause,omitempty"`
+
+	Filters *Filters `json:"filters,omitempty"`
+
+	SessionID string             `json:"sessionId,omitempty"`
+	Event     *VoiceServerUpdate `json:"event,omitempty"`
+}
+
+type UpdateSessionPayload struct {
+	Key     string `json:"key"`
+	Timeout int    `json:"timeout"`
+}
+
 type RestClient interface {
 	Version(ctx context.Context) (string, error)
 	Plugins(ctx context.Context) ([]Plugin, error)
@@ -30,6 +56,11 @@ type RestClient interface {
 	LoadItemHandler(ctx context.Context, identifier string, audioLoaderResultHandler AudioLoadResultHandler) error
 	DecodeTrack(ctx context.Context, track string) (*AudioTrackInfo, error)
 	DecodeTracks(ctx context.Context, tracks []string) ([]RestAudioTrack, error)
+
+	GetPlayer(ctx context.Context, guildID snowflake.ID) (Player, error)
+	UpdatePlayer(ctx context.Context, guildID snowflake.ID, update UpdatePlayerPayload) error
+	DestroyPlayer(ctx context.Context, guildID snowflake.ID) error
+	UpdateSession(ctx context.Context, key string, timeout int) error
 }
 
 func newRestClientImpl(node Node, httpClient *http.Client) RestClient {
@@ -96,22 +127,35 @@ func (c *restClientImpl) LoadItemHandler(ctx context.Context, identifier string,
 	return nil
 }
 
-func (c *restClientImpl) DecodeTrack(ctx context.Context, track string) (*AudioTrackInfo, error) {
-	var info AudioTrackInfo
-	err := c.getJSON(ctx, "/decodetrack?track="+url.QueryEscape(track), &info)
-	if err != nil {
-		return nil, err
-	}
-	return &info, nil
+func (c *restClientImpl) DecodeTrack(ctx context.Context, track string) (info *AudioTrackInfo, err error) {
+	err = c.getJSON(ctx, "/decodetrack?track="+url.QueryEscape(track), &info)
+	return
 }
 
-func (c *restClientImpl) DecodeTracks(ctx context.Context, tracks []string) ([]RestAudioTrack, error) {
-	var audioTracks []RestAudioTrack
-	err := c.postJSON(ctx, "/decodetracks", tracks, &audioTracks)
-	if err != nil {
-		return nil, err
+func (c *restClientImpl) DecodeTracks(ctx context.Context, tracks []string) (audioTracks []RestAudioTrack, err error) {
+	err = c.postJSON(ctx, "/decodetracks", tracks, &audioTracks)
+	return
+}
+
+func (c *restClientImpl) GetPlayer(ctx context.Context, guildID snowflake.ID) (player Player, err error) {
+	var defaultPlayer DefaultPlayer
+	err = c.getJSON(ctx, fmt.Sprintf("/players/%d", guildID), &defaultPlayer)
+	if err == nil {
+		player = &defaultPlayer
 	}
-	return audioTracks, nil
+	return
+}
+
+func (c *restClientImpl) UpdatePlayer(ctx context.Context, guildID snowflake.ID, update UpdatePlayerPayload) error {
+	return c.patchJSON(ctx, fmt.Sprintf("/v3/sessions/%s/players/%d", c.node.SessionID(), guildID), update, nil)
+}
+
+func (c *restClientImpl) DestroyPlayer(ctx context.Context, guildID snowflake.ID) error {
+	return c.delete(ctx, fmt.Sprintf("/v3/sessions/%s/players/%d", c.node.SessionID(), guildID))
+}
+
+func (c *restClientImpl) UpdateSession(ctx context.Context, key string, timeout int) error {
+	return c.patchJSON(ctx, fmt.Sprintf("/v3/sessions/%s", c.node.SessionID()), UpdateSessionPayload{Key: key, Timeout: timeout}, nil)
 }
 
 func (c *restClientImpl) parseRestAudioTracks(loadResultTracks []RestAudioTrack) ([]AudioTrack, error) {
@@ -132,13 +176,15 @@ func (c *restClientImpl) do(ctx context.Context, method string, path string, bod
 		return nil, err
 	}
 	rq.Header.Set("Authorization", c.node.Config().Password)
+	rq.Header.Set("Session-Id", c.node.SessionID())
+	rq.Header.Set("Content-Type", "application/json")
 
 	rs, err := c.httpClient.Do(rq)
 	if err != nil {
 		return nil, err
 	}
 	defer rs.Body.Close()
-	if rs.StatusCode != http.StatusOK {
+	if rs.StatusCode != http.StatusOK && rs.StatusCode != http.StatusNoContent {
 		return nil, errors.New(rs.Status)
 	}
 	rawBody, _ := io.ReadAll(rs.Body)
@@ -150,12 +196,20 @@ func (c *restClientImpl) get(ctx context.Context, path string) ([]byte, error) {
 	return c.do(ctx, http.MethodGet, path, nil)
 }
 
+func (c *restClientImpl) delete(ctx context.Context, path string) error {
+	_, err := c.do(ctx, http.MethodDelete, path, nil)
+	return err
+}
+
 func (c *restClientImpl) getJSON(ctx context.Context, path string, v any) error {
-	rawBody, err := c.get(ctx, path)
+	rsBody, err := c.get(ctx, path)
 	if err != nil {
 		return err
 	}
-	return json.Unmarshal(rawBody, v)
+	if v != nil {
+		return json.Unmarshal(rsBody, v)
+	}
+	return nil
 }
 
 func (c *restClientImpl) postJSON(ctx context.Context, path string, b any, v any) error {
@@ -167,5 +221,23 @@ func (c *restClientImpl) postJSON(ctx context.Context, path string, b any, v any
 	if err != nil {
 		return err
 	}
-	return json.Unmarshal(rsBody, v)
+	if v != nil {
+		return json.Unmarshal(rsBody, v)
+	}
+	return nil
+}
+
+func (c *restClientImpl) patchJSON(ctx context.Context, path string, b any, v any) error {
+	rqBody, err := json.Marshal(b)
+	if err != nil {
+		return err
+	}
+	rsBody, err := c.do(ctx, http.MethodPatch, path, bytes.NewReader(rqBody))
+	if err != nil {
+		return err
+	}
+	if v != nil {
+		return json.Unmarshal(rsBody, v)
+	}
+	return nil
 }

@@ -40,7 +40,10 @@ func (p *MusicPlayer) Queue(event *events.ApplicationCommandInteractionCreate, t
 	if p.PlayingTrack() == nil {
 		var track lavalink.AudioTrack
 		track, p.queue = p.queue[len(p.queue)-1], p.queue[:len(p.queue)-1]
-		_ = p.Play(track)
+		if err := p.Play(track); err != nil {
+			_, _ = p.client.Rest().CreateMessage(p.channelID, discord.NewMessageCreateBuilder().SetContentf("error while playing track: `%+v`", err).Build())
+			return
+		}
 		message := fmt.Sprintf("▶ ️playing [%s](%s)", track.Info().Title, *track.Info().URI)
 		if len(tracks) > 1 {
 			message += fmt.Sprintf("\nand queued %d tracks", len(tracks)-1)

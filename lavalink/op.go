@@ -9,6 +9,7 @@ import (
 type OpType string
 
 const (
+	OpTypeReady             OpType = "ready"
 	OpTypePlay              OpType = "play"
 	OpTypeStop              OpType = "stop"
 	OpTypePause             OpType = "pause"
@@ -65,6 +66,11 @@ func (e *UnmarshalOp) UnmarshalJSON(data []byte) error {
 	var err error
 
 	switch opType.Op {
+	case OpTypeReady:
+		var v ReadyOp
+		err = json.Unmarshal(data, &v)
+		e.Op = v
+
 	case OpTypePlayerUpdate:
 		var v PlayerUpdateOp
 		err = json.Unmarshal(data, &v)
@@ -88,6 +94,13 @@ func (e *UnmarshalOp) UnmarshalJSON(data []byte) error {
 
 	return err
 }
+
+type ReadyOp struct {
+	Resumed   bool   `json:"resumed"`
+	SessionID string `json:"sessionId"`
+}
+
+func (ReadyOp) Op() OpType { return OpTypeReady }
 
 type PlayerUpdateOp struct {
 	GuildID snowflake.ID `json:"guildId"`

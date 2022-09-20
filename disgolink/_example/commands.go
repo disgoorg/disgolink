@@ -4,32 +4,32 @@ import "github.com/disgoorg/disgo/discord"
 
 var commands = []discord.ApplicationCommandCreate{
 	discord.SlashCommandCreate{
-		CommandName: "shuffle",
+		Name:        "shuffle",
 		Description: "shuffles the current queue",
 	},
 	discord.SlashCommandCreate{
-		CommandName: "filter",
+		Name:        "filter",
 		Description: "applies some filters",
 	},
 	discord.SlashCommandCreate{
-		CommandName: "pause",
+		Name:        "pause",
 		Description: "pauses the music",
 	},
 	discord.SlashCommandCreate{
-		CommandName: "queue",
+		Name:        "queue",
 		Description: "shows you all tracks in queue",
 	},
 	discord.SlashCommandCreate{
-		CommandName: "play",
+		Name:        "play",
 		Description: "plays some music",
 		Options: []discord.ApplicationCommandOption{
 			discord.ApplicationCommandOptionString{
-				OptionName:  "query",
+				Name:        "query",
 				Description: "what to play",
 				Required:    true,
 			},
 			discord.ApplicationCommandOptionString{
-				OptionName:  "search-provider",
+				Name:        "search-provider",
 				Description: "where to search",
 				Choices: []discord.ApplicationCommandOptionChoiceString{
 					{Name: "YouTube", Value: "yt"},
