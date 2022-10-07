@@ -60,7 +60,7 @@ func main() {
 		log.Errorf("error while registering guild commands: %s", err)
 	}
 
-	err = client.ConnectGateway(context.TODO())
+	err = client.OpenGateway(context.TODO())
 	if err != nil {
 		log.Fatalf("error while connecting to discord: %s", err)
 	}
