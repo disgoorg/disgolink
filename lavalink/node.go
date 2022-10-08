@@ -233,43 +233,7 @@ func (n *nodeImpl) onEvent(event OpEvent) {
 
 	switch e := event.(type) {
 	case TrackEvent:
-		track, err := n.lavalink.DecodeTrack(e.Track())
-		if err != nil {
-			n.lavalink.Logger().Errorf("error while decoding track: %s", err)
-			return
-		}
-		if playingTrack := player.PlayingTrack(); playingTrack != nil {
-			track.SetUserData(playingTrack.UserData())
-		}
-		switch ee := e.(type) {
-		case TrackStartEvent:
-			player.EmitEvent(func(l any) {
-				if listener := l.(PlayerEventListener); listener != nil {
-					listener.OnTrackStart(player, track)
-				}
-			})
-
-		case TrackEndEvent:
-			player.EmitEvent(func(l any) {
-				if listener := l.(PlayerEventListener); listener != nil {
-					listener.OnTrackEnd(player, track, ee.Reason)
-				}
-			})
-
-		case TrackExceptionEvent:
-			player.EmitEvent(func(l any) {
-				if listener := l.(PlayerEventListener); listener != nil {
-					listener.OnTrackException(player, track, ee.Exception)
-				}
-			})
-
-		case TrackStuckEvent:
-			player.EmitEvent(func(l any) {
-				if listener := l.(PlayerEventListener); listener != nil {
-					listener.OnTrackStuck(player, track, ee.ThresholdMs)
-				}
-			})
-		}
+		player.OnEvent(e)
 
 	case WebsocketClosedEvent:
 		player.EmitEvent(func(l any) {
