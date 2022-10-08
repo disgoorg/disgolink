@@ -7,16 +7,16 @@ import (
 )
 
 func New(s *discordgo.Session, opts ...lavalink.ConfigOpt) *Link {
-	discordgolink := &Link{
+	dgolink := &Link{
 		Lavalink: lavalink.New(append([]lavalink.ConfigOpt{
 			lavalink.WithHTTPClient(s.Client),
 			lavalink.WithUserIDFromBotToken(s.Token),
 		}, opts...)...),
 	}
 
-	s.AddHandler(discordgolink.OnVoiceStateUpdateHandler)
-	s.AddHandler(discordgolink.OnVoiceServerUpdateHandler)
-	return discordgolink
+	s.AddHandler(dgolink.OnVoiceStateUpdateHandler)
+	s.AddHandler(dgolink.OnVoiceServerUpdateHandler)
+	return dgolink
 }
 
 var _ lavalink.Lavalink = (*Link)(nil)

@@ -7,7 +7,7 @@ import (
 )
 
 func New(client bot.Client, opts ...lavalink.ConfigOpt) Link {
-	dgolink := &linkImpl{
+	disgolink := &linkImpl{
 		Lavalink: lavalink.New(append([]lavalink.ConfigOpt{
 			lavalink.WithLogger(client.Logger()),
 			lavalink.WithHTTPClient(client.Rest().HTTPClient()),
@@ -15,8 +15,8 @@ func New(client bot.Client, opts ...lavalink.ConfigOpt) Link {
 		}, opts...)...),
 	}
 
-	client.EventManager().AddEventListeners(dgolink)
-	return dgolink
+	client.EventManager().AddEventListeners(disgolink)
+	return disgolink
 }
 
 type Link interface {
