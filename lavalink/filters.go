@@ -1,6 +1,6 @@
 package lavalink
 
-import "encoding/json"
+import "github.com/disgoorg/json"
 
 var DefaultVolume Volume = 1.0
 

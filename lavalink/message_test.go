@@ -1,9 +1,9 @@
 package lavalink
 
 import (
-	"encoding/json"
 	"testing"
 
+	"github.com/disgoorg/json"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -58,11 +58,11 @@ func TestUnmarshalOp_UnmarshalJSON(t *testing.T) {
 	}
 
 	for _, d := range data {
-		var op UnmarshalOp
+		var op UnmarshalMessage
 		err := json.Unmarshal(d.payload, &op)
 		assert.NoError(t, err)
-		assert.Equal(t, op.Op.Op(), d.opType)
-		if eventOp, ok := op.Op.(OpEvent); ok {
+		assert.Equal(t, op.Message.Op(), d.opType)
+		if eventOp, ok := op.Message.(Event); ok {
 			assert.Equal(t, eventOp.Event(), d.eventType)
 		}
 	}

@@ -1,9 +1,10 @@
 package lavalink
 
 import (
-	"encoding/json"
 	"errors"
 	"io"
+
+	"github.com/disgoorg/json"
 )
 
 func EncodeProbeInfo(probeInfo string, w io.Writer) error {

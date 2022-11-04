@@ -2,12 +2,12 @@ package lavalink
 
 import (
 	"context"
-	"encoding/json"
 	"errors"
 	"fmt"
 	"runtime/debug"
 	"time"
 
+	"github.com/disgoorg/json"
 	"github.com/disgoorg/snowflake/v2"
 )
 
@@ -47,7 +47,7 @@ type PlayOptions struct {
 	StartTime Duration
 	EndTime   Duration
 	NoReplace bool
-	Pause     bool
+	Paused    bool
 	Volume    int
 }
 
@@ -117,30 +117,27 @@ func (p *DefaultPlayer) PlayTrack(track AudioTrack, options PlayOptions) error {
 		return err
 	}
 
-	payload := UpdatePlayerPayload{
-		Track: &encodedTrack,
+	payload := PlayerUpdate{
+		EncodedTrack: json.NewNullablePtr(encodedTrack),
 	}
 	if options.StartTime != 0 {
-		payload.StartTime = options.StartTime
+		payload.Position = &options.StartTime
 	}
 	if options.EndTime != 0 {
-		payload.EndTime = options.EndTime
+		payload.EndTime = &options.EndTime
 	}
-	if options.NoReplace {
-		payload.NoReplace = options.NoReplace
-	}
-	if options.Pause {
-		payload.Pause = &options.Pause
+	if options.Paused {
+		payload.Paused = &options.Paused
 	}
 	if options.Volume != 0 {
 		payload.Volume = &options.Volume
 	}
 
-	if err = p.node.RestClient().UpdatePlayer(context.TODO(), p.guildID, payload); err != nil {
+	if err = p.node.RestClient().UpdatePlayer(context.TODO(), p.guildID, payload, options.NoReplace); err != nil {
 		return fmt.Errorf("error while playing track: %w", err)
 	}
 	p.track = track
-	p.paused = options.Pause
+	p.paused = options.Paused
 	if options.Volume != 0 {
 		p.volume = options.Volume
 	}
@@ -153,9 +150,9 @@ func (p *DefaultPlayer) Play(track AudioTrack) error {
 		return err
 	}
 
-	if err = p.node.RestClient().UpdatePlayer(context.TODO(), p.guildID, UpdatePlayerPayload{
-		Track: &encodedTrack,
-	}); err != nil {
+	if err = p.node.RestClient().UpdatePlayer(context.TODO(), p.guildID, PlayerUpdate{
+		EncodedTrack: json.NewNullablePtr(encodedTrack),
+	}, false); err != nil {
 		return fmt.Errorf("error while playing track: %w", err)
 	}
 	p.track = track
@@ -168,11 +165,11 @@ func (p *DefaultPlayer) PlayAt(track AudioTrack, start Duration, end Duration) e
 		return err
 	}
 
-	if err = p.node.RestClient().UpdatePlayer(context.TODO(), p.guildID, UpdatePlayerPayload{
-		Track:     &encodedTrack,
-		StartTime: start,
-		EndTime:   end,
-	}); err != nil {
+	if err = p.node.RestClient().UpdatePlayer(context.TODO(), p.guildID, PlayerUpdate{
+		EncodedTrack: json.NewNullablePtr(encodedTrack),
+		Position:     &start,
+		EndTime:      &end,
+	}, false); err != nil {
 		return fmt.Errorf("error while playing track: %w", err)
 	}
 	p.track = track
@@ -181,16 +178,13 @@ func (p *DefaultPlayer) PlayAt(track AudioTrack, start Duration, end Duration) e
 
 func (p *DefaultPlayer) Stop() error {
 	p.track = nil
-
 	if p.node == nil {
 		return nil
 	}
 
-	track := ""
-
-	if err := p.node.RestClient().UpdatePlayer(context.TODO(), p.guildID, UpdatePlayerPayload{
-		Track: &track,
-	}); err != nil {
+	if err := p.node.RestClient().UpdatePlayer(context.TODO(), p.guildID, PlayerUpdate{
+		EncodedTrack: json.NullPtr[string](),
+	}, false); err != nil {
 		return fmt.Errorf("error while stopping player: %w", err)
 	}
 	return nil
@@ -211,20 +205,20 @@ func (p *DefaultPlayer) Destroy() error {
 	return nil
 }
 
-func (p *DefaultPlayer) Pause(pause bool) error {
-	if p.paused == pause {
+func (p *DefaultPlayer) Pause(paused bool) error {
+	if p.paused == paused {
 		return nil
 	}
 	if p.node != nil {
-		if err := p.node.RestClient().UpdatePlayer(context.TODO(), p.guildID, UpdatePlayerPayload{
-			Pause: &pause,
-		}); err != nil {
+		if err := p.node.RestClient().UpdatePlayer(context.TODO(), p.guildID, PlayerUpdate{
+			Paused: &paused,
+		}, false); err != nil {
 			return fmt.Errorf("error while pausing player: %w", err)
 		}
 	}
 
-	p.paused = pause
-	if pause {
+	p.paused = paused
+	if paused {
 		p.EmitEvent(func(l any) {
 			if listener, ok := l.(PlayerEventListener); ok {
 				listener.OnPlayerPause(p)
@@ -272,9 +266,9 @@ func (p *DefaultPlayer) Seek(position Duration) error {
 	if p.PlayingTrack().Info().IsStream {
 		return errors.New("cannot seek streams")
 	}
-	if err := p.node.RestClient().UpdatePlayer(context.TODO(), p.guildID, UpdatePlayerPayload{
+	if err := p.node.RestClient().UpdatePlayer(context.TODO(), p.guildID, PlayerUpdate{
 		Position: &position,
-	}); err != nil {
+	}, false); err != nil {
 		return fmt.Errorf("error while seeking player: %w", err)
 	}
 	return nil
@@ -294,9 +288,9 @@ func (p *DefaultPlayer) SetVolume(volume int) error {
 	if volume > 1000 {
 		volume = 1000
 	}
-	if err := p.node.RestClient().UpdatePlayer(context.TODO(), p.guildID, UpdatePlayerPayload{
+	if err := p.node.RestClient().UpdatePlayer(context.TODO(), p.guildID, PlayerUpdate{
 		Volume: &volume,
-	}); err != nil {
+	}, false); err != nil {
 		return fmt.Errorf("error while setting volume of player: %w", err)
 	}
 	p.volume = volume
@@ -327,11 +321,22 @@ func (p *DefaultPlayer) Export() PlayerRestoreState {
 }
 
 func (p *DefaultPlayer) OnVoiceServerUpdate(voiceServerUpdate VoiceServerUpdate) {
+	if p.lastSessionID == nil {
+		return
+	}
+
+	var endpoint string
+	if voiceServerUpdate.Endpoint != nil {
+		endpoint = *voiceServerUpdate.Endpoint
+	}
 	p.lastVoiceServerUpdate = &voiceServerUpdate
-	if err := p.node.RestClient().UpdatePlayer(context.TODO(), p.guildID, UpdatePlayerPayload{
-		Event:     &voiceServerUpdate,
-		SessionID: *p.lastSessionID,
-	}); err != nil {
+	if err := p.node.RestClient().UpdatePlayer(context.TODO(), p.guildID, PlayerUpdate{
+		Voice: &VoiceState{
+			Token:     voiceServerUpdate.Token,
+			Endpoint:  endpoint,
+			SessionID: *p.lastSessionID,
+		},
+	}, false); err != nil {
 		p.node.Lavalink().Logger().Error("error while sending voice server update: ", err)
 	}
 }
@@ -403,9 +408,9 @@ func (p *DefaultPlayer) commitFilters(filters Filters) error {
 	if p.node == nil {
 		return nil
 	}
-	if err := p.node.RestClient().UpdatePlayer(context.TODO(), p.guildID, UpdatePlayerPayload{
+	if err := p.node.RestClient().UpdatePlayer(context.TODO(), p.guildID, PlayerUpdate{
 		Filters: &filters,
-	}); err != nil {
+	}, false); err != nil {
 		return fmt.Errorf("error while setting filters of player: %w", err)
 	}
 	return nil

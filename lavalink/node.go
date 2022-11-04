@@ -2,13 +2,14 @@ package lavalink
 
 import (
 	"context"
-	"encoding/json"
 	"errors"
 	"fmt"
 	"net"
 	"net/http"
 	"sync"
 	"time"
+
+	"github.com/disgoorg/json"
 
 	"github.com/gorilla/websocket"
 )
@@ -25,7 +26,7 @@ const (
 
 type Node interface {
 	Lavalink() Lavalink
-	ConfigureResuming(key string, timeoutSeconds int) error
+	UpdateSession(ctx context.Context, sessionUpdate SessionUpdate) error
 
 	Open(ctx context.Context) error
 	Close()
@@ -89,34 +90,8 @@ func (n *nodeImpl) Name() string {
 	return n.config.Name
 }
 
-func (n *nodeImpl) Send(cmd OpCommand) error {
-	n.statusMu.Lock()
-	defer n.statusMu.Unlock()
-
-	if n.status != Connected {
-		return fmt.Errorf("node is %s and cannot send a cmd to the node", n.status)
-	}
-	data, err := json.Marshal(cmd)
-	if err != nil {
-		return err
-	}
-	for _, pl := range n.Lavalink().Plugins() {
-		if plugin, ok := pl.(PluginEventHandler); ok {
-			plugin.OnNodeMessageOut(n, data)
-		}
-	}
-	if err = n.conn.WriteMessage(websocket.TextMessage, data); err != nil {
-		return fmt.Errorf("error while sending to lavalink websocket: %w", err)
-	}
-
-	return nil
-}
-
-func (n *nodeImpl) ConfigureResuming(key string, timeoutSeconds int) error {
-	return n.Send(ConfigureResumingCommand{
-		Key:     key,
-		Timeout: timeoutSeconds,
-	})
+func (n *nodeImpl) UpdateSession(ctx context.Context, sessionUpdate SessionUpdate) error {
+	return n.RestClient().UpdateSession(ctx, sessionUpdate)
 }
 
 func (n *nodeImpl) Status() NodeStatus {
@@ -181,13 +156,13 @@ loop:
 			}
 		}
 
-		var v UnmarshalOp
+		var v UnmarshalMessage
 		if err = json.Unmarshal(data, &v); err != nil {
 			n.lavalink.Logger().Error("error while unmarshalling op. error: ", err)
 			continue
 		}
 
-		switch op := v.Op.(type) {
+		switch op := v.Message.(type) {
 		case UnknownOp:
 			for _, pl := range n.Lavalink().Plugins() {
 				if plugin, ok := pl.(OpPlugin); ok {
@@ -208,7 +183,7 @@ loop:
 		case PlayerUpdateOp:
 			n.onPlayerUpdate(op)
 
-		case OpEvent:
+		case Event:
 			n.onEvent(op)
 
 		case StatsOp:
@@ -246,7 +221,7 @@ func (n *nodeImpl) onPlayerUpdate(playerUpdate PlayerUpdateOp) {
 	n.lavalink.Logger().Warnf("player update received for unknown player: %s", playerUpdate.GuildID)
 }
 
-func (n *nodeImpl) onEvent(event OpEvent) {
+func (n *nodeImpl) onEvent(event Event) {
 	player := n.lavalink.ExistingPlayer(event.GuildID())
 	if player == nil {
 		return
@@ -343,7 +318,7 @@ func (n *nodeImpl) open(ctx context.Context) error {
 	}
 
 	var err error
-	n.conn, _, err = websocket.DefaultDialer.DialContext(ctx, fmt.Sprintf("%s://%s:%s", scheme, n.config.Host, n.config.Port), header)
+	n.conn, _, err = websocket.DefaultDialer.DialContext(ctx, fmt.Sprintf("%s://%s:%s/v3/websocket", scheme, n.config.Host, n.config.Port), header)
 	if err != nil {
 		return err
 	}

@@ -16,6 +16,7 @@ import (
 	"github.com/disgoorg/disgo/gateway"
 	"github.com/disgoorg/disgolink/disgolink"
 	"github.com/disgoorg/disgolink/lavalink"
+	"github.com/disgoorg/disgolink/lavalink/json"
 	"github.com/disgoorg/log"
 	"github.com/disgoorg/snowflake/v2"
 )
@@ -32,7 +33,7 @@ var (
 
 func main() {
 	log.SetFlags(log.LstdFlags | log.Lshortfile)
-	log.SetLevel(log.LevelDebug)
+	log.SetLevel(log.LevelInfo)
 	log.Info("starting _example...")
 
 	var err error
@@ -50,7 +51,10 @@ func main() {
 
 	defer client.Close(context.TODO())
 
-	dgolink = disgolink.New(client)
+	logger := log.New(log.LstdFlags | log.Lshortfile)
+	logger.SetLevel(log.LevelTrace)
+
+	dgolink = disgolink.New(client, lavalink.WithLogger(logger))
 	registerNodes()
 
 	defer dgolink.Close()
@@ -91,6 +95,10 @@ func registerNodes() {
 		ResumingKey: os.Getenv("lavalink_resuming_key"),
 	})
 	if os.Getenv("lavalink_resuming_key") != "" {
-		_ = dgolink.BestNode().ConfigureResuming(os.Getenv("lavalink_resuming_key"), 20)
+		key := os.Getenv("lavalink_resuming_key")
+		_ = dgolink.BestNode().UpdateSession(context.TODO(), lavalink.SessionUpdate{
+			Key:     json.NewOptional(&key),
+			Timeout: json.NewPtr(20),
+		})
 	}
 }

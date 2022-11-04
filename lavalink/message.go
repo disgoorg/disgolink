@@ -1,7 +1,7 @@
 package lavalink
 
 import (
-	"encoding/json"
+	"github.com/disgoorg/json"
 
 	"github.com/disgoorg/snowflake/v2"
 )
@@ -9,19 +9,10 @@ import (
 type OpType string
 
 const (
-	OpTypeReady             OpType = "ready"
-	OpTypePlay              OpType = "play"
-	OpTypeStop              OpType = "stop"
-	OpTypePause             OpType = "pause"
-	OpTypeSeek              OpType = "seek"
-	OpTypeVolume            OpType = "volume"
-	OpTypeDestroy           OpType = "destroy"
-	OpTypeStats             OpType = "stats"
-	OpTypeVoiceUpdate       OpType = "voiceUpdate"
-	OpTypePlayerUpdate      OpType = "playerUpdate"
-	OpTypeEvent             OpType = "event"
-	OpTypeConfigureResuming OpType = "configureResuming"
-	OpTypeFilters           OpType = "filters"
+	OpTypeReady        OpType = "ready"
+	OpTypeStats        OpType = "stats"
+	OpTypePlayerUpdate OpType = "playerUpdate"
+	OpTypeEvent        OpType = "event"
 )
 
 type EventType string
@@ -34,28 +25,22 @@ const (
 	EventTypeWebSocketClosed EventType = "WebSocketClosedEvent"
 )
 
-type Op interface {
+type Message interface {
 	Op() OpType
 }
 
-type OpCommand interface {
-	json.Marshaler
-	Op
-	OpCommand()
-}
-
-type OpEvent interface {
-	Op
+type Event interface {
+	Message
 	Event() EventType
 	GuildID() snowflake.ID
 	OpEvent()
 }
 
-type UnmarshalOp struct {
-	Op
+type UnmarshalMessage struct {
+	Message
 }
 
-func (e *UnmarshalOp) UnmarshalJSON(data []byte) error {
+func (e *UnmarshalMessage) UnmarshalJSON(data []byte) error {
 	var opType struct {
 		Op OpType `json:"op"`
 	}
@@ -69,27 +54,27 @@ func (e *UnmarshalOp) UnmarshalJSON(data []byte) error {
 	case OpTypeReady:
 		var v ReadyOp
 		err = json.Unmarshal(data, &v)
-		e.Op = v
+		e.Message = v
 
 	case OpTypePlayerUpdate:
 		var v PlayerUpdateOp
 		err = json.Unmarshal(data, &v)
-		e.Op = v
+		e.Message = v
 
 	case OpTypeEvent:
-		var v UnmarshalOpEvent
+		var v UnmarshalEvent
 		err = json.Unmarshal(data, &v)
-		e.Op = v.OpEvent
+		e.Message = v.Event
 
 	case OpTypeStats:
 		var v StatsOp
 		err = json.Unmarshal(data, &v)
-		e.Op = v
+		e.Message = v
 
 	default:
 		var v UnknownOp
 		err = json.Unmarshal(data, &v)
-		e.Op = v
+		e.Message = v
 	}
 
 	return err

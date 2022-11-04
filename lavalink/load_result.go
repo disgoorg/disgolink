@@ -20,19 +20,19 @@ type AudioLoadResultHandler interface {
 
 type LoadResult struct {
 	LoadType     LoadType           `json:"loadType"`
-	PlaylistInfo *PlaylistInfo      `json:"playlistInfo"`
-	Tracks       []RestAudioTrack   `json:"tracks"`
+	PlaylistInfo PlaylistInfo       `json:"playlistInfo"`
+	Tracks       []Track            `json:"tracks"`
 	Exception    *FriendlyException `json:"exception"`
 }
 
 type PlaylistInfo struct {
-	Name          string `json:"name"`
-	SelectedTrack int    `json:"selectedTrack"`
+	Name          string `json:"name,omitempty"`
+	SelectedTrack int    `json:"selectedTrack,omitempty"`
 }
 
-type RestAudioTrack struct {
-	Track string         `json:"track"`
-	Info  AudioTrackInfo `json:"info"`
+type Track struct {
+	Encoded string         `json:"encoded"`
+	Info    AudioTrackInfo `json:"info"`
 }
 
 var _ AudioLoadResultHandler = (*FunctionalResultHandler)(nil)
