@@ -41,6 +41,7 @@ type Player interface {
 	EmitEvent(caller func(l any))
 	AddListener(listener any)
 	RemoveListener(listener any)
+	OnEvent(event TrackEvent)
 }
 
 type PlayOptions struct {
@@ -401,6 +402,50 @@ func (p *DefaultPlayer) RemoveListener(listener any) {
 		if l == listener {
 			p.listeners = append(p.listeners[:i], p.listeners[i+1:]...)
 		}
+	}
+}
+
+func (p *DefaultPlayer) OnEvent(event TrackEvent) {
+	track, err := p.node.Lavalink().DecodeTrack(event.Track())
+	if err != nil {
+		p.node.Lavalink().Logger().Errorf("error while decoding track: %s", err)
+		return
+	}
+	if playingTrack := p.track; playingTrack != nil {
+		track.SetUserData(playingTrack.UserData())
+	}
+
+	switch e := event.(type) {
+	case TrackStartEvent:
+		p.EmitEvent(func(l any) {
+			if listener := l.(PlayerEventListener); listener != nil {
+				listener.OnTrackStart(p, track)
+			}
+		})
+
+	case TrackEndEvent:
+		p.track = nil
+		p.EmitEvent(func(l any) {
+			if listener := l.(PlayerEventListener); listener != nil {
+				listener.OnTrackEnd(p, track, e.Reason)
+			}
+		})
+
+	case TrackExceptionEvent:
+		p.track = nil
+		p.EmitEvent(func(l any) {
+			if listener := l.(PlayerEventListener); listener != nil {
+				listener.OnTrackException(p, track, e.Exception)
+			}
+		})
+
+	case TrackStuckEvent:
+		p.track = nil
+		p.EmitEvent(func(l any) {
+			if listener := l.(PlayerEventListener); listener != nil {
+				listener.OnTrackStuck(p, track, e.ThresholdMs)
+			}
+		})
 	}
 }
 

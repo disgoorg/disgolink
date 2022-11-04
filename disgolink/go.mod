@@ -6,10 +6,11 @@ replace github.com/disgoorg/disgolink/lavalink => ../lavalink
 
 require (
 	github.com/disgoorg/disgo v0.13.19
-	github.com/disgoorg/disgolink/lavalink v1.7.1
+	github.com/disgoorg/disgolink/lavalink v1.7.2
 )
 
 require (
+	github.com/disgoorg/json v1.0.0 // indirect
 	github.com/disgoorg/log v1.2.0 // indirect
 	github.com/disgoorg/snowflake/v2 v2.0.0 // indirect
 	github.com/gorilla/websocket v1.5.0 // indirect

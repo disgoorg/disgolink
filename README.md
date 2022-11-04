@@ -187,7 +187,7 @@ You can find examples under
 
 ## Troubleshooting
 
-For help feel free to open an issues or reach out on [Discord](https://discord.gg/NFmvZYmZMF)
+For help feel free to open an issue or reach out on [Discord](https://discord.gg/NFmvZYmZMF)
 
 ## Contributing
 
@@ -196,4 +196,3 @@ Contributions are welcomed but for bigger changes please first reach out via [Di
 ## License
 
 Distributed under the [![License](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](https://github.com/disgoorg/disgolink/blob/master/LICENSE). See LICENSE for more information.
-

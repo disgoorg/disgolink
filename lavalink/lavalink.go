@@ -150,9 +150,7 @@ func (l *lavalinkImpl) RemoveNode(name string) {
 func (l *lavalinkImpl) AddPlugins(plugins ...any) {
 	l.pluginsMu.Lock()
 	defer l.pluginsMu.Unlock()
-	for _, plugin := range plugins {
-		l.config.Plugins = append(l.config.Plugins, plugin)
-	}
+	l.config.Plugins = append(l.config.Plugins, plugins...)
 }
 
 func (l *lavalinkImpl) Plugins() []any {
