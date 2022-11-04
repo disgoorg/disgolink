@@ -55,7 +55,6 @@ type nodeImpl struct {
 	status     NodeStatus
 	statusMu   sync.Mutex
 	stats      *Stats
-	available  bool
 	restClient RestClient
 }
 
