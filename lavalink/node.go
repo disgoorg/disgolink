@@ -217,7 +217,7 @@ func (n *nodeImpl) onPlayerUpdate(playerUpdate PlayerUpdateOp) {
 		})
 		return
 	}
-	n.lavalink.Logger().Warnf("player update received for unknown player: %s", playerUpdate.GuildID)
+	n.lavalink.Logger().Warnf("defaultPlayer update received for unknown defaultPlayer: %s", playerUpdate.GuildID)
 }
 
 func (n *nodeImpl) onEvent(event Event) {

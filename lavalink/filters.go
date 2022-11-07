@@ -4,162 +4,188 @@ import "github.com/disgoorg/json"
 
 var DefaultVolume Volume = 1.0
 
-type Filters interface {
-	Volume() *Volume
-	Equalizer() *Equalizer
-	Timescale() *Timescale
-	Tremolo() *Tremolo
-	Vibrato() *Vibrato
-	Rotation() *Rotation
-	Karaoke() *Karaoke
-	Distortion() *Distortion
-
-	SetVolume(v *Volume) Filters
-	SetEqualizer(equalizer *Equalizer) Filters
-	SetTimescale(timescale *Timescale) Filters
-	SetTremolo(tremolo *Tremolo) Filters
-	SetVibrato(vibrato *Vibrato) Filters
-	SetRotation(rotation *Rotation) Filters
-	SetKaraoke(karaoke *Karaoke) Filters
-	SetDistortion(distortion *Distortion) Filters
-
-	Clear() Filters
-	Commit() error
-	setCommitFunc(commitFunc func(filters Filters) error)
+type Filters struct {
+	Volume        *Volume        `json:"volume,omitempty"`
+	Equalizer     *Equalizer     `json:"equalizer,omitempty"`
+	Timescale     *Timescale     `json:"timescale,omitempty"`
+	Tremolo       *Tremolo       `json:"tremolo,omitempty"`
+	Vibrato       *Vibrato       `json:"vibrato,omitempty"`
+	Rotation      *Rotation      `json:"rotation,omitempty"`
+	Karaoke       *Karaoke       `json:"karaoke,omitempty"`
+	Distortion    *Distortion    `json:"distortion,omitempty"`
+	ChannelMix    *ChannelMix    `json:"channelMix,omitempty"`
+	LowPass       *LowPass       `json:"lowPass,omitempty"`
+	PluginFilters map[string]any `json:"-"`
 }
 
-func NewFilters(commitFunc func(filters Filters) error) Filters {
-	return &DefaultFilters{commitFunc: commitFunc}
-}
+func (f *Filters) MarshalJSON() ([]byte, error) {
+	filters := make(map[string]any)
 
-var _ Filters = (*DefaultFilters)(nil)
-
-type DefaultFilters struct {
-	FilterVolume     *Volume     `json:"volume,omitempty"`
-	FilterEqualizer  *Equalizer  `json:"equalizer,omitempty"`
-	FilterTimescale  *Timescale  `json:"timescale,omitempty"`
-	FilterTremolo    *Tremolo    `json:"tremolo,omitempty"`
-	FilterVibrato    *Vibrato    `json:"vibrato,omitempty"`
-	FilterRotation   *Rotation   `json:"rotation,omitempty"`
-	FilterKaraoke    *Karaoke    `json:"karaoke,omitempty"`
-	FilterDistortion *Distortion `json:"distortion,omitempty"`
-	commitFunc       func(filters Filters) error
-}
-
-func (f *DefaultFilters) Volume() *Volume {
-	if f.FilterVolume == nil {
-		f.FilterVolume = &DefaultVolume
+	if f.Volume != nil {
+		filters["volume"] = f.Volume
 	}
-	return f.FilterVolume
-}
-
-func (f *DefaultFilters) SetVolume(volume *Volume) Filters {
-	f.FilterVolume = volume
-	return f
-}
-
-func (f *DefaultFilters) Equalizer() *Equalizer {
-	if f.FilterEqualizer == nil {
-		f.FilterEqualizer = new(Equalizer)
+	if f.Equalizer != nil {
+		filters["equalizer"] = f.Equalizer
 	}
-	return f.FilterEqualizer
-}
-
-func (f *DefaultFilters) SetEqualizer(equalizer *Equalizer) Filters {
-	f.FilterEqualizer = equalizer
-	return f
-}
-
-func (f *DefaultFilters) Timescale() *Timescale {
-	if f.FilterTimescale == nil {
-		f.FilterTimescale = new(Timescale)
+	if f.Timescale != nil {
+		filters["timescale"] = f.Timescale
 	}
-	return f.FilterTimescale
-}
-
-func (f *DefaultFilters) SetTimescale(timescale *Timescale) Filters {
-	f.FilterTimescale = timescale
-	return f
-}
-
-func (f *DefaultFilters) Tremolo() *Tremolo {
-	if f.FilterTremolo == nil {
-		f.FilterTremolo = new(Tremolo)
+	if f.Tremolo != nil {
+		filters["tremolo"] = f.Tremolo
 	}
-	return f.FilterTremolo
-}
-
-func (f *DefaultFilters) SetTremolo(tremolo *Tremolo) Filters {
-	f.FilterTremolo = tremolo
-	return f
-}
-
-func (f *DefaultFilters) Vibrato() *Vibrato {
-	if f.FilterVibrato == nil {
-		f.FilterVibrato = new(Vibrato)
+	if f.Vibrato != nil {
+		filters["vibrato"] = f.Vibrato
 	}
-	return f.FilterVibrato
-}
-
-func (f *DefaultFilters) SetVibrato(vibrato *Vibrato) Filters {
-	f.FilterVibrato = vibrato
-	return f
-}
-
-func (f *DefaultFilters) Rotation() *Rotation {
-	if f.FilterRotation == nil {
-		f.FilterRotation = new(Rotation)
+	if f.Rotation != nil {
+		filters["rotation"] = f.Rotation
 	}
-	return f.FilterRotation
-}
-
-func (f *DefaultFilters) SetRotation(rotation *Rotation) Filters {
-	f.FilterRotation = rotation
-	return f
-}
-
-func (f *DefaultFilters) Karaoke() *Karaoke {
-	if f.FilterKaraoke == nil {
-		f.FilterKaraoke = new(Karaoke)
+	if f.Karaoke != nil {
+		filters["karaoke"] = f.Karaoke
 	}
-	return f.FilterKaraoke
-}
-
-func (f *DefaultFilters) SetKaraoke(karaoke *Karaoke) Filters {
-	f.FilterKaraoke = karaoke
-	return f
-}
-
-func (f *DefaultFilters) Distortion() *Distortion {
-	if f.FilterDistortion == nil {
-		f.FilterDistortion = new(Distortion)
+	if f.Distortion != nil {
+		filters["distortion"] = f.Distortion
 	}
-	return f.FilterDistortion
+	if f.ChannelMix != nil {
+		filters["channelMix"] = f.ChannelMix
+	}
+	if f.LowPass != nil {
+		filters["lowPass"] = f.LowPass
+	}
+	for k, v := range f.PluginFilters {
+		filters[k] = v
+	}
+
+	return json.Marshal(filters)
 }
 
-func (f *DefaultFilters) SetDistortion(distortion *Distortion) Filters {
-	f.FilterDistortion = distortion
+func UnmarshalFilters(data json.RawMessage) (*Filters, error) {
+	var filters map[string]json.RawMessage
+	err := json.Unmarshal(data, &filters)
+	if err != nil {
+		return nil, err
+	}
+
+	f := new(Filters)
+
+	for k, v := range filters {
+		switch k {
+		case "volume":
+			f.Volume = new(Volume)
+			err = json.Unmarshal(v, f.Volume)
+		case "equalizer":
+			f.Equalizer = new(Equalizer)
+			err = json.Unmarshal(v, f.Equalizer)
+		case "timescale":
+			f.Timescale = new(Timescale)
+			err = json.Unmarshal(v, f.Timescale)
+		case "tremolo":
+			f.Tremolo = new(Tremolo)
+			err = json.Unmarshal(v, f.Tremolo)
+		case "vibrato":
+			f.Vibrato = new(Vibrato)
+			err = json.Unmarshal(v, f.Vibrato)
+		case "rotation":
+			f.Rotation = new(Rotation)
+			err = json.Unmarshal(v, f.Rotation)
+		case "karaoke":
+			f.Karaoke = new(Karaoke)
+			err = json.Unmarshal(v, f.Karaoke)
+		case "distortion":
+			f.Distortion = new(Distortion)
+			err = json.Unmarshal(v, f.Distortion)
+		case "channelMix":
+			f.ChannelMix = new(ChannelMix)
+			err = json.Unmarshal(v, f.ChannelMix)
+		case "lowPass":
+			f.LowPass = new(LowPass)
+			err = json.Unmarshal(v, f.LowPass)
+		default:
+			if f.PluginFilters == nil {
+				f.PluginFilters = make(map[string]any)
+			}
+			f.PluginFilters[k] = v
+		}
+	}
+	return f, nil
+}
+
+func (f *Filters) GetVolume() *Volume {
+	if f.Volume == nil {
+		f.Volume = &DefaultVolume
+	}
+	return f.Volume
+}
+
+func (f *Filters) GetEqualizer() *Equalizer {
+	if f.Equalizer == nil {
+		f.Equalizer = new(Equalizer)
+	}
+	return f.Equalizer
+}
+
+func (f *Filters) GetTimescale() *Timescale {
+	if f.Timescale == nil {
+		f.Timescale = new(Timescale)
+	}
+	return f.Timescale
+}
+
+func (f *Filters) GetTremolo() *Tremolo {
+	if f.Tremolo == nil {
+		f.Tremolo = new(Tremolo)
+	}
+	return f.Tremolo
+}
+
+func (f *Filters) GetVibrato() *Vibrato {
+	if f.Vibrato == nil {
+		f.Vibrato = new(Vibrato)
+	}
+	return f.Vibrato
+}
+
+func (f *Filters) GetRotation() *Rotation {
+	if f.Rotation == nil {
+		f.Rotation = new(Rotation)
+	}
+	return f.Rotation
+}
+
+func (f *Filters) GetKaraoke() *Karaoke {
+	if f.Karaoke == nil {
+		f.Karaoke = new(Karaoke)
+	}
+	return f.Karaoke
+}
+
+func (f *Filters) GetDistortion() *Distortion {
+	if f.Distortion == nil {
+		f.Distortion = new(Distortion)
+	}
+	return f.Distortion
+}
+
+func (f *Filters) Clear() *Filters {
+	f.Volume = nil
+	f.Equalizer = nil
+	f.Timescale = nil
+	f.Tremolo = nil
+	f.Vibrato = nil
+	f.Rotation = nil
+	f.Karaoke = nil
+	f.Distortion = nil
 	return f
 }
 
-func (f *DefaultFilters) Clear() Filters {
-	f.FilterVolume = nil
-	f.FilterEqualizer = nil
-	f.FilterTimescale = nil
-	f.FilterTremolo = nil
-	f.FilterVibrato = nil
-	f.FilterRotation = nil
-	f.FilterKaraoke = nil
-	f.FilterDistortion = nil
-	return f
+type LowPass struct {
+	Smoothing float64 `json:"smoothing"`
 }
 
-func (f *DefaultFilters) Commit() error {
-	return f.commitFunc(f)
-}
-
-func (f *DefaultFilters) setCommitFunc(commitFunc func(filters Filters) error) {
-	f.commitFunc = commitFunc
+type ChannelMix struct {
+	LeftToLeft   float64 `json:"leftToLeft,omitempty"`
+	LeftToRight  float64 `json:"leftToRight,omitempty"`
+	RightToLeft  float64 `json:"rightToLeft,omitempty"`
+	RightToRight float64 `json:"rightToRight,omitempty"`
 }
 
 type Distortion struct {

@@ -101,6 +101,29 @@ func (g *Git) UnmarshalJSON(data []byte) error {
 	return nil
 }
 
+type RestPlayer struct {
+	GuildID snowflake.ID `json:"guildId"`
+	Track   *Track       `json:"track"`
+	Volume  int          `json:"volume"`
+	Paused  bool         `json:"paused"`
+	Voice   VoiceState   `json:"voice"`
+	Filters Filters      `json:"filters"`
+}
+
+func (p *RestPlayer) UnmarshalJSON(data []byte) error {
+	type restPlayer RestPlayer
+	var v struct {
+		Filters Filter `json:"filters"`
+		restPlayer
+	}
+	if err := json.Unmarshal(data, &v); err != nil {
+		return err
+	}
+	*p = RestPlayer(v.restPlayer)
+	p.Filters = &v.Filters
+	return nil
+}
+
 type PlayerUpdate struct {
 	EncodedTrack *json.Nullable[string] `json:"encodedTrack,omitempty"`
 	Identifier   *string                `json:"identifier,omitempty"`
@@ -133,8 +156,9 @@ type RestClient interface {
 	DecodeTrack(ctx context.Context, encodedTrack string) (*Track, error)
 	DecodeTracks(ctx context.Context, encodedTracks []string) ([]Track, error)
 
-	GetPlayer(ctx context.Context, guildID snowflake.ID) (Player, error)
-	UpdatePlayer(ctx context.Context, guildID snowflake.ID, update PlayerUpdate, noReplace bool) error
+	GetPlayers(ctx context.Context) ([]RestPlayer, error)
+	GetPlayer(ctx context.Context, guildID snowflake.ID) (*RestPlayer, error)
+	UpdatePlayer(ctx context.Context, guildID snowflake.ID, update PlayerUpdate, noReplace bool) (*RestPlayer, error)
 	DestroyPlayer(ctx context.Context, guildID snowflake.ID) error
 	UpdateSession(ctx context.Context, sessionUpdate SessionUpdate) error
 }
@@ -214,17 +238,19 @@ func (c *restClientImpl) DecodeTracks(ctx context.Context, encodedTracks []strin
 	return
 }
 
-func (c *restClientImpl) GetPlayer(ctx context.Context, guildID snowflake.ID) (player Player, err error) {
-	var defaultPlayer DefaultPlayer
-	err = c.getJSON(ctx, fmt.Sprintf("/players/%d", guildID), &defaultPlayer)
-	if err == nil {
-		player = &defaultPlayer
-	}
+func (c *restClientImpl) GetPlayers(ctx context.Context) (players []RestPlayer, err error) {
+	err = c.getJSON(ctx, fmt.Sprintf("/v3/sessions/%s/players", c.node.SessionID()), &players)
 	return
 }
 
-func (c *restClientImpl) UpdatePlayer(ctx context.Context, guildID snowflake.ID, update PlayerUpdate, noReplace bool) error {
-	return c.patchJSON(ctx, fmt.Sprintf("/v3/sessions/%s/players/%d?noReplace=%t", c.node.SessionID(), guildID, noReplace), update, nil)
+func (c *restClientImpl) GetPlayer(ctx context.Context, guildID snowflake.ID) (player *RestPlayer, err error) {
+	err = c.getJSON(ctx, fmt.Sprintf("/v3/sessions/%s/players/%d", c.node.SessionID(), guildID), &player)
+	return
+}
+
+func (c *restClientImpl) UpdatePlayer(ctx context.Context, guildID snowflake.ID, update PlayerUpdate, noReplace bool) (player *RestPlayer, err error) {
+	err = c.patchJSON(ctx, fmt.Sprintf("/v3/sessions/%s/players/%d?noReplace=%t", c.node.SessionID(), guildID, noReplace), update, player)
+	return
 }
 
 func (c *restClientImpl) DestroyPlayer(ctx context.Context, guildID snowflake.ID) error {
