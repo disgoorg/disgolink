@@ -185,10 +185,6 @@ func (p *DefaultPlayer) PlayAt(track AudioTrack, start Duration, end Duration) e
 func (p *DefaultPlayer) Stop() error {
 	p.track = nil
 
-	if p.node == nil {
-		return nil
-	}
-
 	if err := p.node.Send(StopCommand{GuildID: p.guildID}); err != nil {
 		return fmt.Errorf("error while stopping player: %w", err)
 	}
@@ -278,6 +274,8 @@ func (p *DefaultPlayer) Seek(position Duration) error {
 	}); err != nil {
 		return fmt.Errorf("error while seeking player: %w", err)
 	}
+	p.state.Position = position
+	p.state.Time = Time{Time: time.Now()}
 	return nil
 }
 
@@ -421,7 +419,9 @@ func (p *DefaultPlayer) OnEvent(event TrackEvent) {
 		})
 
 	case TrackEndEvent:
-		p.track = nil
+		if e.Reason != AudioTrackEndReasonReplaced && e.Reason != AudioTrackEndReasonStopped {
+			p.track = nil
+		}
 		p.EmitEvent(func(l any) {
 			if listener := l.(PlayerEventListener); listener != nil {
 				listener.OnTrackEnd(p, track, e.Reason)
