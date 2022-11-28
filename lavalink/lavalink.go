@@ -8,6 +8,7 @@ import (
 	"sync"
 	"time"
 
+	"github.com/disgoorg/disgolink/lavalink/protocol"
 	"github.com/disgoorg/log"
 	"github.com/disgoorg/snowflake/v2"
 )
@@ -31,12 +32,12 @@ type Lavalink interface {
 	EncodeTrack(track AudioTrack) (string, error)
 	DecodeTrack(track string) (AudioTrack, error)
 
-	Player(guildID snowflake.ID) Player
-	PlayerOnNode(name string, guildID snowflake.ID) Player
-	RestorePlayer(restoreState PlayerRestoreState) (Player, error)
-	ExistingPlayer(guildID snowflake.ID) Player
+	Player(guildID snowflake.ID) protocol.Player
+	PlayerOnNode(name string, guildID snowflake.ID) protocol.Player
+	RestorePlayer(restoreState PlayerRestoreState) (protocol.Player, error)
+	ExistingPlayer(guildID snowflake.ID) protocol.Player
 	RemovePlayer(guildID snowflake.ID)
-	Players() map[snowflake.ID]Player
+	Players() map[snowflake.ID]protocol.Player
 
 	UserID() snowflake.ID
 	SetUserID(userID snowflake.ID)
@@ -60,7 +61,7 @@ func New(opts ...ConfigOpt) Lavalink {
 	return &lavalinkImpl{
 		config:  *config,
 		nodes:   map[string]Node{},
-		players: map[snowflake.ID]Player{},
+		players: map[snowflake.ID]protocol.Player{},
 	}
 }
 
@@ -74,7 +75,7 @@ type lavalinkImpl struct {
 	nodes   map[string]Node
 
 	playersMu sync.Mutex
-	players   map[snowflake.ID]Player
+	players   map[snowflake.ID]protocol.Player
 }
 
 func (l *lavalinkImpl) Logger() log.Logger {
@@ -204,11 +205,11 @@ func (l *lavalinkImpl) DecodeTrack(str string) (AudioTrack, error) {
 	})
 }
 
-func (l *lavalinkImpl) Player(guildID snowflake.ID) Player {
+func (l *lavalinkImpl) Player(guildID snowflake.ID) protocol.Player {
 	return l.PlayerOnNode("", guildID)
 }
 
-func (l *lavalinkImpl) PlayerOnNode(name string, guildID snowflake.ID) Player {
+func (l *lavalinkImpl) PlayerOnNode(name string, guildID snowflake.ID) protocol.Player {
 	l.playersMu.Lock()
 	defer l.playersMu.Unlock()
 	if player, ok := l.players[guildID]; ok {
@@ -228,7 +229,7 @@ func (l *lavalinkImpl) PlayerOnNode(name string, guildID snowflake.ID) Player {
 	return player
 }
 
-func (l *lavalinkImpl) RestorePlayer(restoreState PlayerRestoreState) (Player, error) {
+func (l *lavalinkImpl) RestorePlayer(restoreState PlayerRestoreState) (protocol.Player, error) {
 	l.playersMu.Lock()
 	defer l.playersMu.Unlock()
 	node := l.Node(restoreState.Node)
@@ -248,7 +249,7 @@ func (l *lavalinkImpl) RestorePlayer(restoreState PlayerRestoreState) (Player, e
 	return player, nil
 }
 
-func (l *lavalinkImpl) ExistingPlayer(guildID snowflake.ID) Player {
+func (l *lavalinkImpl) ExistingPlayer(guildID snowflake.ID) protocol.Player {
 	l.playersMu.Lock()
 	defer l.playersMu.Unlock()
 	return l.players[guildID]
@@ -260,10 +261,10 @@ func (l *lavalinkImpl) RemovePlayer(guildID snowflake.ID) {
 	delete(l.players, guildID)
 }
 
-func (l *lavalinkImpl) Players() map[snowflake.ID]Player {
+func (l *lavalinkImpl) Players() map[snowflake.ID]protocol.Player {
 	l.playersMu.Lock()
 	defer l.playersMu.Unlock()
-	players := make(map[snowflake.ID]Player, len(l.players))
+	players := make(map[snowflake.ID]protocol.Player, len(l.players))
 	for guildID, player := range l.players {
 		players[guildID] = player
 	}

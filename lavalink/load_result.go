@@ -1,38 +1,11 @@
 package lavalink
 
-type LoadType string
-
-const (
-	LoadTypeTrackLoaded    LoadType = "TRACK_LOADED"
-	LoadTypePlaylistLoaded LoadType = "PLAYLIST_LOADED"
-	LoadTypeSearchResult   LoadType = "SEARCH_RESULT"
-	LoadTypeNoMatches      LoadType = "NO_MATCHES"
-	LoadTypeLoadFailed     LoadType = "LOAD_FAILED"
-)
-
 type AudioLoadResultHandler interface {
-	TrackLoaded(track AudioTrack)
+	TrackLoaded(track Track)
 	PlaylistLoaded(playlist AudioPlaylist)
 	SearchResultLoaded(tracks []AudioTrack)
 	NoMatches()
 	LoadFailed(e FriendlyException)
-}
-
-type LoadResult struct {
-	LoadType     LoadType           `json:"loadType"`
-	PlaylistInfo *PlaylistInfo      `json:"playlistInfo"`
-	Tracks       []RestAudioTrack   `json:"tracks"`
-	Exception    *FriendlyException `json:"exception"`
-}
-
-type PlaylistInfo struct {
-	Name          string `json:"name"`
-	SelectedTrack int    `json:"selectedTrack"`
-}
-
-type RestAudioTrack struct {
-	Track string         `json:"track"`
-	Info  AudioTrackInfo `json:"info"`
 }
 
 var _ AudioLoadResultHandler = (*FunctionalResultHandler)(nil)

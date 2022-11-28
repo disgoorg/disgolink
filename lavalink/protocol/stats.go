@@ -1,4 +1,4 @@
-package lavalink
+package protocol
 
 type Stats struct {
 	Players        int         `json:"players"`

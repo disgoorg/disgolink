@@ -4,10 +4,12 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
-	"errors"
+	"fmt"
 	"io"
 	"net/http"
 	"net/url"
+
+	"github.com/disgoorg/disgolink/lavalink/protocol"
 )
 
 type SearchType string
@@ -25,11 +27,10 @@ func (t SearchType) Apply(searchString string) string {
 
 type RestClient interface {
 	Version(ctx context.Context) (string, error)
-	Plugins(ctx context.Context) ([]Plugin, error)
-	LoadItem(ctx context.Context, identifier string) (*LoadResult, error)
-	LoadItemHandler(ctx context.Context, identifier string, audioLoaderResultHandler AudioLoadResultHandler) error
-	DecodeTrack(ctx context.Context, track string) (*AudioTrackInfo, error)
-	DecodeTracks(ctx context.Context, tracks []string) ([]RestAudioTrack, error)
+	LoadItem(ctx context.Context, identifier string) (*protocol.LoadResult, error)
+
+	DecodeTrack(ctx context.Context, encodedTrack string) (*protocol.Track, error)
+	DecodeTracks(ctx context.Context, encodedTracks []string) ([]protocol.Track, error)
 }
 
 func newRestClientImpl(node Node, httpClient *http.Client) RestClient {
@@ -42,130 +43,80 @@ type restClientImpl struct {
 }
 
 func (c *restClientImpl) Version(ctx context.Context) (string, error) {
-	rawBody, err := c.get(ctx, "/version")
+	_, rawBody, err := c.do(ctx, http.MethodGet, "/version", nil)
 	if err != nil {
 		return "", err
 	}
 	return string(rawBody), nil
 }
 
-func (c *restClientImpl) Plugins(ctx context.Context) (plugins []Plugin, err error) {
-	err = c.getJSON(ctx, "/plugins", &plugins)
-	if err != nil {
-		return nil, err
-	}
-	return
-}
-
-func (c *restClientImpl) LoadItem(ctx context.Context, identifier string) (*LoadResult, error) {
-	var result LoadResult
-	err := c.getJSON(ctx, "/loadtracks?identifier="+url.QueryEscape(identifier), &result)
+func (c *restClientImpl) LoadItem(ctx context.Context, identifier string) (*protocol.LoadResult, error) {
+	var result protocol.LoadResult
+	err := c.doJSON(ctx, http.MethodGet, "/loadtracks?identifier="+url.QueryEscape(identifier), nil, &result)
 	if err != nil {
 		return nil, err
 	}
 	return &result, nil
 }
 
-func (c *restClientImpl) LoadItemHandler(ctx context.Context, identifier string, audioLoaderResultHandler AudioLoadResultHandler) error {
-	result, err := c.LoadItem(ctx, identifier)
-	if err != nil {
-		return err
-	}
-
-	tracks, err := c.parseRestAudioTracks(result.Tracks)
-	if err != nil {
-		return err
-	}
-
-	switch result.LoadType {
-	case LoadTypeTrackLoaded:
-		audioLoaderResultHandler.TrackLoaded(tracks[0])
-
-	case LoadTypePlaylistLoaded:
-		audioLoaderResultHandler.PlaylistLoaded(NewAudioPlaylist(result.PlaylistInfo.Name, result.PlaylistInfo.SelectedTrack, tracks))
-
-	case LoadTypeSearchResult:
-		audioLoaderResultHandler.SearchResultLoaded(tracks)
-
-	case LoadTypeNoMatches:
-		audioLoaderResultHandler.NoMatches()
-
-	case LoadTypeLoadFailed:
-		audioLoaderResultHandler.LoadFailed(*result.Exception)
-	}
-	return nil
+func (c *restClientImpl) DecodeTrack(ctx context.Context, encodedTrack string) (track *protocol.Track, err error) {
+	err = c.doJSON(ctx, http.MethodGet, "/decodetrack?track="+url.QueryEscape(encodedTrack), nil, &track)
+	return
 }
 
-func (c *restClientImpl) DecodeTrack(ctx context.Context, track string) (*AudioTrackInfo, error) {
-	var info AudioTrackInfo
-	err := c.getJSON(ctx, "/decodetrack?track="+url.QueryEscape(track), &info)
-	if err != nil {
-		return nil, err
-	}
-	return &info, nil
+func (c *restClientImpl) DecodeTracks(ctx context.Context, encodedTracks []string) (tracks []protocol.Track, err error) {
+	err = c.doJSON(ctx, http.MethodPost, "/decodetracks", encodedTracks, &tracks)
+	return
 }
 
-func (c *restClientImpl) DecodeTracks(ctx context.Context, tracks []string) ([]RestAudioTrack, error) {
-	var audioTracks []RestAudioTrack
-	err := c.postJSON(ctx, "/decodetracks", tracks, &audioTracks)
+func (c *restClientImpl) do(ctx context.Context, method string, path string, rqBody io.Reader) (int, []byte, error) {
+	rq, err := http.NewRequestWithContext(ctx, method, c.node.Config().RestURL()+path, rqBody)
 	if err != nil {
-		return nil, err
-	}
-	return audioTracks, nil
-}
-
-func (c *restClientImpl) parseRestAudioTracks(loadResultTracks []RestAudioTrack) ([]AudioTrack, error) {
-	tracks := make([]AudioTrack, len(loadResultTracks))
-	for i := range loadResultTracks {
-		decodedTrack, err := c.node.Lavalink().DecodeTrack(loadResultTracks[i].Track)
-		if err != nil {
-			return nil, err
-		}
-		tracks[i] = decodedTrack
-	}
-	return tracks, nil
-}
-
-func (c *restClientImpl) do(ctx context.Context, method string, path string, body io.Reader) ([]byte, error) {
-	rq, err := http.NewRequestWithContext(ctx, method, c.node.RestURL()+path, body)
-	if err != nil {
-		return nil, err
+		return 0, nil, err
 	}
 	rq.Header.Set("Authorization", c.node.Config().Password)
 
 	rs, err := c.httpClient.Do(rq)
 	if err != nil {
-		return nil, err
+		return 0, nil, err
 	}
+
 	defer rs.Body.Close()
-	if rs.StatusCode != http.StatusOK {
-		return nil, errors.New(rs.Status)
+	rawBody, err := io.ReadAll(rs.Body)
+	c.node.Lavalink().Logger().Tracef("response from %s, code %d, body: %s", c.node.Config().RestURL()+path, rs.StatusCode, string(rawBody))
+	if err != nil {
+		return rs.StatusCode, nil, fmt.Errorf("failed to read response body: %w", err)
 	}
-	rawBody, _ := io.ReadAll(rs.Body)
-	c.node.Lavalink().Logger().Tracef("response from %s, code %d, body: %s", c.node.RestURL()+path, rs.StatusCode, string(rawBody))
-	return rawBody, nil
+
+	if rs.StatusCode >= http.StatusBadRequest {
+		var lavalinkErr protocol.Error
+		if err = json.Unmarshal(rawBody, &lavalinkErr); err != nil {
+			return rs.StatusCode, rawBody, fmt.Errorf("error while unmarshalling lavalink error: %w", err)
+		}
+		return rs.StatusCode, nil, lavalinkErr
+	}
+
+	return rs.StatusCode, rawBody, nil
 }
 
-func (c *restClientImpl) get(ctx context.Context, path string) ([]byte, error) {
-	return c.do(ctx, http.MethodGet, path, nil)
-}
-
-func (c *restClientImpl) getJSON(ctx context.Context, path string, v any) error {
-	rawBody, err := c.get(ctx, path)
+func (c *restClientImpl) doJSON(ctx context.Context, method string, path string, rqBody any, rsBody any) error {
+	var rqBodyReader io.Reader
+	if rqBody != nil {
+		var err error
+		rawRqBody, err := json.Marshal(rqBody)
+		if err != nil {
+			return fmt.Errorf("failed to marshal request body: %w", err)
+		}
+		rqBodyReader = bytes.NewReader(rawRqBody)
+	}
+	statusCode, rawBody, err := c.do(ctx, method, path, rqBodyReader)
 	if err != nil {
 		return err
 	}
-	return json.Unmarshal(rawBody, v)
-}
-
-func (c *restClientImpl) postJSON(ctx context.Context, path string, b any, v any) error {
-	rqBody, err := json.Marshal(b)
-	if err != nil {
-		return err
+	if statusCode != http.StatusNoContent {
+		if err = json.Unmarshal(rawBody, rsBody); err != nil {
+			return fmt.Errorf("failed to unmarshal response body: %w", err)
+		}
 	}
-	rsBody, err := c.do(ctx, http.MethodPost, path, bytes.NewReader(rqBody))
-	if err != nil {
-		return err
-	}
-	return json.Unmarshal(rsBody, v)
+	return json.Unmarshal(rawBody, rsBody)
 }

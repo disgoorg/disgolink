@@ -1,98 +1,45 @@
 package lavalink
 
 import (
+	"context"
 	"encoding/json"
 	"errors"
 	"fmt"
 	"runtime/debug"
 	"time"
 
+	"github.com/disgoorg/disgolink/lavalink/protocol"
 	"github.com/disgoorg/snowflake/v2"
 )
 
+var ErrPlayerNoNode = errors.New("player has no node")
+
 type Player interface {
-	PlayingTrack() AudioTrack
-	Paused() bool
-	Position() Duration
-	Connected() bool
-	Volume() int
-	Filters() Filters
 	GuildID() snowflake.ID
 	ChannelID() *snowflake.ID
-	Node() Node
-	Export() PlayerRestoreState
+	Track() protocol.Track
+	Paused() bool
+	State() protocol.PlayerState
+	Volume() int
+	Filters() protocol.Filters
 
-	Play(track AudioTrack) error
-	PlayTrack(track AudioTrack, options PlayOptions) error
-	PlayAt(track AudioTrack, start Duration, end Duration) error
-	Stop() error
+	Update(ctx context.Context, update protocol.PlayerUpdate) error
 	Destroy() error
-	Pause(paused bool) error
-	Seek(position Duration) error
-	SetVolume(volume int) error
-	SetFilters(filters Filters)
-	ChangeNode(node Node)
 
-	OnVoiceServerUpdate(voiceServerUpdate VoiceServerUpdate)
-	OnVoiceStateUpdate(voiceStateUpdate VoiceStateUpdate)
-	OnPlayerUpdate(state PlayerState)
+	Lavalink() Lavalink
+	Node() Node
 
 	EmitEvent(caller func(l any))
 	AddListener(listener any)
 	RemoveListener(listener any)
-	OnEvent(event TrackEvent)
+
+	OnEvent(event protocol.Event)
+	OnPlayerUpdate(playerUpdate protocol.PlayerUpdate)
+	OnVoiceServerUpdate(token string, endpoint string)
+	OnVoiceStateUpdate(sessionID string)
 }
 
-type PlayOptions struct {
-	StartTime Duration
-	EndTime   Duration
-	NoReplace bool
-	Pause     bool
-	Volume    int
-}
-
-var _ Player = (*DefaultPlayer)(nil)
-
-func NewPlayer(node Node, lavalink Lavalink, guildID snowflake.ID) Player {
-	return &DefaultPlayer{
-		guildID:  guildID,
-		volume:   100,
-		node:     node,
-		lavalink: lavalink,
-	}
-}
-
-func newResumingPlayer(node Node, lavalink Lavalink, resumeState PlayerRestoreState) (Player, error) {
-	var track AudioTrack
-	if resumeState.PlayingTrack != nil {
-		var err error
-		if track, err = lavalink.DecodeTrack(*resumeState.PlayingTrack); err != nil {
-			return nil, err
-		}
-	}
-
-	player := &DefaultPlayer{
-		guildID:               resumeState.GuildID,
-		channelID:             resumeState.ChannelID,
-		lastSessionID:         resumeState.LastSessionID,
-		lastVoiceServerUpdate: resumeState.LastVoiceServerUpdate,
-		track:                 track,
-		volume:                resumeState.Volume,
-		paused:                resumeState.Paused,
-		state:                 resumeState.State,
-		filters:               resumeState.Filters,
-		node:                  node,
-		lavalink:              lavalink,
-	}
-
-	if resumeState.Filters != nil {
-		resumeState.Filters.setCommitFunc(player.commitFilters)
-	}
-
-	return player, nil
-}
-
-type DefaultPlayer struct {
+type defaultPlayer struct {
 	guildID               snowflake.ID
 	channelID             *snowflake.ID
 	lastSessionID         *string
@@ -107,106 +54,19 @@ type DefaultPlayer struct {
 	listeners             []any
 }
 
-func (p *DefaultPlayer) PlayingTrack() AudioTrack {
+func (p *defaultPlayer) Track() protocol.Track {
 	return p.track
 }
 
-func (p *DefaultPlayer) PlayTrack(track AudioTrack, options PlayOptions) error {
-	encodedTrack, err := p.node.Lavalink().EncodeTrack(track)
-	if err != nil {
-		return err
+func (p *defaultPlayer) Destroy() error {
+	if p.node == nil {
+		return ErrPlayerNoNode
 	}
 
-	cmd := PlayCommand{
-		GuildID: p.guildID,
-		Track:   encodedTrack,
-	}
-	if options.StartTime != 0 {
-		cmd.StartTime = &options.StartTime
-	}
-	if options.EndTime != 0 {
-		cmd.EndTime = &options.EndTime
-	}
-	if options.NoReplace {
-		cmd.NoReplace = &options.NoReplace
-	}
-	if options.Pause {
-		cmd.Pause = &options.Pause
-	}
-	if options.Volume != 0 {
-		cmd.Volume = &options.Volume
-	}
-
-	if err = p.Node().Send(cmd); err != nil {
-		return fmt.Errorf("error while playing track: %w", err)
-	}
-	p.track = track
-	p.paused = options.Pause
-	if options.Volume != 0 {
-		p.volume = options.Volume
-	}
-	return nil
+	return p.node.Rest().
 }
 
-func (p *DefaultPlayer) Play(track AudioTrack) error {
-	encodedTrack, err := p.node.Lavalink().EncodeTrack(track)
-	if err != nil {
-		return err
-	}
-
-	if err = p.Node().Send(PlayCommand{
-		GuildID: p.guildID,
-		Track:   encodedTrack,
-	}); err != nil {
-		return fmt.Errorf("error while playing track: %w", err)
-	}
-	p.track = track
-	return nil
-}
-
-func (p *DefaultPlayer) PlayAt(track AudioTrack, start Duration, end Duration) error {
-	encodedTrack, err := p.node.Lavalink().EncodeTrack(track)
-	if err != nil {
-		return err
-	}
-
-	if err = p.Node().Send(PlayCommand{
-		GuildID:   p.guildID,
-		Track:     encodedTrack,
-		StartTime: &start,
-		EndTime:   &end,
-	}); err != nil {
-		return fmt.Errorf("error while playing track: %w", err)
-	}
-	p.track = track
-	return nil
-}
-
-func (p *DefaultPlayer) Stop() error {
-	p.track = nil
-
-	if err := p.node.Send(StopCommand{GuildID: p.guildID}); err != nil {
-		return fmt.Errorf("error while stopping player: %w", err)
-	}
-	return nil
-}
-
-func (p *DefaultPlayer) Destroy() error {
-	for _, pl := range p.Node().Lavalink().Plugins() {
-		if plugin, ok := pl.(PluginEventHandler); ok {
-			plugin.OnDestroyPlayer(p)
-		}
-	}
-	if p.node != nil {
-		if err := p.node.Send(DestroyCommand{GuildID: p.guildID}); err != nil {
-			return fmt.Errorf("error while destroying player: %w", err)
-		}
-	}
-	p.lavalink.RemovePlayer(p.guildID)
-	return nil
-}
-
-func (p *DefaultPlayer) Pause(pause bool) error {
+func (p *defaultPlayer) Pause(pause bool) error {
 	if p.paused == pause {
 		return nil
 	}
@@ -236,17 +96,17 @@ func (p *DefaultPlayer) Pause(pause bool) error {
 	return nil
 }
 
-func (p *DefaultPlayer) Paused() bool {
+func (p *defaultPlayer) Paused() bool {
 	return p.paused
 }
 
-func (p *DefaultPlayer) Position() Duration {
+func (p *defaultPlayer) Position() protocol.Duration {
 	if p.track == nil {
 		return 0
 	}
 	position := p.state.Position
 	if !p.paused {
-		position += Duration(time.Now().UnixMilli() - p.state.Time.UnixMilli())
+		position += protocol.Duration(time.Now().UnixMilli() - p.state.Time.UnixMilli())
 	}
 	if position > p.track.Info().Length {
 		return p.track.Info().Length
@@ -257,11 +117,11 @@ func (p *DefaultPlayer) Position() Duration {
 	return position
 }
 
-func (p *DefaultPlayer) Connected() bool {
+func (p *defaultPlayer) Connected() bool {
 	return p.state.Connected
 }
 
-func (p *DefaultPlayer) Seek(position Duration) error {
+func (p *defaultPlayer) Seek(position protocol.Duration) error {
 	if p.PlayingTrack() == nil {
 		return errors.New("no track is playing")
 	}
@@ -275,15 +135,15 @@ func (p *DefaultPlayer) Seek(position Duration) error {
 		return fmt.Errorf("error while seeking player: %w", err)
 	}
 	p.state.Position = position
-	p.state.Time = Time{Time: time.Now()}
+	p.state.Time = protocol.Time{Time: time.Now()}
 	return nil
 }
 
-func (p *DefaultPlayer) Volume() int {
+func (p *defaultPlayer) Volume() int {
 	return p.volume
 }
 
-func (p *DefaultPlayer) SetVolume(volume int) error {
+func (p *defaultPlayer) SetVolume(volume int) error {
 	if p.node == nil {
 		return nil
 	}
@@ -303,30 +163,30 @@ func (p *DefaultPlayer) SetVolume(volume int) error {
 	return nil
 }
 
-func (p *DefaultPlayer) Filters() Filters {
+func (p *defaultPlayer) Filters() Filters {
 	if p.filters == nil {
 		p.filters = NewFilters(p.commitFilters)
 	}
 	return p.filters
 }
 
-func (p *DefaultPlayer) SetFilters(filters Filters) {
+func (p *defaultPlayer) SetFilters(filters Filters) {
 	p.filters = filters
 }
 
-func (p *DefaultPlayer) GuildID() snowflake.ID {
+func (p *defaultPlayer) GuildID() snowflake.ID {
 	return p.guildID
 }
 
-func (p *DefaultPlayer) ChannelID() *snowflake.ID {
+func (p *defaultPlayer) ChannelID() *snowflake.ID {
 	return p.channelID
 }
 
-func (p *DefaultPlayer) Export() PlayerRestoreState {
+func (p *defaultPlayer) Export() PlayerRestoreState {
 	return PlayerRestoreState{}
 }
 
-func (p *DefaultPlayer) OnVoiceServerUpdate(voiceServerUpdate VoiceServerUpdate) {
+func (p *defaultPlayer) OnVoiceServerUpdate(voiceServerUpdate VoiceServerUpdate) {
 	p.lastVoiceServerUpdate = &voiceServerUpdate
 	if err := p.Node().Send(VoiceUpdateCommand{
 		GuildID:   voiceServerUpdate.GuildID,
@@ -337,7 +197,7 @@ func (p *DefaultPlayer) OnVoiceServerUpdate(voiceServerUpdate VoiceServerUpdate)
 	}
 }
 
-func (p *DefaultPlayer) OnVoiceStateUpdate(voiceStateUpdate VoiceStateUpdate) {
+func (p *defaultPlayer) OnVoiceStateUpdate(voiceStateUpdate VoiceStateUpdate) {
 	if voiceStateUpdate.ChannelID == nil {
 		p.channelID = nil
 		if p.Node() != nil {
@@ -352,14 +212,14 @@ func (p *DefaultPlayer) OnVoiceStateUpdate(voiceStateUpdate VoiceStateUpdate) {
 	p.lastSessionID = &voiceStateUpdate.SessionID
 }
 
-func (p *DefaultPlayer) Node() Node {
+func (p *defaultPlayer) Node() Node {
 	if p.node == nil {
 		p.node = p.lavalink.BestNode()
 	}
 	return p.node
 }
 
-func (p *DefaultPlayer) ChangeNode(node Node) {
+func (p *defaultPlayer) ChangeNode(node Node) {
 	p.node = node
 	if p.lastVoiceServerUpdate != nil {
 		p.OnVoiceServerUpdate(*p.lastVoiceServerUpdate)
@@ -372,11 +232,11 @@ func (p *DefaultPlayer) ChangeNode(node Node) {
 	}
 }
 
-func (p *DefaultPlayer) OnPlayerUpdate(state PlayerState) {
+func (p *defaultPlayer) OnPlayerUpdate(state PlayerState) {
 	p.state = state
 }
 
-func (p *DefaultPlayer) EmitEvent(caller func(l any)) {
+func (p *defaultPlayer) EmitEvent(caller func(l any)) {
 	defer func() {
 		if r := recover(); r != nil {
 			p.lavalink.Logger().Errorf("recovered from panic in event listener: %#v\nstack: %s", r, string(debug.Stack()))
@@ -388,11 +248,11 @@ func (p *DefaultPlayer) EmitEvent(caller func(l any)) {
 	}
 }
 
-func (p *DefaultPlayer) AddListener(listener any) {
+func (p *defaultPlayer) AddListener(listener any) {
 	p.listeners = append(p.listeners, listener)
 }
 
-func (p *DefaultPlayer) RemoveListener(listener any) {
+func (p *defaultPlayer) RemoveListener(listener any) {
 	for i, l := range p.listeners {
 		if l == listener {
 			p.listeners = append(p.listeners[:i], p.listeners[i+1:]...)
@@ -400,7 +260,7 @@ func (p *DefaultPlayer) RemoveListener(listener any) {
 	}
 }
 
-func (p *DefaultPlayer) OnEvent(event TrackEvent) {
+func (p *defaultPlayer) OnEvent(event TrackEvent) {
 	track, err := p.node.Lavalink().DecodeTrack(event.Track())
 	if err != nil {
 		p.node.Lavalink().Logger().Errorf("error while decoding track: %s", err)
@@ -419,7 +279,7 @@ func (p *DefaultPlayer) OnEvent(event TrackEvent) {
 		})
 
 	case TrackEndEvent:
-		if e.Reason != AudioTrackEndReasonReplaced && e.Reason != AudioTrackEndReasonStopped {
+		if e.Reason != protocol.AudioTrackEndReasonReplaced && e.Reason != protocol.AudioTrackEndReasonStopped {
 			p.track = nil
 		}
 		p.EmitEvent(func(l any) {
@@ -446,7 +306,7 @@ func (p *DefaultPlayer) OnEvent(event TrackEvent) {
 	}
 }
 
-func (p *DefaultPlayer) commitFilters(filters Filters) error {
+func (p *defaultPlayer) commitFilters(filters Filters) error {
 	if p.node == nil {
 		return nil
 	}
@@ -460,9 +320,9 @@ func (p *DefaultPlayer) commitFilters(filters Filters) error {
 }
 
 type PlayerState struct {
-	Time      Time     `json:"time"`
-	Position  Duration `json:"position"`
-	Connected bool     `json:"connected"`
+	Time      protocol.Time     `json:"time"`
+	Position  protocol.Duration `json:"position"`
+	Connected bool              `json:"connected"`
 }
 
 type PlayerRestoreState struct {

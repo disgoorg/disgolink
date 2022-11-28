@@ -1,4 +1,4 @@
-package lavalink
+package protocol
 
 import (
 	"strconv"
