@@ -1,4 +1,4 @@
-package protocol
+package lavalink
 
 type Track struct {
 	Encoded    string         `json:"encoded"`

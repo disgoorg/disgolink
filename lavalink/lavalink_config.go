@@ -12,7 +12,6 @@ func DefaultConfig() *Config {
 	return &Config{
 		Logger:     log.Default(),
 		HTTPClient: &http.Client{Timeout: 10 * time.Second},
-		Plugins:    []any{NewHTTPSourcePlugin(), NewLocalSourcePlugin()},
 	}
 }
 
@@ -20,7 +19,6 @@ type Config struct {
 	Logger     log.Logger
 	HTTPClient *http.Client
 	UserID     snowflake.ID
-	Plugins    []any
 }
 
 type ConfigOpt func(config *Config)
@@ -58,16 +56,4 @@ func WithUserIDString(userID string) ConfigOpt {
 func WithUserIDFromBotToken(botToken string) ConfigOpt {
 	token, _ := UserIDFromBotToken(botToken)
 	return WithUserID(token)
-}
-
-func WithPlugins(plugins ...any) ConfigOpt {
-	return func(config *Config) {
-		config.Plugins = append(config.Plugins, plugins...)
-	}
-}
-
-func WithOverwritePlugins(plugins ...any) ConfigOpt {
-	return func(config *Config) {
-		config.Plugins = plugins
-	}
 }

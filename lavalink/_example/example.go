@@ -43,29 +43,29 @@ func (b *Bot) messageCreateHandler() {
 	if !urlPattern.MatchString(query) {
 		query = "ytsearch:" + query
 	}
-	_ = b.Link.BestRestClient().LoadItemHandler(context.TODO(), query, lavalink.NewResultHandler(
-		func(track lavalink.AudioTrack) {
+	b.Link.BestNode().LoadTracks(context.TODO(), query, lavalink.NewResultHandler(
+		func(track lavalink.Track) {
 			id, _ := snowflake.Parse(args[1])
 			b.Play(guildID, id, channelID, track)
 		},
-		func(playlist lavalink.AudioPlaylist) {
+		func(playlist lavalink.Playlist) {
 			id, _ := snowflake.Parse(args[1])
-			b.Play(guildID, id, channelID, playlist.Tracks()[0])
+			b.Play(guildID, id, channelID, playlist.Tracks[0])
 		},
-		func(tracks []lavalink.AudioTrack) {
+		func(tracks []lavalink.Track) {
 			id, _ := snowflake.Parse(args[1])
 			b.Play(guildID, id, channelID, tracks[0])
 		},
 		func() {
 			// TODO: send error message
 		},
-		func(ex lavalink.FriendlyException) {
+		func(ex lavalink.Exception) {
 			// TODO: send error message
 		},
 	))
 }
 
-func (b *Bot) Play(guildID snowflake.ID, voiceChannelID snowflake.ID, channelID snowflake.ID, track lavalink.AudioTrack) {
+func (b *Bot) Play(guildID snowflake.ID, voiceChannelID snowflake.ID, channelID snowflake.ID, track lavalink.Track) {
 	// TODO: join voice channel
 
 	if err := b.Link.Player(guildID).Play(track); err != nil {
@@ -77,7 +77,7 @@ func (b *Bot) Play(guildID snowflake.ID, voiceChannelID snowflake.ID, channelID 
 
 func (b *Bot) registerNodes() {
 	secure, _ := strconv.ParseBool(os.Getenv("lavalink_secure"))
-	node, _ := b.Link.AddNode(context.TODO(), lavalink.NodeConfig{
+	node, _ := b.Link.AddNode(context.TODO(), NodeConfig{
 		Name:        "test",
 		Host:        os.Getenv("lavalink_host"),
 		Port:        os.Getenv("lavalink_port"),

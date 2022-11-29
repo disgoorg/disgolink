@@ -9,7 +9,6 @@ import (
 	"net/http"
 	"net/url"
 
-	"github.com/disgoorg/disgolink/lavalink/protocol"
 	"github.com/disgoorg/snowflake/v2"
 )
 
@@ -28,19 +27,19 @@ func (t SearchType) Apply(searchString string) string {
 
 type RestClient interface {
 	Version(ctx context.Context) (string, error)
-	Info(ctx context.Context) (*protocol.Info, error)
-	Stats(ctx context.Context) (*protocol.Stats, error)
+	Info(ctx context.Context) (*Info, error)
+	Stats(ctx context.Context) (*Stats, error)
 
-	UpdateSession(ctx context.Context, sessionID string, sessionUpdate protocol.SessionUpdate) (*protocol.Session, error)
+	UpdateSession(ctx context.Context, sessionID string, sessionUpdate SessionUpdate) (*Session, error)
 
-	Players(ctx context.Context, sessionID string) ([]protocol.Player, error)
-	Player(ctx context.Context, sessionID string, guildID snowflake.ID) (*protocol.Player, error)
-	UpdatePlayer(ctx context.Context, sessionID string, guildID snowflake.ID, playerUpdate protocol.PlayerUpdate) (*protocol.Player, error)
+	Players(ctx context.Context, sessionID string) ([]Player, error)
+	Player(ctx context.Context, sessionID string, guildID snowflake.ID) (*Player, error)
+	UpdatePlayer(ctx context.Context, sessionID string, guildID snowflake.ID, playerUpdate PlayerUpdate) (*Player, error)
 	DestroyPlayer(ctx context.Context, sessionID string, guildID snowflake.ID) error
 
-	LoadTracks(ctx context.Context, identifier string) (*protocol.LoadResult, error)
-	DecodeTrack(ctx context.Context, encodedTrack string) (*protocol.Track, error)
-	DecodeTracks(ctx context.Context, encodedTracks []string) ([]protocol.Track, error)
+	LoadTracks(ctx context.Context, identifier string) (*LoadResult, error)
+	DecodeTrack(ctx context.Context, encodedTrack string) (*Track, error)
+	DecodeTracks(ctx context.Context, encodedTracks []string) ([]Track, error)
 }
 
 func newRestClientImpl(node Node, httpClient *http.Client) RestClient {
@@ -60,32 +59,32 @@ func (c *restClientImpl) Version(ctx context.Context) (string, error) {
 	return string(rawBody), nil
 }
 
-func (c *restClientImpl) Info(ctx context.Context) (info *protocol.Info, err error) {
+func (c *restClientImpl) Info(ctx context.Context) (info *Info, err error) {
 	err = c.doJSON(ctx, http.MethodGet, "/v3/info", nil, &info)
 	return
 }
 
-func (c *restClientImpl) Stats(ctx context.Context) (stats *protocol.Stats, err error) {
+func (c *restClientImpl) Stats(ctx context.Context) (stats *Stats, err error) {
 	err = c.doJSON(ctx, http.MethodGet, "/v3/stats", nil, &stats)
 	return
 }
 
-func (c *restClientImpl) UpdateSession(ctx context.Context, sessionID string, sessionUpdate protocol.SessionUpdate) (session *protocol.Session, err error) {
+func (c *restClientImpl) UpdateSession(ctx context.Context, sessionID string, sessionUpdate SessionUpdate) (session *Session, err error) {
 	err = c.doJSON(ctx, http.MethodPost, "/v3/sessions/"+sessionID, sessionUpdate, &session)
 	return
 }
 
-func (c *restClientImpl) Players(ctx context.Context, sessionID string) (players []protocol.Player, err error) {
+func (c *restClientImpl) Players(ctx context.Context, sessionID string) (players []Player, err error) {
 	err = c.doJSON(ctx, http.MethodGet, "/v3/sessions/"+sessionID+"/players", nil, &players)
 	return
 }
 
-func (c *restClientImpl) Player(ctx context.Context, sessionID string, guildID snowflake.ID) (player *protocol.Player, err error) {
+func (c *restClientImpl) Player(ctx context.Context, sessionID string, guildID snowflake.ID) (player *Player, err error) {
 	err = c.doJSON(ctx, http.MethodGet, "/v3/sessions/"+sessionID+"/players/"+guildID.String(), nil, &player)
 	return
 }
 
-func (c *restClientImpl) UpdatePlayer(ctx context.Context, sessionID string, guildID snowflake.ID, playerUpdate protocol.PlayerUpdate) (player *protocol.Player, err error) {
+func (c *restClientImpl) UpdatePlayer(ctx context.Context, sessionID string, guildID snowflake.ID, playerUpdate PlayerUpdate) (player *Player, err error) {
 	err = c.doJSON(ctx, http.MethodPost, "/v3/sessions/"+sessionID+"/players/"+guildID.String(), playerUpdate, &player)
 	return
 }
@@ -95,8 +94,8 @@ func (c *restClientImpl) DestroyPlayer(ctx context.Context, sessionID string, gu
 	return err
 }
 
-func (c *restClientImpl) LoadTracks(ctx context.Context, identifier string) (*protocol.LoadResult, error) {
-	var result protocol.LoadResult
+func (c *restClientImpl) LoadTracks(ctx context.Context, identifier string) (*LoadResult, error) {
+	var result LoadResult
 	err := c.doJSON(ctx, http.MethodGet, "/v3/loadtracks?identifier="+url.QueryEscape(identifier), nil, &result)
 	if err != nil {
 		return nil, err
@@ -104,12 +103,12 @@ func (c *restClientImpl) LoadTracks(ctx context.Context, identifier string) (*pr
 	return &result, nil
 }
 
-func (c *restClientImpl) DecodeTrack(ctx context.Context, encodedTrack string) (track *protocol.Track, err error) {
+func (c *restClientImpl) DecodeTrack(ctx context.Context, encodedTrack string) (track *Track, err error) {
 	err = c.doJSON(ctx, http.MethodGet, "/v3/decodetrack?track="+url.QueryEscape(encodedTrack), nil, &track)
 	return
 }
 
-func (c *restClientImpl) DecodeTracks(ctx context.Context, encodedTracks []string) (tracks []protocol.Track, err error) {
+func (c *restClientImpl) DecodeTracks(ctx context.Context, encodedTracks []string) (tracks []Track, err error) {
 	err = c.doJSON(ctx, http.MethodPost, "/v3/decodetracks", encodedTracks, &tracks)
 	return
 }
@@ -134,7 +133,7 @@ func (c *restClientImpl) do(ctx context.Context, method string, path string, rqB
 	}
 
 	if rs.StatusCode >= http.StatusBadRequest {
-		var lavalinkErr protocol.Error
+		var lavalinkErr Error
 		if err = json.Unmarshal(rawBody, &lavalinkErr); err != nil {
 			return rs.StatusCode, rawBody, fmt.Errorf("error while unmarshalling lavalink error: %w", err)
 		}
