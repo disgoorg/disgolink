@@ -25,27 +25,17 @@ type Lavalink interface {
 	BestRestClient() RestClient
 	RemoveNode(name string)
 
-	AddPlugins(plugins ...any)
-	Plugins() []any
-	RemovePlugins(plugins ...any)
-
-	EncodeTrack(track AudioTrack) (string, error)
-	DecodeTrack(track string) (AudioTrack, error)
-
-	Player(guildID snowflake.ID) protocol.Player
+	Player(guildID snowflake.ID) AudioPlayer
 	PlayerOnNode(name string, guildID snowflake.ID) protocol.Player
-	RestorePlayer(restoreState PlayerRestoreState) (protocol.Player, error)
 	ExistingPlayer(guildID snowflake.ID) protocol.Player
 	RemovePlayer(guildID snowflake.ID)
 	Players() map[snowflake.ID]protocol.Player
 
 	UserID() snowflake.ID
-	SetUserID(userID snowflake.ID)
+	Close() error
 
-	Close()
-
-	OnVoiceServerUpdate(voiceServerUpdate VoiceServerUpdate)
-	OnVoiceStateUpdate(voiceStateUpdate VoiceStateUpdate)
+	OnVoiceServerUpdate(token string, endpoint string)
+	OnVoiceStateUpdate(channelID snowflake.ID, sessionID string)
 }
 
 func New(opts ...ConfigOpt) Lavalink {

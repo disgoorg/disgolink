@@ -3,6 +3,7 @@ package lavalink
 import (
 	"context"
 	"fmt"
+	"io"
 	"net/http"
 	"sync"
 
@@ -27,6 +28,7 @@ type Node interface {
 
 	Stats() protocol.Stats
 	Status() NodeStatus
+	SessionID() string
 
 	Open(ctx context.Context) error
 	Close() error
@@ -65,9 +67,12 @@ type nodeImpl struct {
 	rest     RestClient
 
 	conn   *websocket.Conn
-	status NodeStatus
-	stats  protocol.Stats
-	mu     sync.Mutex
+	connMu sync.Mutex
+
+	status    NodeStatus
+	stats     protocol.Stats
+	sessionID string
+	mu        sync.Mutex
 }
 
 func (n *nodeImpl) Lavalink() Lavalink {
@@ -88,6 +93,10 @@ func (n *nodeImpl) Status() NodeStatus {
 
 func (n *nodeImpl) Stats() protocol.Stats {
 	return n.stats
+}
+
+func (n *nodeImpl) SessionID() string {
+	return n.sessionID
 }
 
 func (n *nodeImpl) Open(ctx context.Context) error {
@@ -137,26 +146,51 @@ func (n *nodeImpl) open(ctx context.Context) error {
 
 	go n.listen()
 
-	for _, pl := range n.Lavalink().Plugins() {
-		if plugin, ok := pl.(PluginEventHandler); ok {
-			plugin.OnNodeOpen(n)
-		}
-	}
-
 	return err
 }
 
-func (n *nodeImpl) listen() {
+func (n *nodeImpl) listen(conn *websocket.Conn) {
+	defer n.lavalink.Logger().Debug("exiting listen goroutine...")
+loop:
+	for {
+		_, reader, err := conn.NextReader()
+		if err != nil {
+			n.connMu.Lock()
+			sameConnection := n.conn == conn
+			n.connMu.Unlock()
 
+			if !sameConnection {
+				return
+			}
+
+			break loop
+		}
+
+		data, err := io.ReadAll(reader)
+		if err != nil {
+			n.lavalink.Logger().Errorf("error while reading ws data: %s", err)
+			continue
+		}
+
+		m, err := protocol.UnmarshalMessage(data)
+		if err != nil {
+			n.lavalink.Logger().Errorf("error while unmarshalling ws data: %s", err)
+			return
+		}
+
+		switch message := m.(type) {
+		case protocol.MessageStats:
+
+		case protocol.MessagePlayerUpdate:
+
+		case protocol.Event:
+			n.lavalink.Player(message.GuildID())
+		}
+
+	}
 }
 
 func (n *nodeImpl) Close() {
-
-	for _, pl := range n.Lavalink().Plugins() {
-		if plugin, ok := pl.(PluginEventHandler); ok {
-			plugin.OnNodeDestroy(n)
-		}
-	}
 	n.status = Disconnected
 	if n.conn != nil {
 		if err := n.conn.Close(); err != nil {

@@ -50,7 +50,10 @@ func main() {
 
 	defer client.Close(context.TODO())
 
-	dgolink = disgolink.New(client)
+	logger := log.New(log.LstdFlags | log.Lshortfile)
+	logger.SetLevel(log.LevelTrace)
+
+	dgolink = disgolink.New(client, lavalink.WithLogger(logger))
 	registerNodes()
 
 	defer dgolink.Close()

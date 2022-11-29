@@ -10,6 +10,7 @@ import (
 	"net/url"
 
 	"github.com/disgoorg/disgolink/lavalink/protocol"
+	"github.com/disgoorg/snowflake/v2"
 )
 
 type SearchType string
@@ -27,8 +28,17 @@ func (t SearchType) Apply(searchString string) string {
 
 type RestClient interface {
 	Version(ctx context.Context) (string, error)
-	LoadItem(ctx context.Context, identifier string) (*protocol.LoadResult, error)
+	Info(ctx context.Context) (*protocol.Info, error)
+	Stats(ctx context.Context) (*protocol.Stats, error)
 
+	UpdateSession(ctx context.Context, sessionID string, sessionUpdate protocol.SessionUpdate) (*protocol.Session, error)
+
+	Players(ctx context.Context, sessionID string) ([]protocol.Player, error)
+	Player(ctx context.Context, sessionID string, guildID snowflake.ID) (*protocol.Player, error)
+	UpdatePlayer(ctx context.Context, sessionID string, guildID snowflake.ID, playerUpdate protocol.PlayerUpdate) (*protocol.Player, error)
+	DestroyPlayer(ctx context.Context, sessionID string, guildID snowflake.ID) error
+
+	LoadTracks(ctx context.Context, identifier string) (*protocol.LoadResult, error)
 	DecodeTrack(ctx context.Context, encodedTrack string) (*protocol.Track, error)
 	DecodeTracks(ctx context.Context, encodedTracks []string) ([]protocol.Track, error)
 }
@@ -50,9 +60,44 @@ func (c *restClientImpl) Version(ctx context.Context) (string, error) {
 	return string(rawBody), nil
 }
 
-func (c *restClientImpl) LoadItem(ctx context.Context, identifier string) (*protocol.LoadResult, error) {
+func (c *restClientImpl) Info(ctx context.Context) (info *protocol.Info, err error) {
+	err = c.doJSON(ctx, http.MethodGet, "/v3/info", nil, &info)
+	return
+}
+
+func (c *restClientImpl) Stats(ctx context.Context) (stats *protocol.Stats, err error) {
+	err = c.doJSON(ctx, http.MethodGet, "/v3/stats", nil, &stats)
+	return
+}
+
+func (c *restClientImpl) UpdateSession(ctx context.Context, sessionID string, sessionUpdate protocol.SessionUpdate) (session *protocol.Session, err error) {
+	err = c.doJSON(ctx, http.MethodPost, "/v3/sessions/"+sessionID, sessionUpdate, &session)
+	return
+}
+
+func (c *restClientImpl) Players(ctx context.Context, sessionID string) (players []protocol.Player, err error) {
+	err = c.doJSON(ctx, http.MethodGet, "/v3/sessions/"+sessionID+"/players", nil, &players)
+	return
+}
+
+func (c *restClientImpl) Player(ctx context.Context, sessionID string, guildID snowflake.ID) (player *protocol.Player, err error) {
+	err = c.doJSON(ctx, http.MethodGet, "/v3/sessions/"+sessionID+"/players/"+guildID.String(), nil, &player)
+	return
+}
+
+func (c *restClientImpl) UpdatePlayer(ctx context.Context, sessionID string, guildID snowflake.ID, playerUpdate protocol.PlayerUpdate) (player *protocol.Player, err error) {
+	err = c.doJSON(ctx, http.MethodPost, "/v3/sessions/"+sessionID+"/players/"+guildID.String(), playerUpdate, &player)
+	return
+}
+
+func (c *restClientImpl) DestroyPlayer(ctx context.Context, sessionID string, guildID snowflake.ID) error {
+	_, _, err := c.do(ctx, http.MethodDelete, "/v3/sessions/"+sessionID+"/players/"+guildID.String(), nil)
+	return err
+}
+
+func (c *restClientImpl) LoadTracks(ctx context.Context, identifier string) (*protocol.LoadResult, error) {
 	var result protocol.LoadResult
-	err := c.doJSON(ctx, http.MethodGet, "/loadtracks?identifier="+url.QueryEscape(identifier), nil, &result)
+	err := c.doJSON(ctx, http.MethodGet, "/v3/loadtracks?identifier="+url.QueryEscape(identifier), nil, &result)
 	if err != nil {
 		return nil, err
 	}
@@ -60,12 +105,12 @@ func (c *restClientImpl) LoadItem(ctx context.Context, identifier string) (*prot
 }
 
 func (c *restClientImpl) DecodeTrack(ctx context.Context, encodedTrack string) (track *protocol.Track, err error) {
-	err = c.doJSON(ctx, http.MethodGet, "/decodetrack?track="+url.QueryEscape(encodedTrack), nil, &track)
+	err = c.doJSON(ctx, http.MethodGet, "/v3/decodetrack?track="+url.QueryEscape(encodedTrack), nil, &track)
 	return
 }
 
 func (c *restClientImpl) DecodeTracks(ctx context.Context, encodedTracks []string) (tracks []protocol.Track, err error) {
-	err = c.doJSON(ctx, http.MethodPost, "/decodetracks", encodedTracks, &tracks)
+	err = c.doJSON(ctx, http.MethodPost, "/v3/decodetracks", encodedTracks, &tracks)
 	return
 }
 
