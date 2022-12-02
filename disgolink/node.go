@@ -1,4 +1,4 @@
-package lavalink
+package disgolink
 
 import (
 	"context"
@@ -9,6 +9,7 @@ import (
 	"sync"
 	"time"
 
+	"github.com/disgoorg/disgolink/v2/lavalink"
 	"github.com/gorilla/websocket"
 )
 
@@ -27,21 +28,21 @@ var ErrNodeAlreadyConnected = errors.New("node already connected")
 var _ Node = (*nodeImpl)(nil)
 
 type Node interface {
-	Lavalink() Lavalink
+	Lavalink() Client
 	Config() NodeConfig
 	Rest() RestClient
 
-	Stats() Stats
+	Stats() lavalink.Stats
 	Status() Status
 	SessionID() string
 
 	Version(ctx context.Context) (string, error)
-	Info(ctx context.Context) (*Info, error)
-	Update(ctx context.Context, update SessionUpdate) error
+	Info(ctx context.Context) (*lavalink.Info, error)
+	Update(ctx context.Context, update lavalink.SessionUpdate) error
 	LoadTracks(ctx context.Context, identifier string, handler AudioLoadResultHandler)
 
-	DecodeTrack(ctx context.Context, encodedTrack string) (*Track, error)
-	DecodeTracks(ctx context.Context, encodedTracks []string) ([]Track, error)
+	DecodeTrack(ctx context.Context, encodedTrack string) (*lavalink.Track, error)
+	DecodeTracks(ctx context.Context, encodedTracks []string) ([]lavalink.Track, error)
 
 	Open(ctx context.Context) error
 	Close()
@@ -49,8 +50,7 @@ type Node interface {
 
 type NodeConfig struct {
 	Name        string `json:"name"`
-	Host        string `json:"host"`
-	Port        string `json:"port"`
+	Address     string `json:"address"`
 	Password    string `json:"password"`
 	Secure      bool   `json:"secure"`
 	ResumingKey string `json:"resumingKey"`
@@ -65,7 +65,7 @@ func (c NodeConfig) RestURL() string {
 		scheme += "s"
 	}
 
-	return fmt.Sprintf("%s://%s:%s", scheme, c.Host, c.Port)
+	return fmt.Sprintf("%s://%s", scheme, c.Address)
 }
 
 func (c NodeConfig) WsURL() string {
@@ -74,11 +74,11 @@ func (c NodeConfig) WsURL() string {
 		scheme += "s"
 	}
 
-	return fmt.Sprintf("%s://%s:%s", scheme, c.Host, c.Port)
+	return fmt.Sprintf("%s://%s", scheme, c.Address)
 }
 
 type nodeImpl struct {
-	lavalink Lavalink
+	lavalink Client
 	config   NodeConfig
 	rest     RestClient
 
@@ -86,12 +86,12 @@ type nodeImpl struct {
 	connMu sync.Mutex
 
 	status    Status
-	stats     Stats
+	stats     lavalink.Stats
 	sessionID string
 	mu        sync.Mutex
 }
 
-func (n *nodeImpl) Lavalink() Lavalink {
+func (n *nodeImpl) Lavalink() Client {
 	return n.lavalink
 }
 
@@ -107,7 +107,7 @@ func (n *nodeImpl) Status() Status {
 	return n.status
 }
 
-func (n *nodeImpl) Stats() Stats {
+func (n *nodeImpl) Stats() lavalink.Stats {
 	return n.stats
 }
 
@@ -119,11 +119,11 @@ func (n *nodeImpl) Version(ctx context.Context) (string, error) {
 	return n.rest.Version(ctx)
 }
 
-func (n *nodeImpl) Info(ctx context.Context) (*Info, error) {
+func (n *nodeImpl) Info(ctx context.Context) (*lavalink.Info, error) {
 	return n.rest.Info(ctx)
 }
 
-func (n *nodeImpl) Update(ctx context.Context, update SessionUpdate) error {
+func (n *nodeImpl) Update(ctx context.Context, update lavalink.SessionUpdate) error {
 	_, err := n.rest.UpdateSession(ctx, n.sessionID, update)
 	return err
 }
@@ -131,41 +131,41 @@ func (n *nodeImpl) Update(ctx context.Context, update SessionUpdate) error {
 func (n *nodeImpl) LoadTracks(ctx context.Context, identifier string, handler AudioLoadResultHandler) {
 	result, err := n.rest.LoadTracks(ctx, identifier)
 	if err != nil {
-		handler.LoadFailed(Exception{
-			Message:  err.Error(),
-			Severity: SeverityFault,
-		})
+		handler.LoadFailed(err)
 	}
 
 	switch result.LoadType {
-	case LoadTypeTrackLoaded:
+	case lavalink.LoadTypeTrackLoaded:
 		handler.TrackLoaded(result.Tracks[0])
 
-	case LoadTypePlaylistLoaded:
-		result.Playlist.Tracks = result.Tracks
-		handler.PlaylistLoaded(*result.Playlist)
+	case lavalink.LoadTypePlaylistLoaded:
+		handler.PlaylistLoaded(lavalink.Playlist{
+			Info:       result.PlaylistInfo,
+			PluginInfo: result.PluginInfo,
+			Tracks:     result.Tracks,
+		})
 
-	case LoadTypeSearchResult:
+	case lavalink.LoadTypeSearchResult:
 		handler.SearchResultLoaded(result.Tracks)
 
-	case LoadTypeNoMatches:
+	case lavalink.LoadTypeNoMatches:
 		handler.NoMatches()
 
-	case LoadTypeLoadFailed:
-		handler.LoadFailed(*result.Exception)
+	case lavalink.LoadTypeLoadFailed:
+		handler.LoadFailed(result.Exception)
 	}
 }
 
-func (n *nodeImpl) DecodeTrack(ctx context.Context, encodedTrack string) (*Track, error) {
+func (n *nodeImpl) DecodeTrack(ctx context.Context, encodedTrack string) (*lavalink.Track, error) {
 	return n.rest.DecodeTrack(ctx, encodedTrack)
 }
 
-func (n *nodeImpl) DecodeTracks(ctx context.Context, encodedTracks []string) ([]Track, error) {
+func (n *nodeImpl) DecodeTracks(ctx context.Context, encodedTracks []string) ([]lavalink.Track, error) {
 	return n.rest.DecodeTracks(ctx, encodedTracks)
 }
 
 func (n *nodeImpl) Open(ctx context.Context) error {
-	n.lavalink.Logger().Debug("opening connection to lavalink node...")
+	n.lavalink.Logger().Debug("opening connection to disgolink node...")
 
 	n.connMu.Lock()
 	defer n.connMu.Unlock()
@@ -178,7 +178,7 @@ func (n *nodeImpl) Open(ctx context.Context) error {
 	header := http.Header{
 		"Authorization": []string{n.config.Password},
 		"User-Id":       []string{n.lavalink.UserID().String()},
-		"Client-Name":   []string{fmt.Sprintf("%s/%s", Name, LibraryVersion)},
+		"Client-Name":   []string{fmt.Sprintf("%s/%s", Name, Version)},
 	}
 	if n.config.ResumingKey != "" {
 		header.Add("Resume-Key", n.config.ResumingKey)
@@ -194,11 +194,11 @@ func (n *nodeImpl) Open(ctx context.Context) error {
 		return err
 	}
 
-	message, err := UnmarshalMessage(data)
+	message, err := lavalink.UnmarshalMessage(data)
 	if err != nil {
 		return fmt.Errorf("failed to unmarshal ready message. error: %w", err)
 	}
-	ready, ok := message.(MessageReady)
+	ready, ok := message.(lavalink.MessageReady)
 	if !ok {
 		return fmt.Errorf("expected ready message but got %T", message)
 	}
@@ -287,18 +287,18 @@ loop:
 			break loop
 		}
 
-		m, err := UnmarshalMessage(data)
+		m, err := lavalink.UnmarshalMessage(data)
 		if err != nil {
 			n.lavalink.Logger().Errorf("error while unmarshalling ws data: %s", err)
 			return
 		}
 
 		switch message := m.(type) {
-		case MessageStats:
+		case lavalink.MessageStats:
 
-		case MessagePlayerUpdate:
+		case lavalink.MessagePlayerUpdate:
 
-		case Event:
+		case lavalink.Event:
 			n.lavalink.Player(message.GuildID())
 		}
 

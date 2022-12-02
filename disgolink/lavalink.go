@@ -1,4 +1,4 @@
-package lavalink
+package disgolink
 
 import (
 	"context"
@@ -13,7 +13,7 @@ import (
 
 var ErrNoUserID = errors.New("no user id has been configured")
 
-type Lavalink interface {
+type Client interface {
 	Logger() log.Logger
 
 	AddNode(ctx context.Context, config NodeConfig) (Node, error)
@@ -35,9 +35,13 @@ type Lavalink interface {
 	OnVoiceStateUpdate(guildID snowflake.ID, channelID *snowflake.ID, sessionID string)
 }
 
-func New(opts ...ConfigOpt) Lavalink {
+func New(userID snowflake.ID, opts ...ConfigOpt) (Client, error) {
 	config := DefaultConfig()
 	config.Apply(opts)
+
+	if userID == 0 {
+		return nil, ErrNoUserID
+	}
 
 	if config.Logger == nil {
 		config.Logger = log.Default()
@@ -47,16 +51,17 @@ func New(opts ...ConfigOpt) Lavalink {
 	}
 	return &lavalinkImpl{
 		config:  *config,
+		userID:  userID,
 		nodes:   map[string]Node{},
 		players: map[snowflake.ID]AudioPlayer{},
-	}
+	}, nil
 }
 
-var _ Lavalink = (*lavalinkImpl)(nil)
+var _ Client = (*lavalinkImpl)(nil)
 
 type lavalinkImpl struct {
-	config    Config
-	pluginsMu sync.Mutex
+	config Config
+	userID snowflake.ID
 
 	nodesMu sync.Mutex
 	nodes   map[string]Node
@@ -70,9 +75,6 @@ func (l *lavalinkImpl) Logger() log.Logger {
 }
 
 func (l *lavalinkImpl) AddNode(ctx context.Context, config NodeConfig) (Node, error) {
-	if l.UserID() == 0 {
-		return nil, ErrNoUserID
-	}
 	node := &nodeImpl{
 		config:   config,
 		lavalink: l,
@@ -169,11 +171,7 @@ func (l *lavalinkImpl) ForPlayers(playerFunc func(player AudioPlayer)) {
 }
 
 func (l *lavalinkImpl) UserID() snowflake.ID {
-	return l.config.UserID
-}
-
-func (l *lavalinkImpl) SetUserID(userID snowflake.ID) {
-	l.config.UserID = userID
+	return l.userID
 }
 
 func (l *lavalinkImpl) Close() {

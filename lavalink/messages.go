@@ -24,8 +24,8 @@ const (
 	EventTypeTrackException  EventType = "TrackExceptionEvent"
 	EventTypeTrackStuck      EventType = "TrackStuckEvent"
 	EventTypeWebSocketClosed EventType = "WebSocketClosedEvent"
-	EventTypePlayerPause     EventType = "PlayerPauseEvent"  // not actually sent by lavalink
-	EventTypePlayerResume    EventType = "PlayerResumeEvent" // not actually sent by lavalink
+	EventTypePlayerPause     EventType = "PlayerPauseEvent"  // not actually sent by disgolink
+	EventTypePlayerResume    EventType = "PlayerResumeEvent" // not actually sent by disgolink
 )
 
 func UnmarshalMessage(data []byte) (Message, error) {

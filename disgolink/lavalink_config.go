@@ -1,11 +1,10 @@
-package lavalink
+package disgolink
 
 import (
 	"net/http"
 	"time"
 
 	"github.com/disgoorg/log"
-	"github.com/disgoorg/snowflake/v2"
 )
 
 func DefaultConfig() *Config {
@@ -18,7 +17,6 @@ func DefaultConfig() *Config {
 type Config struct {
 	Logger     log.Logger
 	HTTPClient *http.Client
-	UserID     snowflake.ID
 }
 
 type ConfigOpt func(config *Config)
@@ -40,20 +38,4 @@ func WithHTTPClient(httpClient *http.Client) ConfigOpt {
 	return func(config *Config) {
 		config.HTTPClient = httpClient
 	}
-}
-
-func WithUserID(userID snowflake.ID) ConfigOpt {
-	return func(config *Config) {
-		config.UserID = userID
-	}
-}
-
-func WithUserIDString(userID string) ConfigOpt {
-	parsed, _ := snowflake.Parse(userID)
-	return WithUserID(parsed)
-}
-
-func WithUserIDFromBotToken(botToken string) ConfigOpt {
-	token, _ := UserIDFromBotToken(botToken)
-	return WithUserID(token)
 }

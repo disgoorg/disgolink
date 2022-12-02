@@ -1,31 +1,5 @@
 package lavalink
 
-import (
-	"runtime/debug"
-	"strings"
-)
-
-const (
-	Name   = "disgolink"
-	GitHub = "https://github.com/disgoorg/" + Name
-)
-
-var (
-	LibraryVersion = getVersion()
-)
-
-func getVersion() string {
-	bi, ok := debug.ReadBuildInfo()
-	if ok {
-		for _, dep := range bi.Deps {
-			if strings.Contains(GitHub, dep.Path) {
-				return dep.Version
-			}
-		}
-	}
-	return "unknown"
-}
-
 type Info struct {
 	Version        Version  `json:"version"`
 	BuildTime      Time     `json:"buildTime"`

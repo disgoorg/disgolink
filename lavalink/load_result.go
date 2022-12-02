@@ -1,10 +1,11 @@
 package lavalink
 
 type LoadResult struct {
-	LoadType  LoadType   `json:"loadType"`
-	Playlist  *Playlist  `json:"playlist"`
-	Tracks    []Track    `json:"tracks"`
-	Exception *Exception `json:"exception"`
+	LoadType     LoadType       `json:"loadType"`
+	PlaylistInfo PlaylistInfo   `json:"playlistInfo"`
+	PluginInfo   map[string]any `json:"pluginInfo"`
+	Tracks       []Track        `json:"tracks"`
+	Exception    Exception      `json:"exception"`
 }
 
 var _ error = (*Exception)(nil)
@@ -55,57 +56,3 @@ const (
 	LoadTypeNoMatches      LoadType = "NO_MATCHES"
 	LoadTypeLoadFailed     LoadType = "LOAD_FAILED"
 )
-
-type AudioLoadResultHandler interface {
-	TrackLoaded(track Track)
-	PlaylistLoaded(playlist Playlist)
-	SearchResultLoaded(tracks []Track)
-	NoMatches()
-	LoadFailed(e Exception)
-}
-
-var _ AudioLoadResultHandler = (*FunctionalResultHandler)(nil)
-
-func NewResultHandler(trackLoaded func(track Track), playlistLoaded func(playlist Playlist), searchResultLoaded func(tracks []Track), noMatches func(), loadFailed func(e Exception)) AudioLoadResultHandler {
-	return FunctionalResultHandler{
-		trackLoaded:        trackLoaded,
-		playlistLoaded:     playlistLoaded,
-		searchResultLoaded: searchResultLoaded,
-		noMatches:          noMatches,
-		loadFailed:         loadFailed,
-	}
-}
-
-type FunctionalResultHandler struct {
-	trackLoaded        func(track Track)
-	playlistLoaded     func(playlist Playlist)
-	searchResultLoaded func(tracks []Track)
-	noMatches          func()
-	loadFailed         func(e Exception)
-}
-
-func (h FunctionalResultHandler) TrackLoaded(track Track) {
-	if h.trackLoaded != nil {
-		h.trackLoaded(track)
-	}
-}
-func (h FunctionalResultHandler) PlaylistLoaded(playlist Playlist) {
-	if h.playlistLoaded != nil {
-		h.playlistLoaded(playlist)
-	}
-}
-func (h FunctionalResultHandler) SearchResultLoaded(tracks []Track) {
-	if h.searchResultLoaded != nil {
-		h.searchResultLoaded(tracks)
-	}
-}
-func (h FunctionalResultHandler) NoMatches() {
-	if h.noMatches != nil {
-		h.noMatches()
-	}
-}
-func (h FunctionalResultHandler) LoadFailed(e Exception) {
-	if h.loadFailed != nil {
-		h.loadFailed(e)
-	}
-}

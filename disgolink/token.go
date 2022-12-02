@@ -1,4 +1,4 @@
-package lavalink
+package disgolink
 
 import (
 	"encoding/base64"

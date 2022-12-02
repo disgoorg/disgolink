@@ -24,22 +24,8 @@ This Library uses the [Disgo Snowflake](https://github.com/disgoorg/snowflake) p
 
 ### Installing
 
-For [DisGo](https://github.com/disgoorg/disgo) and [DiscordGo](https://github.com/bwmarrin/discordgo) there is a sub module which simplifies the usage of DisGolink a bit. You can skip those if you want and directly get the Lavalink Client via
-
 ```sh
-go get github.com/disgoorg/disgolink/lavalink
-```
-
-or you can get the library specific packages via
-
-#### DisGo
-```sh
-go get github.com/disgoorg/disgolink/disgolink
-```
-
-#### DiscordGo
-```sh
-go get github.com/disgoorg/disgolink/dgolink
+go get github.com/disgoorg/disgolink/v2
 ```
 
 ## Usage
@@ -49,36 +35,21 @@ go get github.com/disgoorg/disgolink/dgolink
 First create a new lavalink instance. You can do this either with
 
 ```go
-import "github.com/disgoorg/disgolink/lavalink"
-
-link := lavalink.New(lavalink.WithUserID("user_id_here"))
-```
-
-or with the library specific packages
-
-#### DisGo
-```go
 import "github.com/disgoorg/disgolink/disgolink"
 
-link := disgolink.New(disgo)
-```
-
-#### DiscordGo
-```go
-import "github.com/disgoorg/disgolink/dgolink"
-
-link := dgolink.New(session)
+var userID = snowflake.MustParse("1234567890")
+client := disgolink.New(disgolink.WithUserID(userID))
 ```
 
 then you add your lavalink nodes. This directly connects to the nodes and is a blocking call
 ```go
-node, err := link.AddNode(context.TODO(), lavalink.NodeConfig{
+node, err := client.AddNode(context.TODO(), lavalink.NodeConfig{
 		Name:        "test", // a unique node name
 		Host:        "localhost",
 		Port:        "2333",
 		Password:    "youshallnotpass",
 		Secure:      false, // ws or wss
-		ResumingKey: "", // only needed if you want to resume a lavalink session
+		ResumingKey: "", // only needed if you want to resume a disgolink session
 })
 ```
 
@@ -111,7 +82,7 @@ err := link.BestRestClient().LoadItemHandler(context.TODO(), query, lavalink.New
 
 ### Playing a track
 
-To play a track we first need to to connect to the voice channel.
+To play a track we first need to connect to the voice channel.
 Connecting to a voice channel differs with every lib but here are some quick usages with some
 ```go
 // DisGo

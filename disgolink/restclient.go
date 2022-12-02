@@ -1,4 +1,4 @@
-package lavalink
+package disgolink
 
 import (
 	"bytes"
@@ -9,37 +9,25 @@ import (
 	"net/http"
 	"net/url"
 
+	"github.com/disgoorg/disgolink/v2/lavalink"
 	"github.com/disgoorg/snowflake/v2"
 )
 
-type SearchType string
-
-// search prefixes
-const (
-	SearchTypeYoutube      SearchType = "ytsearch"
-	SearchTypeYoutubeMusic SearchType = "ytmsearch"
-	SearchTypeSoundCloud   SearchType = "scsearch"
-)
-
-func (t SearchType) Apply(searchString string) string {
-	return string(t) + ":" + searchString
-}
-
 type RestClient interface {
 	Version(ctx context.Context) (string, error)
-	Info(ctx context.Context) (*Info, error)
-	Stats(ctx context.Context) (*Stats, error)
+	Info(ctx context.Context) (*lavalink.Info, error)
+	Stats(ctx context.Context) (*lavalink.Stats, error)
 
-	UpdateSession(ctx context.Context, sessionID string, sessionUpdate SessionUpdate) (*Session, error)
+	UpdateSession(ctx context.Context, sessionID string, sessionUpdate lavalink.SessionUpdate) (*lavalink.Session, error)
 
-	Players(ctx context.Context, sessionID string) ([]Player, error)
-	Player(ctx context.Context, sessionID string, guildID snowflake.ID) (*Player, error)
-	UpdatePlayer(ctx context.Context, sessionID string, guildID snowflake.ID, playerUpdate PlayerUpdate) (*Player, error)
+	Players(ctx context.Context, sessionID string) ([]lavalink.Player, error)
+	Player(ctx context.Context, sessionID string, guildID snowflake.ID) (*lavalink.Player, error)
+	UpdatePlayer(ctx context.Context, sessionID string, guildID snowflake.ID, playerUpdate lavalink.PlayerUpdate) (*lavalink.Player, error)
 	DestroyPlayer(ctx context.Context, sessionID string, guildID snowflake.ID) error
 
-	LoadTracks(ctx context.Context, identifier string) (*LoadResult, error)
-	DecodeTrack(ctx context.Context, encodedTrack string) (*Track, error)
-	DecodeTracks(ctx context.Context, encodedTracks []string) ([]Track, error)
+	LoadTracks(ctx context.Context, identifier string) (*lavalink.LoadResult, error)
+	DecodeTrack(ctx context.Context, encodedTrack string) (*lavalink.Track, error)
+	DecodeTracks(ctx context.Context, encodedTracks []string) ([]lavalink.Track, error)
 }
 
 func newRestClientImpl(node Node, httpClient *http.Client) RestClient {
@@ -59,32 +47,32 @@ func (c *restClientImpl) Version(ctx context.Context) (string, error) {
 	return string(rawBody), nil
 }
 
-func (c *restClientImpl) Info(ctx context.Context) (info *Info, err error) {
+func (c *restClientImpl) Info(ctx context.Context) (info *lavalink.Info, err error) {
 	err = c.doJSON(ctx, http.MethodGet, "/v3/info", nil, &info)
 	return
 }
 
-func (c *restClientImpl) Stats(ctx context.Context) (stats *Stats, err error) {
+func (c *restClientImpl) Stats(ctx context.Context) (stats *lavalink.Stats, err error) {
 	err = c.doJSON(ctx, http.MethodGet, "/v3/stats", nil, &stats)
 	return
 }
 
-func (c *restClientImpl) UpdateSession(ctx context.Context, sessionID string, sessionUpdate SessionUpdate) (session *Session, err error) {
+func (c *restClientImpl) UpdateSession(ctx context.Context, sessionID string, sessionUpdate lavalink.SessionUpdate) (session *lavalink.Session, err error) {
 	err = c.doJSON(ctx, http.MethodPost, "/v3/sessions/"+sessionID, sessionUpdate, &session)
 	return
 }
 
-func (c *restClientImpl) Players(ctx context.Context, sessionID string) (players []Player, err error) {
+func (c *restClientImpl) Players(ctx context.Context, sessionID string) (players []lavalink.Player, err error) {
 	err = c.doJSON(ctx, http.MethodGet, "/v3/sessions/"+sessionID+"/players", nil, &players)
 	return
 }
 
-func (c *restClientImpl) Player(ctx context.Context, sessionID string, guildID snowflake.ID) (player *Player, err error) {
+func (c *restClientImpl) Player(ctx context.Context, sessionID string, guildID snowflake.ID) (player *lavalink.Player, err error) {
 	err = c.doJSON(ctx, http.MethodGet, "/v3/sessions/"+sessionID+"/players/"+guildID.String(), nil, &player)
 	return
 }
 
-func (c *restClientImpl) UpdatePlayer(ctx context.Context, sessionID string, guildID snowflake.ID, playerUpdate PlayerUpdate) (player *Player, err error) {
+func (c *restClientImpl) UpdatePlayer(ctx context.Context, sessionID string, guildID snowflake.ID, playerUpdate lavalink.PlayerUpdate) (player *lavalink.Player, err error) {
 	err = c.doJSON(ctx, http.MethodPost, "/v3/sessions/"+sessionID+"/players/"+guildID.String(), playerUpdate, &player)
 	return
 }
@@ -94,21 +82,17 @@ func (c *restClientImpl) DestroyPlayer(ctx context.Context, sessionID string, gu
 	return err
 }
 
-func (c *restClientImpl) LoadTracks(ctx context.Context, identifier string) (*LoadResult, error) {
-	var result LoadResult
-	err := c.doJSON(ctx, http.MethodGet, "/v3/loadtracks?identifier="+url.QueryEscape(identifier), nil, &result)
-	if err != nil {
-		return nil, err
-	}
-	return &result, nil
+func (c *restClientImpl) LoadTracks(ctx context.Context, identifier string) (result *lavalink.LoadResult, err error) {
+	err = c.doJSON(ctx, http.MethodGet, "/v3/loadtracks?identifier="+url.QueryEscape(identifier), nil, &result)
+	return
 }
 
-func (c *restClientImpl) DecodeTrack(ctx context.Context, encodedTrack string) (track *Track, err error) {
+func (c *restClientImpl) DecodeTrack(ctx context.Context, encodedTrack string) (track *lavalink.Track, err error) {
 	err = c.doJSON(ctx, http.MethodGet, "/v3/decodetrack?track="+url.QueryEscape(encodedTrack), nil, &track)
 	return
 }
 
-func (c *restClientImpl) DecodeTracks(ctx context.Context, encodedTracks []string) (tracks []Track, err error) {
+func (c *restClientImpl) DecodeTracks(ctx context.Context, encodedTracks []string) (tracks []lavalink.Track, err error) {
 	err = c.doJSON(ctx, http.MethodPost, "/v3/decodetracks", encodedTracks, &tracks)
 	return
 }
@@ -133,9 +117,9 @@ func (c *restClientImpl) do(ctx context.Context, method string, path string, rqB
 	}
 
 	if rs.StatusCode >= http.StatusBadRequest {
-		var lavalinkErr Error
+		var lavalinkErr lavalink.Error
 		if err = json.Unmarshal(rawBody, &lavalinkErr); err != nil {
-			return rs.StatusCode, rawBody, fmt.Errorf("error while unmarshalling lavalink error: %w", err)
+			return rs.StatusCode, rawBody, fmt.Errorf("error while unmarshalling disgolink error: %w", err)
 		}
 		return rs.StatusCode, nil, lavalinkErr
 	}
