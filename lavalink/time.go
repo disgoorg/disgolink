@@ -5,6 +5,12 @@ import (
 	"time"
 )
 
+func Now() Time {
+	return Time{
+		Time: time.Now(),
+	}
+}
+
 type Time struct {
 	time.Time
 }

@@ -54,6 +54,22 @@ var commands = []discord.ApplicationCommandCreate{
 			},
 		},
 	},
+	discord.SlashCommandCreate{
+		Name:        "pause",
+		Description: "Pauses the current song",
+	},
+	discord.SlashCommandCreate{
+		Name:        "now-playing",
+		Description: "Shows the current playing song",
+	},
+	discord.SlashCommandCreate{
+		Name:        "stop",
+		Description: "Stops the current song and stops the player",
+	},
+	discord.SlashCommandCreate{
+		Name: "players",
+		Description: "Shows all active players",
+	},
 }
 
 func registerCommands(client bot.Client) {

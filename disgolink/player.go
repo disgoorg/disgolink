@@ -12,7 +12,7 @@ import (
 
 var ErrPlayerNoNode = errors.New("player has no node")
 
-type AudioPlayer interface {
+type Player interface {
 	GuildID() snowflake.ID
 	ChannelID() *snowflake.ID
 	Track() *lavalink.Track
@@ -22,7 +22,7 @@ type AudioPlayer interface {
 	Volume() int
 	Filters() lavalink.Filters
 
-	Update(ctx context.Context, update lavalink.PlayerUpdate) error
+	Update(ctx context.Context, opts ...lavalink.PlayerUpdateOpt) error
 	Destroy(ctx context.Context) error
 
 	Lavalink() Client
@@ -38,7 +38,7 @@ type AudioPlayer interface {
 	OnVoiceStateUpdate(channelID *snowflake.ID, sessionID string)
 }
 
-func NewPlayer(lavalink Client, node Node, guildID snowflake.ID) AudioPlayer {
+func NewPlayer(lavalink Client, node Node, guildID snowflake.ID) Player {
 	return &defaultPlayer{
 		lavalink: lavalink,
 		node:     node,
@@ -108,13 +108,32 @@ func (p *defaultPlayer) Filters() lavalink.Filters {
 	return p.filters
 }
 
-func (p *defaultPlayer) Update(ctx context.Context, update lavalink.PlayerUpdate) error {
+func (p *defaultPlayer) Update(ctx context.Context, opts ...lavalink.PlayerUpdateOpt) error {
 	if p.node == nil {
 		return ErrPlayerNoNode
 	}
 
-	_, err := p.node.Rest().UpdatePlayer(ctx, p.node.SessionID(), p.guildID, update)
-	return err
+	update := lavalink.DefaultPlayerUpdate()
+	update.Apply(opts)
+
+	updatedPlayer, err := p.node.Rest().UpdatePlayer(ctx, p.node.SessionID(), p.guildID, *update)
+	if err != nil {
+		return err
+	}
+
+	p.track = updatedPlayer.Track
+	if updatedPlayer.Track != nil {
+		p.state.Position = updatedPlayer.Track.Info.Position
+	} else {
+		p.state.Position = 0
+	}
+	p.state.Time = lavalink.Now()
+	p.volume = updatedPlayer.Volume
+	p.paused = updatedPlayer.Paused
+	p.voice = updatedPlayer.Voice
+	p.filters = updatedPlayer.Filters
+
+	return nil
 }
 
 func (p *defaultPlayer) Destroy(ctx context.Context) error {
@@ -174,6 +193,7 @@ func (p *defaultPlayer) OnEvent(event lavalink.Event) {
 
 	case lavalink.EventWebSocketClosed:
 		p.voice = lavalink.VoiceState{}
+		p.state.Connected = false
 	}
 	p.EmitEvent(event)
 }
@@ -207,6 +227,7 @@ func (p *defaultPlayer) OnVoiceStateUpdate(channelID *snowflake.ID, sessionID st
 		if err := p.Destroy(ctx); err != nil {
 			p.node.Lavalink().Logger().Error("error while destroying player: ", err)
 		}
+		p.lavalink.RemovePlayer(p.guildID)
 		return
 	}
 	p.channelID = channelID

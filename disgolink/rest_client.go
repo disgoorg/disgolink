@@ -13,6 +13,30 @@ import (
 	"github.com/disgoorg/snowflake/v2"
 )
 
+type Endpoint string
+
+func (e Endpoint) Format(a ...any) string {
+	return fmt.Sprintf(string(e), a...)
+}
+
+var (
+	EndpointVersion Endpoint = "/version"
+	EndpointInfo    Endpoint = "/v3/info"
+	EndpointStats   Endpoint = "/v3/stats"
+
+	EndpointUpdateSession Endpoint = "/v3/sessions/%s"
+	EndpointPlayers       Endpoint = "/v3/sessions/%s/players"
+	EndpointPlayer        Endpoint = "/v3/sessions/%s/players/%s"
+	EndpointUpdatePlayer  Endpoint = "/v3/sessions/%s/players/%s?noReplace=%t"
+	EndpointDestroyPlayer Endpoint = "/v3/sessions/%s/players/%s"
+
+	EndpointLoadTracks   Endpoint = "/v3/loadtracks?identifier=%s"
+	EndpointDecodeTrack  Endpoint = "/v3/decodetrack?track=%s"
+	EndpointDecodeTracks Endpoint = "/v3/decodetracks"
+
+	EndpointWebSocket Endpoint = "/v3/websocket"
+)
+
 type RestClient interface {
 	Version(ctx context.Context) (string, error)
 	Info(ctx context.Context) (*lavalink.Info, error)
@@ -40,7 +64,7 @@ type restClientImpl struct {
 }
 
 func (c *restClientImpl) Version(ctx context.Context) (string, error) {
-	_, rawBody, err := c.do(ctx, http.MethodGet, "/version", nil)
+	_, rawBody, err := c.do(ctx, http.MethodGet, EndpointVersion.Format(), nil)
 	if err != nil {
 		return "", err
 	}
@@ -48,52 +72,52 @@ func (c *restClientImpl) Version(ctx context.Context) (string, error) {
 }
 
 func (c *restClientImpl) Info(ctx context.Context) (info *lavalink.Info, err error) {
-	err = c.doJSON(ctx, http.MethodGet, "/v3/info", nil, &info)
+	err = c.doJSON(ctx, http.MethodGet, EndpointInfo.Format(), nil, &info)
 	return
 }
 
 func (c *restClientImpl) Stats(ctx context.Context) (stats *lavalink.Stats, err error) {
-	err = c.doJSON(ctx, http.MethodGet, "/v3/stats", nil, &stats)
+	err = c.doJSON(ctx, http.MethodGet, EndpointStats.Format(), nil, &stats)
 	return
 }
 
 func (c *restClientImpl) UpdateSession(ctx context.Context, sessionID string, sessionUpdate lavalink.SessionUpdate) (session *lavalink.Session, err error) {
-	err = c.doJSON(ctx, http.MethodPost, "/v3/sessions/"+sessionID, sessionUpdate, &session)
+	err = c.doJSON(ctx, http.MethodPost, EndpointUpdateSession.Format(sessionID), sessionUpdate, &session)
 	return
 }
 
 func (c *restClientImpl) Players(ctx context.Context, sessionID string) (players []lavalink.Player, err error) {
-	err = c.doJSON(ctx, http.MethodGet, "/v3/sessions/"+sessionID+"/players", nil, &players)
+	err = c.doJSON(ctx, http.MethodGet, EndpointPlayers.Format(sessionID), nil, &players)
 	return
 }
 
 func (c *restClientImpl) Player(ctx context.Context, sessionID string, guildID snowflake.ID) (player *lavalink.Player, err error) {
-	err = c.doJSON(ctx, http.MethodGet, "/v3/sessions/"+sessionID+"/players/"+guildID.String(), nil, &player)
+	err = c.doJSON(ctx, http.MethodGet, EndpointPlayer.Format(sessionID, guildID), nil, &player)
 	return
 }
 
 func (c *restClientImpl) UpdatePlayer(ctx context.Context, sessionID string, guildID snowflake.ID, playerUpdate lavalink.PlayerUpdate) (player *lavalink.Player, err error) {
-	err = c.doJSON(ctx, http.MethodPost, "/v3/sessions/"+sessionID+"/players/"+guildID.String(), playerUpdate, &player)
+	err = c.doJSON(ctx, http.MethodPatch, EndpointUpdatePlayer.Format(sessionID, guildID, playerUpdate.NoReplace), playerUpdate, &player)
 	return
 }
 
 func (c *restClientImpl) DestroyPlayer(ctx context.Context, sessionID string, guildID snowflake.ID) error {
-	_, _, err := c.do(ctx, http.MethodDelete, "/v3/sessions/"+sessionID+"/players/"+guildID.String(), nil)
+	_, _, err := c.do(ctx, http.MethodDelete, EndpointDestroyPlayer.Format(sessionID, guildID), nil)
 	return err
 }
 
 func (c *restClientImpl) LoadTracks(ctx context.Context, identifier string) (result *lavalink.LoadResult, err error) {
-	err = c.doJSON(ctx, http.MethodGet, "/v3/loadtracks?identifier="+url.QueryEscape(identifier), nil, &result)
+	err = c.doJSON(ctx, http.MethodGet, EndpointLoadTracks.Format(url.QueryEscape(identifier)), nil, &result)
 	return
 }
 
 func (c *restClientImpl) DecodeTrack(ctx context.Context, encodedTrack string) (track *lavalink.Track, err error) {
-	err = c.doJSON(ctx, http.MethodGet, "/v3/decodetrack?track="+url.QueryEscape(encodedTrack), nil, &track)
+	err = c.doJSON(ctx, http.MethodGet, EndpointDecodeTrack.Format(url.QueryEscape(encodedTrack)), nil, &track)
 	return
 }
 
 func (c *restClientImpl) DecodeTracks(ctx context.Context, encodedTracks []string) (tracks []lavalink.Track, err error) {
-	err = c.doJSON(ctx, http.MethodPost, "/v3/decodetracks", encodedTracks, &tracks)
+	err = c.doJSON(ctx, http.MethodPost, EndpointDecodeTracks.Format(), encodedTracks, &tracks)
 	return
 }
 
@@ -103,6 +127,9 @@ func (c *restClientImpl) do(ctx context.Context, method string, path string, rqB
 		return 0, nil, err
 	}
 	rq.Header.Set("Authorization", c.node.Config().Password)
+	if rqBody != nil {
+		rq.Header.Set("Content-Type", "application/json")
+	}
 
 	rs, err := c.httpClient.Do(rq)
 	if err != nil {

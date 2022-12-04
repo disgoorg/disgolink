@@ -2,11 +2,9 @@ module github.com/disgoorg/disgolink/v2/_examples/disgo
 
 go 1.18
 
-replace github.com/disgoorg/disgolink/v2 => ../../
-
 require (
 	github.com/disgoorg/disgo v0.14.0
-	github.com/disgoorg/disgolink/v2 v2.0.0
+	github.com/disgoorg/disgolink/v2 v2.0.0-20221202182417-6fda63ee401a
 	github.com/disgoorg/json v1.0.0
 	github.com/disgoorg/log v1.2.0
 	github.com/disgoorg/snowflake/v2 v2.0.1

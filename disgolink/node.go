@@ -88,7 +88,6 @@ type nodeImpl struct {
 	status    Status
 	stats     lavalink.Stats
 	sessionID string
-	mu        sync.Mutex
 }
 
 func (n *nodeImpl) Lavalink() Client {
@@ -295,11 +294,22 @@ loop:
 
 		switch message := m.(type) {
 		case lavalink.MessageStats:
+			n.stats = lavalink.Stats(message)
 
 		case lavalink.MessagePlayerUpdate:
+			player := n.lavalink.ExistingPlayer(message.GuildID)
+			if player == nil {
+				continue
+			}
+			player.OnPlayerUpdate(message.State)
 
 		case lavalink.Event:
-			n.lavalink.Player(message.GuildID())
+			player := n.lavalink.ExistingPlayer(message.GuildID())
+			if player == nil {
+				continue
+			}
+			player.OnEvent(message)
+
 		}
 
 	}

@@ -22,11 +22,11 @@ type Client interface {
 	BestNode() Node
 	RemoveNode(name string)
 
-	Player(guildID snowflake.ID) AudioPlayer
-	PlayerOnNode(name string, guildID snowflake.ID) AudioPlayer
-	ExistingPlayer(guildID snowflake.ID) AudioPlayer
+	Player(guildID snowflake.ID) Player
+	PlayerOnNode(name string, guildID snowflake.ID) Player
+	ExistingPlayer(guildID snowflake.ID) Player
 	RemovePlayer(guildID snowflake.ID)
-	ForPlayers(playerFunc func(player AudioPlayer))
+	ForPlayers(playerFunc func(player Player))
 
 	UserID() snowflake.ID
 	Close()
@@ -49,17 +49,17 @@ func New(userID snowflake.ID, opts ...ConfigOpt) (Client, error) {
 	if config.HTTPClient == nil {
 		config.HTTPClient = &http.Client{Timeout: 20 * time.Second}
 	}
-	return &lavalinkImpl{
+	return &clientImpl{
 		config:  *config,
 		userID:  userID,
 		nodes:   map[string]Node{},
-		players: map[snowflake.ID]AudioPlayer{},
+		players: map[snowflake.ID]Player{},
 	}, nil
 }
 
-var _ Client = (*lavalinkImpl)(nil)
+var _ Client = (*clientImpl)(nil)
 
-type lavalinkImpl struct {
+type clientImpl struct {
 	config Config
 	userID snowflake.ID
 
@@ -67,14 +67,14 @@ type lavalinkImpl struct {
 	nodes   map[string]Node
 
 	playersMu sync.Mutex
-	players   map[snowflake.ID]AudioPlayer
+	players   map[snowflake.ID]Player
 }
 
-func (l *lavalinkImpl) Logger() log.Logger {
+func (l *clientImpl) Logger() log.Logger {
 	return l.config.Logger
 }
 
-func (l *lavalinkImpl) AddNode(ctx context.Context, config NodeConfig) (Node, error) {
+func (l *clientImpl) AddNode(ctx context.Context, config NodeConfig) (Node, error) {
 	node := &nodeImpl{
 		config:   config,
 		lavalink: l,
@@ -91,7 +91,7 @@ func (l *lavalinkImpl) AddNode(ctx context.Context, config NodeConfig) (Node, er
 	return node, nil
 }
 
-func (l *lavalinkImpl) Nodes() []Node {
+func (l *clientImpl) Nodes() []Node {
 	l.nodesMu.Lock()
 	defer l.nodesMu.Unlock()
 	nodes := make([]Node, len(l.nodes))
@@ -103,13 +103,13 @@ func (l *lavalinkImpl) Nodes() []Node {
 	return nodes
 }
 
-func (l *lavalinkImpl) Node(name string) Node {
+func (l *clientImpl) Node(name string) Node {
 	l.nodesMu.Lock()
 	defer l.nodesMu.Unlock()
 	return l.nodes[name]
 }
 
-func (l *lavalinkImpl) BestNode() Node {
+func (l *clientImpl) BestNode() Node {
 	l.nodesMu.Lock()
 	defer l.nodesMu.Unlock()
 	var bestNode Node
@@ -121,7 +121,7 @@ func (l *lavalinkImpl) BestNode() Node {
 	return bestNode
 }
 
-func (l *lavalinkImpl) RemoveNode(name string) {
+func (l *clientImpl) RemoveNode(name string) {
 	l.nodesMu.Lock()
 	defer l.nodesMu.Unlock()
 	if node, ok := l.nodes[name]; ok {
@@ -130,11 +130,11 @@ func (l *lavalinkImpl) RemoveNode(name string) {
 	}
 }
 
-func (l *lavalinkImpl) Player(guildID snowflake.ID) AudioPlayer {
+func (l *clientImpl) Player(guildID snowflake.ID) Player {
 	return l.PlayerOnNode("", guildID)
 }
 
-func (l *lavalinkImpl) PlayerOnNode(name string, guildID snowflake.ID) AudioPlayer {
+func (l *clientImpl) PlayerOnNode(name string, guildID snowflake.ID) Player {
 	l.playersMu.Lock()
 	defer l.playersMu.Unlock()
 	if player, ok := l.players[guildID]; ok {
@@ -150,19 +150,19 @@ func (l *lavalinkImpl) PlayerOnNode(name string, guildID snowflake.ID) AudioPlay
 	return player
 }
 
-func (l *lavalinkImpl) ExistingPlayer(guildID snowflake.ID) AudioPlayer {
+func (l *clientImpl) ExistingPlayer(guildID snowflake.ID) Player {
 	l.playersMu.Lock()
 	defer l.playersMu.Unlock()
 	return l.players[guildID]
 }
 
-func (l *lavalinkImpl) RemovePlayer(guildID snowflake.ID) {
+func (l *clientImpl) RemovePlayer(guildID snowflake.ID) {
 	l.playersMu.Lock()
 	defer l.playersMu.Unlock()
 	delete(l.players, guildID)
 }
 
-func (l *lavalinkImpl) ForPlayers(playerFunc func(player AudioPlayer)) {
+func (l *clientImpl) ForPlayers(playerFunc func(player Player)) {
 	l.playersMu.Lock()
 	defer l.playersMu.Unlock()
 	for _, player := range l.players {
@@ -170,11 +170,11 @@ func (l *lavalinkImpl) ForPlayers(playerFunc func(player AudioPlayer)) {
 	}
 }
 
-func (l *lavalinkImpl) UserID() snowflake.ID {
+func (l *clientImpl) UserID() snowflake.ID {
 	return l.userID
 }
 
-func (l *lavalinkImpl) Close() {
+func (l *clientImpl) Close() {
 	l.nodesMu.Lock()
 	defer l.nodesMu.Unlock()
 	for _, node := range l.nodes {
@@ -182,7 +182,7 @@ func (l *lavalinkImpl) Close() {
 	}
 }
 
-func (l *lavalinkImpl) OnVoiceServerUpdate(guildID snowflake.ID, token string, endpoint string) {
+func (l *clientImpl) OnVoiceServerUpdate(guildID snowflake.ID, token string, endpoint string) {
 	player := l.ExistingPlayer(guildID)
 	if player == nil {
 		return
@@ -190,7 +190,7 @@ func (l *lavalinkImpl) OnVoiceServerUpdate(guildID snowflake.ID, token string, e
 	player.OnVoiceServerUpdate(token, endpoint)
 }
 
-func (l *lavalinkImpl) OnVoiceStateUpdate(guildID snowflake.ID, channelID *snowflake.ID, sessionID string) {
+func (l *clientImpl) OnVoiceStateUpdate(guildID snowflake.ID, channelID *snowflake.ID, sessionID string) {
 	player := l.ExistingPlayer(guildID)
 	if player == nil {
 		return

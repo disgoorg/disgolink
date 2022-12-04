@@ -7,7 +7,8 @@ import (
 
 const (
 	Name   = "disgolink"
-	GitHub = "https://github.com/disgoorg/" + Name
+	Module = "github.com/disgoorg/" + Name
+	GitHub = "https://" + Module
 )
 
 var (
@@ -18,7 +19,7 @@ func getVersion() string {
 	bi, ok := debug.ReadBuildInfo()
 	if ok {
 		for _, dep := range bi.Deps {
-			if strings.Contains(GitHub, dep.Path) {
+			if strings.Contains(dep.Path, Module) {
 				return dep.Version
 			}
 		}
