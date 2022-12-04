@@ -129,6 +129,19 @@ func (p *defaultPlayer) Update(ctx context.Context, opts ...lavalink.PlayerUpdat
 	}
 	p.state.Time = lavalink.Now()
 	p.volume = updatedPlayer.Volume
+
+	// dispatch artificial player resume/pause event
+	if update.Paused != nil {
+		if p.paused && !*update.Paused {
+			go p.OnEvent(lavalink.EventPlayerResume{
+				GuildID_: p.guildID,
+			})
+		} else if !p.paused && *update.Paused {
+			go p.OnEvent(lavalink.EventPlayerPause{
+				GuildID_: p.guildID,
+			})
+		}
+	}
 	p.paused = updatedPlayer.Paused
 	p.voice = updatedPlayer.Voice
 	p.filters = updatedPlayer.Filters
@@ -183,6 +196,12 @@ func (p *defaultPlayer) RemoveListeners(listeners ...EventListener) {
 
 func (p *defaultPlayer) OnEvent(event lavalink.Event) {
 	switch e := event.(type) {
+	case lavalink.EventPlayerPause:
+		p.paused = true
+
+	case lavalink.EventPlayerResume:
+		p.paused = false
+
 	case lavalink.EventTrackEnd:
 		if e.Reason != lavalink.TrackEndReasonReplaced && e.Reason != lavalink.TrackEndReasonStopped {
 			p.track = nil
