@@ -49,6 +49,13 @@ func main() {
 	}
 	b.Session = session
 
+	session.State.TrackVoice = true
+	session.Identify.Intents = discordgo.IntentGuilds | discordgo.IntentsGuildVoiceStates
+
+	session.AddHandler(b.onApplicationCommand)
+	session.AddHandler(b.onVoiceStateUpdate)
+	session.AddHandler(b.onVoiceServerUpdate)
+
 	if err = session.Open(); err != nil {
 		log.Fatal(err)
 	}
@@ -95,7 +102,7 @@ func main() {
 	<-s
 }
 
-func (b *Bot) onApplicationCommand(event *discordgo.InteractionCreate) {
+func (b *Bot) onApplicationCommand(session *discordgo.Session, event *discordgo.InteractionCreate) {
 	data := event.ApplicationCommandData()
 
 	handler, ok := b.Handlers[data.Name]
@@ -108,7 +115,7 @@ func (b *Bot) onApplicationCommand(event *discordgo.InteractionCreate) {
 	}
 }
 
-func (b *Bot) onVoiceStateUpdate(event *discordgo.VoiceStateUpdate) {
+func (b *Bot) onVoiceStateUpdate(session *discordgo.Session, event *discordgo.VoiceStateUpdate) {
 	var guildID *snowflake.ID
 	if event.GuildID != "" {
 		id := snowflake.MustParse(event.GuildID)
@@ -117,6 +124,6 @@ func (b *Bot) onVoiceStateUpdate(event *discordgo.VoiceStateUpdate) {
 	b.Lavalink.OnVoiceStateUpdate(snowflake.MustParse(event.VoiceState.GuildID), guildID, event.VoiceState.SessionID)
 }
 
-func (b *Bot) onVoiceServerUpdate(event *discordgo.VoiceServerUpdate) {
+func (b *Bot) onVoiceServerUpdate(session *discordgo.Session, event *discordgo.VoiceServerUpdate) {
 	b.Lavalink.OnVoiceServerUpdate(snowflake.MustParse(event.GuildID), event.Token, event.Endpoint)
 }

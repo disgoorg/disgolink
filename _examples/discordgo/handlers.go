@@ -114,6 +114,16 @@ func (b *Bot) play(event *discordgo.InteractionCreate, data discordgo.Applicatio
 		identifier = lavalink.SearchTypeYoutube.Apply(identifier)
 	}
 
+	voiceState, err := b.Session.State.VoiceState(event.GuildID, event.Member.User.ID)
+	if err != nil {
+		return b.Session.InteractionRespond(event.Interaction, &discordgo.InteractionResponse{
+			Type: discordgo.InteractionResponseChannelMessageWithSource,
+			Data: &discordgo.InteractionResponseData{
+				Content: fmt.Sprintf("Error while getting voice state: `%s`", err),
+			},
+		})
+	}
+
 	if err := b.Session.InteractionRespond(event.Interaction, &discordgo.InteractionResponse{
 		Type: discordgo.InteractionResponseDeferredChannelMessageWithSource,
 	}); err != nil {
@@ -158,7 +168,7 @@ func (b *Bot) play(event *discordgo.InteractionCreate, data discordgo.Applicatio
 		return nil
 	}
 
-	if err := b.Session.ChannelVoiceJoinManual(event.GuildID, "", false, false); err != nil {
+	if err := b.Session.ChannelVoiceJoinManual(event.GuildID, voiceState.ChannelID, false, false); err != nil {
 		return err
 	}
 
