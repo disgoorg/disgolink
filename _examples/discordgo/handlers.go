@@ -11,6 +11,79 @@ import (
 	"time"
 )
 
+func (b *Bot) queueType(event *discordgo.InteractionCreate, data discordgo.ApplicationCommandInteractionData) error {
+	queue := b.Queues.Get(event.GuildID)
+	if queue == nil {
+		return b.Session.InteractionRespond(event.Interaction, &discordgo.InteractionResponse{
+			Type: discordgo.InteractionResponseChannelMessageWithSource,
+			Data: &discordgo.InteractionResponseData{
+				Content: "No player found",
+			},
+		})
+	}
+
+	queue.Type = QueueType(data.Options[0].Value.(string))
+	return b.Session.InteractionRespond(event.Interaction, &discordgo.InteractionResponse{
+		Type: discordgo.InteractionResponseChannelMessageWithSource,
+		Data: &discordgo.InteractionResponseData{
+			Content: fmt.Sprintf("Queue type set to `%s`", queue.Type),
+		},
+	})
+}
+
+func (b *Bot) clearQueue(event *discordgo.InteractionCreate, data discordgo.ApplicationCommandInteractionData) error {
+	queue := b.Queues.Get(event.GuildID)
+	if queue == nil {
+		return b.Session.InteractionRespond(event.Interaction, &discordgo.InteractionResponse{
+			Type: discordgo.InteractionResponseChannelMessageWithSource,
+			Data: &discordgo.InteractionResponseData{
+				Content: "No player found",
+			},
+		})
+	}
+
+	queue.Clear()
+	return b.Session.InteractionRespond(event.Interaction, &discordgo.InteractionResponse{
+		Type: discordgo.InteractionResponseChannelMessageWithSource,
+		Data: &discordgo.InteractionResponseData{
+			Content: "Queue cleared",
+		},
+	})
+}
+
+func (b *Bot) queue(event *discordgo.InteractionCreate, data discordgo.ApplicationCommandInteractionData) error {
+	queue := b.Queues.Get(event.GuildID)
+	if queue == nil {
+		return b.Session.InteractionRespond(event.Interaction, &discordgo.InteractionResponse{
+			Type: discordgo.InteractionResponseChannelMessageWithSource,
+			Data: &discordgo.InteractionResponseData{
+				Content: "No player found",
+			},
+		})
+	}
+
+	if len(queue.Tracks) == 0 {
+		return b.Session.InteractionRespond(event.Interaction, &discordgo.InteractionResponse{
+			Type: discordgo.InteractionResponseChannelMessageWithSource,
+			Data: &discordgo.InteractionResponseData{
+				Content: "No tracks in queue",
+			},
+		})
+	}
+
+	var tracks string
+	for i, track := range queue.Tracks {
+		tracks += fmt.Sprintf("%d. [`%s`](<%s>)\n", i+1, track.Info.Title, *track.Info.URI)
+	}
+
+	return b.Session.InteractionRespond(event.Interaction, &discordgo.InteractionResponse{
+		Type: discordgo.InteractionResponseChannelMessageWithSource,
+		Data: &discordgo.InteractionResponseData{
+			Content: fmt.Sprintf("Queue `%s`:\n%s", queue.Type, tracks),
+		},
+	})
+}
+
 func (b *Bot) pause(event *discordgo.InteractionCreate, data discordgo.ApplicationCommandInteractionData) error {
 	player := b.Lavalink.ExistingPlayer(snowflake.MustParse(event.GuildID))
 	if player == nil {
@@ -130,6 +203,9 @@ func (b *Bot) play(event *discordgo.InteractionCreate, data discordgo.Applicatio
 		return err
 	}
 
+	player := b.Lavalink.Player(snowflake.MustParse(event.GuildID))
+	queue := b.Queues.Get(event.GuildID)
+
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
 
@@ -139,19 +215,32 @@ func (b *Bot) play(event *discordgo.InteractionCreate, data discordgo.Applicatio
 			_, _ = b.Session.InteractionResponseEdit(event.Interaction, &discordgo.WebhookEdit{
 				Content: json.Ptr(fmt.Sprintf("Loading track: [`%s`](<%s>)", track.Info.Title, *track.Info.URI)),
 			})
-			toPlay = &track
+			if player.Track() == nil {
+				toPlay = &track
+			} else {
+				queue.Add(track)
+			}
 		},
 		func(playlist lavalink.Playlist) {
 			_, _ = b.Session.InteractionResponseEdit(event.Interaction, &discordgo.WebhookEdit{
 				Content: json.Ptr(fmt.Sprintf("Loaded playlist: `%s` with `%d` tracks", playlist.Info.Name, len(playlist.Tracks))),
 			})
-			toPlay = &playlist.Tracks[0]
+			if player.Track() == nil {
+				toPlay = &playlist.Tracks[0]
+				queue.Add(playlist.Tracks[1:]...)
+			} else {
+				queue.Add(playlist.Tracks...)
+			}
 		},
 		func(tracks []lavalink.Track) {
 			_, _ = b.Session.InteractionResponseEdit(event.Interaction, &discordgo.WebhookEdit{
 				Content: json.Ptr(fmt.Sprintf("Loaded search result: [`%s`](<%s>)", tracks[0].Info.Title, *tracks[0].Info.URI)),
 			})
-			toPlay = &tracks[0]
+			if player.Track() == nil {
+				toPlay = &tracks[0]
+			} else {
+				queue.Add(tracks[0])
+			}
 		},
 		func() {
 			_, _ = b.Session.InteractionResponseEdit(event.Interaction, &discordgo.WebhookEdit{
@@ -172,5 +261,5 @@ func (b *Bot) play(event *discordgo.InteractionCreate, data discordgo.Applicatio
 		return err
 	}
 
-	return b.Lavalink.Player(snowflake.MustParse(event.GuildID)).Update(context.TODO(), lavalink.WithTrack(*toPlay))
+	return player.Update(context.TODO(), lavalink.WithTrack(*toPlay))
 }

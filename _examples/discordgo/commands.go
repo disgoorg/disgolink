@@ -34,6 +34,40 @@ var commands = []*discordgo.ApplicationCommand{
 		Name:        "players",
 		Description: "Shows all active players",
 	},
+	{
+		Name:        "queue",
+		Description: "Shows the current queue",
+	},
+	{
+		Name:        "clear-queue",
+		Description: "Clears the current queue",
+	},
+	{
+		Name: "queue-type",
+		Description: "Sets the queue type",
+		Options: []*discordgo.ApplicationCommandOption{
+			{
+				Type:        discordgo.ApplicationCommandOptionString,
+				Name:        "type",
+				Description: "The queue type",
+				Required:    true,
+				Choices: []*discordgo.ApplicationCommandOptionChoice{
+					{
+						Name:  "default",
+						Value: "default",
+					},
+					{
+						Name:  "repeat-track",
+						Value: "repeat-track",
+					},
+					{
+						Name:  "repeat-queue",
+						Value: "repeat-queue",
+					},
+				},
+			},
+		},
+	},
 }
 
 func registerCommands(s *discordgo.Session) {

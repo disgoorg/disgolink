@@ -54,6 +54,7 @@ func New(userID snowflake.ID, opts ...ConfigOpt) Client {
 		userID:     userID,
 		nodes:      map[string]Node{},
 		players:    map[snowflake.ID]Player{},
+		listeners:  config.Listeners,
 	}
 }
 

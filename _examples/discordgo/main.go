@@ -19,7 +19,7 @@ var (
 	urlPattern    = regexp.MustCompile("^https?://[-a-zA-Z0-9+&@#/%?=~_|!:,.;]*[-a-zA-Z0-9+&@#/%=~_|]?")
 	searchPattern = regexp.MustCompile(`^(.{2})search:(.+)`)
 
-	TOKEN   = os.Getenv("TOKEN")
+	TOKEN    = os.Getenv("TOKEN")
 	GUILD_ID = os.Getenv("GUILD_ID")
 
 	nodeName      = os.Getenv("NODE_NAME")
@@ -32,6 +32,7 @@ type Bot struct {
 	Session  *discordgo.Session
 	Lavalink disgolink.Client
 	Handlers map[string]func(event *discordgo.InteractionCreate, data discordgo.ApplicationCommandInteractionData) error
+	Queues   *QueueManager
 }
 
 func main() {
@@ -41,7 +42,11 @@ func main() {
 	log.Info("discordgo version: ", discordgo.VERSION)
 	log.Info("disgolink version: ", disgolink.Version)
 
-	b := &Bot{}
+	b := &Bot{
+		Queues: &QueueManager{
+			queues: make(map[string]*Queue),
+		},
+	}
 
 	session, err := discordgo.New("Bot " + TOKEN)
 	if err != nil {
@@ -77,6 +82,9 @@ func main() {
 		"pause":       b.pause,
 		"now-playing": b.nowPlaying,
 		"stop":        b.stop,
+		"queue":       b.queue,
+		"clear-queue": b.clearQueue,
+		"queue-type":  b.queueType,
 	}
 
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
@@ -96,7 +104,7 @@ func main() {
 	}
 	log.Infof("node version: %s", version)
 
-	log.Info("DisGo example is now running. Press CTRL-C to exit.")
+	log.Info("DiscordGo example is now running. Press CTRL-C to exit.")
 	s := make(chan os.Signal, 1)
 	signal.Notify(s, syscall.SIGINT, syscall.SIGTERM, os.Interrupt)
 	<-s
@@ -116,12 +124,19 @@ func (b *Bot) onApplicationCommand(session *discordgo.Session, event *discordgo.
 }
 
 func (b *Bot) onVoiceStateUpdate(session *discordgo.Session, event *discordgo.VoiceStateUpdate) {
+	if event.UserID != session.State.User.ID {
+		return
+	}
+
 	var guildID *snowflake.ID
 	if event.GuildID != "" {
 		id := snowflake.MustParse(event.GuildID)
 		guildID = &id
 	}
-	b.Lavalink.OnVoiceStateUpdate(snowflake.MustParse(event.VoiceState.GuildID), guildID, event.VoiceState.SessionID)
+	b.Lavalink.OnVoiceStateUpdate(snowflake.MustParse(event.GuildID), guildID, event.SessionID)
+	if event.ChannelID == "" {
+		b.Queues.Delete(event.GuildID)
+	}
 }
 
 func (b *Bot) onVoiceServerUpdate(session *discordgo.Session, event *discordgo.VoiceServerUpdate) {
