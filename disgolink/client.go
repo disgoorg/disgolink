@@ -2,7 +2,6 @@ package disgolink
 
 import (
 	"context"
-	"errors"
 	"net/http"
 	"sync"
 	"time"
@@ -10,8 +9,6 @@ import (
 	"github.com/disgoorg/log"
 	"github.com/disgoorg/snowflake/v2"
 )
-
-var ErrNoUserID = errors.New("no user id has been configured")
 
 type Client interface {
 	Logger() log.Logger
@@ -35,13 +32,9 @@ type Client interface {
 	OnVoiceStateUpdate(guildID snowflake.ID, channelID *snowflake.ID, sessionID string)
 }
 
-func New(userID snowflake.ID, opts ...ConfigOpt) (Client, error) {
+func New(userID snowflake.ID, opts ...ConfigOpt) Client {
 	config := DefaultConfig()
 	config.Apply(opts)
-
-	if userID == 0 {
-		return nil, ErrNoUserID
-	}
 
 	if config.Logger == nil {
 		config.Logger = log.Default()
@@ -54,7 +47,7 @@ func New(userID snowflake.ID, opts ...ConfigOpt) (Client, error) {
 		userID:  userID,
 		nodes:   map[string]Node{},
 		players: map[snowflake.ID]Player{},
-	}, nil
+	}
 }
 
 var _ Client = (*clientImpl)(nil)
