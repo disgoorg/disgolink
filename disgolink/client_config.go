@@ -1,6 +1,7 @@
 package disgolink
 
 import (
+	"github.com/disgoorg/disgolink/v2/lavalink"
 	"net/http"
 	"time"
 
@@ -17,6 +18,7 @@ func DefaultConfig() *Config {
 type Config struct {
 	Logger     log.Logger
 	HTTPClient *http.Client
+	Listeners  []EventListener
 }
 
 type ConfigOpt func(config *Config)
@@ -38,4 +40,14 @@ func WithHTTPClient(httpClient *http.Client) ConfigOpt {
 	return func(config *Config) {
 		config.HTTPClient = httpClient
 	}
+}
+
+func WithListeners(listeners ...EventListener) ConfigOpt {
+	return func(config *Config) {
+		config.Listeners = append(config.Listeners, listeners...)
+	}
+}
+
+func WithListenerFunc[E lavalink.Event](listenerFunc func(p Player, e E)) ConfigOpt {
+	return WithListeners(NewListenerFunc(listenerFunc))
 }

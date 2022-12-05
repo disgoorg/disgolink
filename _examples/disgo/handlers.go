@@ -152,6 +152,5 @@ func (b *Bot) play(event *events.ApplicationCommandInteractionCreate, data disco
 		return err
 	}
 
-	player := b.Lavalink.Player(*event.GuildID())
-	return player.Update(context.TODO(), lavalink.WithTrack(*toPlay))
+	return b.Lavalink.Player(*event.GuildID()).Update(context.TODO(), lavalink.WithTrack(*toPlay))
 }

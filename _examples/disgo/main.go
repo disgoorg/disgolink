@@ -41,10 +41,12 @@ type Bot struct {
 
 func main() {
 	log.SetFlags(log.LstdFlags | log.Lshortfile)
-	log.SetLevel(log.LevelDebug)
+	log.SetLevel(log.LevelInfo)
 	log.Info("starting disgo example...")
 	log.Info("disgo version: ", disgo.Version)
 	log.Info("disgolink version: ", disgolink.Version)
+
+	b := &Bot{}
 
 	client, err := disgo.New(token,
 		bot.WithGatewayConfigOpts(
@@ -53,22 +55,26 @@ func main() {
 		bot.WithCacheConfigOpts(
 			cache.WithCacheFlags(cache.FlagVoiceStates),
 		),
+		bot.WithEventListenerFunc(b.onApplicationCommand),
+		bot.WithEventListenerFunc(b.onVoiceStateUpdate),
+		bot.WithEventListenerFunc(b.onVoiceServerUpdate),
 	)
 	if err != nil {
 		log.Fatal(err)
 	}
+	b.Client = client
 
 	registerCommands(client)
 
-	lavalinkClient, err := disgolink.New(client.ApplicationID())
-	if err != nil {
-		log.Fatal(err)
-	}
-
-	b := &Bot{
-		Client:   client,
-		Lavalink: lavalinkClient,
-	}
+	b.Lavalink = disgolink.New(client.ApplicationID(),
+		disgolink.WithListenerFunc(b.onPlayerPause),
+		disgolink.WithListenerFunc(b.onPlayerResume),
+		disgolink.WithListenerFunc(b.onTrackStart),
+		disgolink.WithListenerFunc(b.onTrackEnd),
+		disgolink.WithListenerFunc(b.onTrackException),
+		disgolink.WithListenerFunc(b.onTrackStuck),
+		disgolink.WithListenerFunc(b.onWebSocketClosed),
+	)
 	b.Handlers = map[string]func(event *events.ApplicationCommandInteractionCreate, data discord.SlashCommandInteractionData) error{
 		"play":        b.play,
 		"pause":       b.pause,
@@ -77,12 +83,6 @@ func main() {
 		"players":     b.players,
 	}
 
-	client.AddEventListeners(
-		bot.NewListenerFunc(b.onApplicationCommand),
-		bot.NewListenerFunc(b.onVoiceStateUpdate),
-		bot.NewListenerFunc(b.onVoiceServerUpdate),
-	)
-
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
 	if err = client.OpenGateway(ctx); err != nil {
@@ -90,7 +90,7 @@ func main() {
 	}
 	defer client.Close(context.TODO())
 
-	node, err := lavalinkClient.AddNode(ctx, disgolink.NodeConfig{
+	node, err := b.Lavalink.AddNode(ctx, disgolink.NodeConfig{
 		Name:     nodeName,
 		Address:  nodeAddress,
 		Password: nodePassword,
@@ -126,7 +126,6 @@ func (b *Bot) onApplicationCommand(event *events.ApplicationCommandInteractionCr
 
 func (b *Bot) onVoiceStateUpdate(event *events.GuildVoiceStateUpdate) {
 	b.Lavalink.OnVoiceStateUpdate(event.VoiceState.GuildID, event.VoiceState.ChannelID, event.VoiceState.SessionID)
-
 }
 
 func (b *Bot) onVoiceServerUpdate(event *events.VoiceServerUpdate) {

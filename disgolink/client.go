@@ -2,7 +2,9 @@ package disgolink
 
 import (
 	"context"
+	"github.com/disgoorg/disgolink/v2/lavalink"
 	"net/http"
+	"runtime/debug"
 	"sync"
 	"time"
 
@@ -25,6 +27,10 @@ type Client interface {
 	RemovePlayer(guildID snowflake.ID)
 	ForPlayers(playerFunc func(player Player))
 
+	EmitEvent(player Player, event lavalink.Event)
+	AddListeners(listeners ...EventListener)
+	RemoveListeners(listeners ...EventListener)
+
 	UserID() snowflake.ID
 	Close()
 
@@ -43,7 +49,6 @@ func New(userID snowflake.ID, opts ...ConfigOpt) Client {
 		config.HTTPClient = &http.Client{Timeout: 20 * time.Second}
 	}
 	return &clientImpl{
-		config:  *config,
 		userID:  userID,
 		nodes:   map[string]Node{},
 		players: map[snowflake.ID]Player{},
@@ -53,7 +58,8 @@ func New(userID snowflake.ID, opts ...ConfigOpt) Client {
 var _ Client = (*clientImpl)(nil)
 
 type clientImpl struct {
-	config Config
+	logger log.Logger
+	httpClient *http.Client
 	userID snowflake.ID
 
 	nodesMu sync.Mutex
@@ -61,10 +67,13 @@ type clientImpl struct {
 
 	playersMu sync.Mutex
 	players   map[snowflake.ID]Player
+
+	listenersMu sync.Mutex
+	listeners  []EventListener
 }
 
 func (l *clientImpl) Logger() log.Logger {
-	return l.config.Logger
+	return l.logger
 }
 
 func (l *clientImpl) AddNode(ctx context.Context, config NodeConfig) (Node, error) {
@@ -73,7 +82,7 @@ func (l *clientImpl) AddNode(ctx context.Context, config NodeConfig) (Node, erro
 		lavalink: l,
 		status:   StatusDisconnected,
 	}
-	node.rest = newRestClientImpl(node, l.config.HTTPClient)
+	node.rest = newRestClientImpl(node, l.httpClient)
 	if err := node.Open(ctx); err != nil {
 		return nil, err
 	}
@@ -160,6 +169,37 @@ func (l *clientImpl) ForPlayers(playerFunc func(player Player)) {
 	defer l.playersMu.Unlock()
 	for _, player := range l.players {
 		playerFunc(player)
+	}
+}
+
+func (l *clientImpl) EmitEvent(player Player, event lavalink.Event) {
+	l.listenersMu.Lock()
+	defer l.listenersMu.Unlock()
+
+	defer func() {
+		if r := recover(); r != nil {
+			l.Logger().Errorf("recovered from panic in event listener: %#v\nstack: %s", r, string(debug.Stack()))
+			return
+		}
+	}()
+	for _, listener := range l.listeners {
+		listener.OnEvent(player, event)
+	}
+}
+func (l *clientImpl) AddListeners(listeners ...EventListener) {
+	l.listenersMu.Lock()
+	defer l.listenersMu.Unlock()
+	l.listeners = append(l.listeners, listeners...)
+}
+func (l *clientImpl) RemoveListeners(listeners ...EventListener) {
+	l.listenersMu.Lock()
+	defer l.listenersMu.Unlock()
+	for _, listener := range listeners {
+		for i, ln := range l.listeners {
+			if ln == listener {
+				l.listeners = append(l.listeners[:i], l.listeners[i+1:]...)
+			}
+		}
 	}
 }
 

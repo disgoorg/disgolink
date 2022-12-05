@@ -3,7 +3,6 @@ package disgolink
 import (
 	"context"
 	"errors"
-	"runtime/debug"
 	"time"
 
 	"github.com/disgoorg/disgolink/v2/lavalink"
@@ -27,10 +26,6 @@ type Player interface {
 
 	Lavalink() Client
 	Node() Node
-
-	EmitEvent(event lavalink.Event)
-	AddListeners(listeners ...EventListener)
-	RemoveListeners(listeners ...EventListener)
 
 	OnEvent(event lavalink.Event)
 	OnPlayerUpdate(state lavalink.PlayerState)
@@ -59,8 +54,6 @@ type defaultPlayer struct {
 
 	node     Node
 	lavalink Client
-
-	listeners []EventListener
 }
 
 func (p *defaultPlayer) GuildID() snowflake.ID {
@@ -168,32 +161,6 @@ func (p *defaultPlayer) Lavalink() Client {
 	return p.lavalink
 }
 
-func (p *defaultPlayer) EmitEvent(event lavalink.Event) {
-	defer func() {
-		if r := recover(); r != nil {
-			p.lavalink.Logger().Errorf("recovered from panic in event listener: %#v\nstack: %s", r, string(debug.Stack()))
-			return
-		}
-	}()
-	for _, listener := range p.listeners {
-		listener.OnEvent(event)
-	}
-}
-
-func (p *defaultPlayer) AddListeners(listeners ...EventListener) {
-	p.listeners = append(p.listeners, listeners...)
-}
-
-func (p *defaultPlayer) RemoveListeners(listeners ...EventListener) {
-	for _, listener := range listeners {
-		for i, l := range p.listeners {
-			if l == listener {
-				p.listeners = append(p.listeners[:i], p.listeners[i+1:]...)
-			}
-		}
-	}
-}
-
 func (p *defaultPlayer) OnEvent(event lavalink.Event) {
 	switch e := event.(type) {
 	case lavalink.EventPlayerPause:
@@ -214,7 +181,7 @@ func (p *defaultPlayer) OnEvent(event lavalink.Event) {
 		p.voice = lavalink.VoiceState{}
 		p.state.Connected = false
 	}
-	p.EmitEvent(event)
+	p.lavalink.EmitEvent(p, event)
 }
 
 func (p *defaultPlayer) OnPlayerUpdate(state lavalink.PlayerState) {
