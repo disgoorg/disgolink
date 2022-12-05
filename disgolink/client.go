@@ -49,18 +49,20 @@ func New(userID snowflake.ID, opts ...ConfigOpt) Client {
 		config.HTTPClient = &http.Client{Timeout: 20 * time.Second}
 	}
 	return &clientImpl{
-		userID:  userID,
-		nodes:   map[string]Node{},
-		players: map[snowflake.ID]Player{},
+		logger:     config.Logger,
+		httpClient: config.HTTPClient,
+		userID:     userID,
+		nodes:      map[string]Node{},
+		players:    map[snowflake.ID]Player{},
 	}
 }
 
 var _ Client = (*clientImpl)(nil)
 
 type clientImpl struct {
-	logger log.Logger
+	logger     log.Logger
 	httpClient *http.Client
-	userID snowflake.ID
+	userID     snowflake.ID
 
 	nodesMu sync.Mutex
 	nodes   map[string]Node
@@ -69,7 +71,7 @@ type clientImpl struct {
 	players   map[snowflake.ID]Player
 
 	listenersMu sync.Mutex
-	listeners  []EventListener
+	listeners   []EventListener
 }
 
 func (l *clientImpl) Logger() log.Logger {

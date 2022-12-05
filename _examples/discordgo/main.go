@@ -49,6 +49,11 @@ func main() {
 	}
 	b.Session = session
 
+	if err = session.Open(); err != nil {
+		log.Fatal(err)
+	}
+	defer session.Close()
+
 	registerCommands(session)
 
 	b.Lavalink = disgolink.New(snowflake.MustParse(session.State.User.ID),
@@ -69,11 +74,6 @@ func main() {
 
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
-	if err = session.Open(); err != nil {
-		log.Fatal(err)
-	}
-	defer session.Close()
-
 	node, err := b.Lavalink.AddNode(ctx, disgolink.NodeConfig{
 		Name:     nodeName,
 		Address:  nodeAddress,
