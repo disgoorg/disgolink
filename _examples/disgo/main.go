@@ -24,20 +24,14 @@ var (
 	urlPattern    = regexp.MustCompile("^https?://[-a-zA-Z0-9+&@#/%?=~_|!:,.;]*[-a-zA-Z0-9+&@#/%=~_|]?")
 	searchPattern = regexp.MustCompile(`^(.{2})search:(.+)`)
 
-	token   = os.Getenv("TOKEN")
-	guildID = snowflake.GetEnv("GUILD_ID")
+	TOKEN    = os.Getenv("TOKEN")
+	GUILD_ID = snowflake.GetEnv("GUILD_ID")
 
-	nodeName      = os.Getenv("NODE_NAME")
-	nodeAddress   = os.Getenv("NODE_ADDRESS")
-	nodePassword  = os.Getenv("NODE_PASSWORD")
-	nodeSecure, _ = strconv.ParseBool(os.Getenv("NODE_SECURE"))
+	NODE_NAME      = os.Getenv("NODE_NAME")
+	NODE_ADDRESS   = os.Getenv("NODE_ADDRESS")
+	NODE_PASSWORD  = os.Getenv("NODE_PASSWORD")
+	NODE_SECURE, _ = strconv.ParseBool(os.Getenv("NODE_SECURE"))
 )
-
-type Bot struct {
-	Client   bot.Client
-	Lavalink disgolink.Client
-	Handlers map[string]func(event *events.ApplicationCommandInteractionCreate, data discord.SlashCommandInteractionData) error
-}
 
 func main() {
 	log.SetFlags(log.LstdFlags | log.Lshortfile)
@@ -46,9 +40,9 @@ func main() {
 	log.Info("disgo version: ", disgo.Version)
 	log.Info("disgolink version: ", disgolink.Version)
 
-	b := &Bot{}
+	b := newBot()
 
-	client, err := disgo.New(token,
+	client, err := disgo.New(TOKEN,
 		bot.WithGatewayConfigOpts(
 			gateway.WithIntents(gateway.IntentGuilds, gateway.IntentGuildVoiceStates),
 		),
@@ -81,6 +75,9 @@ func main() {
 		"now-playing": b.nowPlaying,
 		"stop":        b.stop,
 		"players":     b.players,
+		"queue":       b.queue,
+		"clear-queue": b.clearQueue,
+		"queue-type":  b.queueType,
 	}
 
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
@@ -90,11 +87,15 @@ func main() {
 	}
 	defer client.Close(context.TODO())
 
+	client.AddEventListeners(bot.NewListenerFunc(func(event *events.MessageCreate) {
+
+	}))
+
 	node, err := b.Lavalink.AddNode(ctx, disgolink.NodeConfig{
-		Name:     nodeName,
-		Address:  nodeAddress,
-		Password: nodePassword,
-		Secure:   nodeSecure,
+		Name:     NODE_NAME,
+		Address:  NODE_ADDRESS,
+		Password: NODE_PASSWORD,
+		Secure:   NODE_SECURE,
 	})
 	if err != nil {
 		log.Fatal(err)
@@ -109,25 +110,4 @@ func main() {
 	s := make(chan os.Signal, 1)
 	signal.Notify(s, syscall.SIGINT, syscall.SIGTERM, os.Interrupt)
 	<-s
-}
-
-func (b *Bot) onApplicationCommand(event *events.ApplicationCommandInteractionCreate) {
-	data := event.SlashCommandInteractionData()
-
-	handler, ok := b.Handlers[data.CommandName()]
-	if !ok {
-		log.Info("unknown command: ", data.CommandName())
-		return
-	}
-	if err := handler(event, data); err != nil {
-		log.Error("error handling command: ", err)
-	}
-}
-
-func (b *Bot) onVoiceStateUpdate(event *events.GuildVoiceStateUpdate) {
-	b.Lavalink.OnVoiceStateUpdate(event.VoiceState.GuildID, event.VoiceState.ChannelID, event.VoiceState.SessionID)
-}
-
-func (b *Bot) onVoiceServerUpdate(event *events.VoiceServerUpdate) {
-	b.Lavalink.OnVoiceServerUpdate(event.GuildID, event.Token, *event.Endpoint)
 }

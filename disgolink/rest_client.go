@@ -64,7 +64,7 @@ type restClientImpl struct {
 }
 
 func (c *restClientImpl) Version(ctx context.Context) (string, error) {
-	_, rawBody, err := c.do(ctx, http.MethodGet, EndpointVersion.Format(), nil)
+	_, rawBody, err := c.do(ctx, http.MethodGet, string(EndpointVersion), nil)
 	if err != nil {
 		return "", err
 	}
@@ -72,12 +72,12 @@ func (c *restClientImpl) Version(ctx context.Context) (string, error) {
 }
 
 func (c *restClientImpl) Info(ctx context.Context) (info *lavalink.Info, err error) {
-	err = c.doJSON(ctx, http.MethodGet, EndpointInfo.Format(), nil, &info)
+	err = c.doJSON(ctx, http.MethodGet, string(EndpointInfo), nil, &info)
 	return
 }
 
 func (c *restClientImpl) Stats(ctx context.Context) (stats *lavalink.Stats, err error) {
-	err = c.doJSON(ctx, http.MethodGet, EndpointStats.Format(), nil, &stats)
+	err = c.doJSON(ctx, http.MethodGet, string(EndpointStats), nil, &stats)
 	return
 }
 
@@ -117,7 +117,7 @@ func (c *restClientImpl) DecodeTrack(ctx context.Context, encodedTrack string) (
 }
 
 func (c *restClientImpl) DecodeTracks(ctx context.Context, encodedTracks []string) (tracks []lavalink.Track, err error) {
-	err = c.doJSON(ctx, http.MethodPost, EndpointDecodeTracks.Format(), encodedTracks, &tracks)
+	err = c.doJSON(ctx, http.MethodPost, string(EndpointDecodeTracks), encodedTracks, &tracks)
 	return
 }
 

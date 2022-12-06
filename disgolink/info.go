@@ -2,13 +2,12 @@ package disgolink
 
 import (
 	"runtime/debug"
-	"strings"
 )
 
 const (
 	Name   = "disgolink"
-	Module = "github.com/disgoorg/" + Name
-	GitHub = "https://" + Module
+	Module = "github.com/disgoorg/disgolink/v2"
+	GitHub = "https://github.com/disgoorg/disgo"
 )
 
 var (
@@ -19,7 +18,8 @@ func getVersion() string {
 	bi, ok := debug.ReadBuildInfo()
 	if ok {
 		for _, dep := range bi.Deps {
-			if strings.Contains(dep.Path, Module) {
+			println(dep.Path)
+			if dep.Path == Module {
 				return dep.Version
 			}
 		}

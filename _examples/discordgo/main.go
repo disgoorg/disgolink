@@ -22,10 +22,10 @@ var (
 	TOKEN    = os.Getenv("TOKEN")
 	GUILD_ID = os.Getenv("GUILD_ID")
 
-	nodeName      = os.Getenv("NODE_NAME")
-	nodeAddress   = os.Getenv("NODE_ADDRESS")
-	nodePassword  = os.Getenv("NODE_PASSWORD")
-	nodeSecure, _ = strconv.ParseBool(os.Getenv("NODE_SECURE"))
+	NODE_NAME    = os.Getenv("NODE_NAME")
+	NODE_ADDRESS  = os.Getenv("NODE_ADDRESS")
+	NODE_PASSWORD  = os.Getenv("NODE_PASSWORD")
+	NODE_SECURE, _ = strconv.ParseBool(os.Getenv("NODE_SECURE"))
 )
 
 type Bot struct {
@@ -90,10 +90,10 @@ func main() {
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
 	node, err := b.Lavalink.AddNode(ctx, disgolink.NodeConfig{
-		Name:     nodeName,
-		Address:  nodeAddress,
-		Password: nodePassword,
-		Secure:   nodeSecure,
+		Name:     NODE_NAME,
+		Address:  NODE_ADDRESS,
+		Password: NODE_PASSWORD,
+		Secure:   NODE_SECURE,
 	})
 	if err != nil {
 		log.Fatal(err)

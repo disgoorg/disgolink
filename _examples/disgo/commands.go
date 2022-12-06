@@ -73,7 +73,7 @@ var commands = []discord.ApplicationCommandCreate{
 }
 
 func registerCommands(client bot.Client) {
-	if _, err := client.Rest().SetGuildCommands(client.ApplicationID(), guildID, commands); err != nil {
+	if _, err := client.Rest().SetGuildCommands(client.ApplicationID(), GUILD_ID, commands); err != nil {
 		log.Warn(err)
 	}
 }

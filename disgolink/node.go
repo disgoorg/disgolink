@@ -54,9 +54,6 @@ type NodeConfig struct {
 	Password    string `json:"password"`
 	Secure      bool   `json:"secure"`
 	ResumingKey string `json:"resumingKey"`
-
-	ReconnectTimeout  time.Duration `json:"-"`
-	MaxReconnectTries int           `json:"-"`
 }
 
 func (c NodeConfig) RestURL() string {
@@ -74,7 +71,7 @@ func (c NodeConfig) WsURL() string {
 		scheme += "s"
 	}
 
-	return fmt.Sprintf("%s://%s", scheme, c.Address)
+	return fmt.Sprintf("%s://%s%s", scheme, c.Address, EndpointWebSocket)
 }
 
 type nodeImpl struct {
@@ -164,7 +161,11 @@ func (n *nodeImpl) DecodeTracks(ctx context.Context, encodedTracks []string) ([]
 }
 
 func (n *nodeImpl) Open(ctx context.Context) error {
-	n.lavalink.Logger().Debug("opening connection to disgolink node...")
+	return n.reconnectTry(ctx, 0)
+}
+
+func (n *nodeImpl) open(ctx context.Context) error {
+	n.lavalink.Logger().Debug("opening connection to node...")
 
 	n.connMu.Lock()
 	defer n.connMu.Unlock()
@@ -231,11 +232,13 @@ func (n *nodeImpl) Close() {
 	}
 }
 
-func (n *nodeImpl) reconnectTry(ctx context.Context, try int, delay time.Duration) error {
-	if try >= n.config.MaxReconnectTries-1 {
-		return fmt.Errorf("failed to reconnect. exceeded max reconnect tries of %d reached", n.config.MaxReconnectTries)
+func (n *nodeImpl) reconnectTry(ctx context.Context, try int) error {
+	delay := time.Duration(try) * 2 * time.Second
+	if delay > 30*time.Second {
+		delay = 30 * time.Second
 	}
-	timer := time.NewTimer(time.Duration(try) * delay)
+
+	timer := time.NewTimer(delay)
 	defer timer.Stop()
 	select {
 	case <-ctx.Done():
@@ -244,23 +247,19 @@ func (n *nodeImpl) reconnectTry(ctx context.Context, try int, delay time.Duratio
 	case <-timer.C:
 	}
 
-	n.lavalink.Logger().Debug("reconnecting node...")
-	if err := n.Open(ctx); err != nil {
+	if err := n.open(ctx); err != nil {
 		if err == ErrNodeAlreadyConnected {
 			return err
 		}
 		n.lavalink.Logger().Error("failed to reconnect node. error: ", err)
 		n.status = StatusDisconnected
-		return n.reconnectTry(ctx, try+1, delay)
+		return n.reconnectTry(ctx, try+1)
 	}
 	return nil
 }
 
 func (n *nodeImpl) reconnect() {
-	ctx, cancel := context.WithTimeout(context.Background(), n.config.ReconnectTimeout)
-	defer cancel()
-
-	if err := n.reconnectTry(ctx, 0, time.Second); err != nil {
+	if err := n.reconnectTry(context.Background(), 0); err != nil {
 		n.lavalink.Logger().Error("failed to reopen node. error: ", err)
 	}
 }
@@ -280,6 +279,7 @@ loop:
 			}
 
 			if !errors.Is(err, net.ErrClosed) {
+				n.Close()
 				go n.reconnect()
 			}
 

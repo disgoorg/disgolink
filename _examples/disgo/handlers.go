@@ -11,6 +11,58 @@ import (
 	"time"
 )
 
+func (b *Bot) queueType(event *events.ApplicationCommandInteractionCreate, data discord.SlashCommandInteractionData) error {
+	queue := b.Queues.Get(*event.GuildID())
+	if queue == nil {
+		return event.CreateMessage(discord.MessageCreate{
+			Content: "No player found",
+		})
+	}
+
+	queue.Type = QueueType(data.String("type"))
+	return event.CreateMessage(discord.MessageCreate{
+		Content: fmt.Sprintf("Queue type set to `%s`", queue.Type),
+	})
+}
+
+func (b *Bot) clearQueue(event *events.ApplicationCommandInteractionCreate, data discord.SlashCommandInteractionData) error {
+	queue := b.Queues.Get(*event.GuildID())
+	if queue == nil {
+		return event.CreateMessage(discord.MessageCreate{
+			Content: "No player found",
+		})
+	}
+
+	queue.Clear()
+	return event.CreateMessage(discord.MessageCreate{
+		Content: "Queue cleared",
+	})
+}
+
+func (b *Bot) queue(event *events.ApplicationCommandInteractionCreate, data discord.SlashCommandInteractionData) error {
+	queue := b.Queues.Get(*event.GuildID())
+	if queue == nil {
+		return event.CreateMessage(discord.MessageCreate{
+			Content: "No player found",
+		})
+	}
+
+	if len(queue.Tracks) == 0 {
+		return event.CreateMessage(discord.MessageCreate{
+			Content: "No tracks in queue",
+		})
+	}
+
+	var tracks string
+	for i, track := range queue.Tracks {
+		tracks += fmt.Sprintf("%d. [`%s`](<%s>)\n", i+1, track.Info.Title, *track.Info.URI)
+	}
+
+	return event.CreateMessage(discord.MessageCreate{
+		Content: fmt.Sprintf("Queue `%s`:\n%s", queue.Type, tracks),
+	})
+}
+
 func (b *Bot) players(event *events.ApplicationCommandInteractionCreate, data discord.SlashCommandInteractionData) error {
 	var description string
 	b.Lavalink.ForPlayers(func(player disgolink.Player) {
