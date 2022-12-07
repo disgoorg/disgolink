@@ -8,6 +8,7 @@ require (
 	github.com/disgoorg/snowflake/v2 v2.0.1
 	github.com/gorilla/websocket v1.5.0
 	github.com/stretchr/testify v1.8.1
+	golang.org/x/exp v0.0.0-20221207211629-99ab8fa1c11f
 )
 
 require (
