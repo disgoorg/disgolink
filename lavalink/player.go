@@ -24,8 +24,8 @@ type VoiceState struct {
 }
 
 type PlayerState struct {
-	Time      Time     `json:"time"`
-	Position  Duration `json:"position"`
-	Connected bool     `json:"connected"`
-	Ping      int      `json:"ping"`
+	Time      Timestamp `json:"time"`
+	Position  Duration  `json:"position"`
+	Connected bool      `json:"connected"`
+	Ping      int       `json:"ping"`
 }

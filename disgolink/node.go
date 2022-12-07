@@ -198,7 +198,7 @@ func (n *nodeImpl) open(ctx context.Context) error {
 	if err != nil {
 		return fmt.Errorf("failed to unmarshal ready message. error: %w", err)
 	}
-	ready, ok := message.(lavalink.MessageReady)
+	ready, ok := message.(lavalink.ReadyMessage)
 	if !ok {
 		return fmt.Errorf("expected ready message but got %T", message)
 	}
@@ -293,10 +293,10 @@ loop:
 		}
 
 		switch message := m.(type) {
-		case lavalink.MessageStats:
+		case lavalink.StatsMessage:
 			n.stats = lavalink.Stats(message)
 
-		case lavalink.MessagePlayerUpdate:
+		case lavalink.PlayerUpdateMessage:
 			player := n.lavalink.ExistingPlayer(message.GuildID)
 			if player == nil {
 				continue

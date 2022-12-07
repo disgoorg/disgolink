@@ -22,8 +22,8 @@ var (
 	TOKEN    = os.Getenv("TOKEN")
 	GUILD_ID = os.Getenv("GUILD_ID")
 
-	NODE_NAME    = os.Getenv("NODE_NAME")
-	NODE_ADDRESS  = os.Getenv("NODE_ADDRESS")
+	NODE_NAME      = os.Getenv("NODE_NAME")
+	NODE_ADDRESS   = os.Getenv("NODE_ADDRESS")
 	NODE_PASSWORD  = os.Getenv("NODE_PASSWORD")
 	NODE_SECURE, _ = strconv.ParseBool(os.Getenv("NODE_SECURE"))
 )

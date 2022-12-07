@@ -1,6 +1,11 @@
 package lavalink
 
-import "encoding/json"
+import (
+	"encoding/json"
+	"golang.org/x/exp/slices"
+)
+
+var DefaultFilters = []string{"volume", "equalizer", "timescale", "tremolo", "vibrato", "rotation", "karaoke", "distortion", "channelMix", "lowPass"}
 
 type Filters struct {
 	Volume        *Volume        `json:"volume,omitempty"`
@@ -30,7 +35,7 @@ func (f *Filters) UnmarshalJSON(data []byte) error {
 		return err
 	}
 	for k := range pluginFilters {
-		if k == "volume" || k == "equalizer" || k == "timescale" || k == "tremolo" || k == "vibrato" || k == "rotation" || k == "karaoke" || k == "distortion" || k == "channelMix" || k == "lowPass" {
+		if slices.Contains(DefaultFilters, k) {
 			delete(pluginFilters, k)
 		}
 	}
@@ -40,9 +45,6 @@ func (f *Filters) UnmarshalJSON(data []byte) error {
 
 func (f Filters) MarshalJSON() ([]byte, error) {
 	v := make(map[string]any)
-	for k, val := range f.PluginFilters {
-		v[k] = val
-	}
 
 	if f.Volume != nil {
 		v["volume"] = f.Volume
@@ -73,6 +75,10 @@ func (f Filters) MarshalJSON() ([]byte, error) {
 	}
 	if f.LowPass != nil {
 		v["lowPass"] = f.LowPass
+	}
+
+	for k, val := range f.PluginFilters {
+		v[k] = val
 	}
 
 	return json.Marshal(v)

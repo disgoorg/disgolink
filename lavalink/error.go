@@ -5,12 +5,12 @@ import (
 )
 
 type Error struct {
-	Timestamp   Time   `json:"timestamp"`
-	Status      int    `json:"status"`
-	StatusError string `json:"error"`
-	Trace       string `json:"trace"`
-	Message     string `json:"message"`
-	Path        string `json:"path"`
+	Timestamp   Timestamp `json:"timestamp"`
+	Status      int       `json:"status"`
+	StatusError string    `json:"error"`
+	Trace       string    `json:"trace"`
+	Message     string    `json:"message"`
+	Path        string    `json:"path"`
 }
 
 func (e Error) Error() string {

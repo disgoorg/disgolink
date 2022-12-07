@@ -34,7 +34,7 @@ type Player interface {
 }
 
 func NewPlayer(lavalink Client, node Node, guildID snowflake.ID) Player {
-	return &defaultPlayer{
+	return &defaultImpl{
 		lavalink: lavalink,
 		node:     node,
 		guildID:  guildID,
@@ -42,7 +42,7 @@ func NewPlayer(lavalink Client, node Node, guildID snowflake.ID) Player {
 	}
 }
 
-type defaultPlayer struct {
+type defaultImpl struct {
 	guildID   snowflake.ID
 	channelID *snowflake.ID
 	track     *lavalink.Track
@@ -56,23 +56,23 @@ type defaultPlayer struct {
 	lavalink Client
 }
 
-func (p *defaultPlayer) GuildID() snowflake.ID {
+func (p *defaultImpl) GuildID() snowflake.ID {
 	return p.guildID
 }
 
-func (p *defaultPlayer) ChannelID() *snowflake.ID {
+func (p *defaultImpl) ChannelID() *snowflake.ID {
 	return p.channelID
 }
 
-func (p *defaultPlayer) Track() *lavalink.Track {
+func (p *defaultImpl) Track() *lavalink.Track {
 	return p.track
 }
 
-func (p *defaultPlayer) Paused() bool {
+func (p *defaultImpl) Paused() bool {
 	return p.paused
 }
 
-func (p *defaultPlayer) Position() lavalink.Duration {
+func (p *defaultImpl) Position() lavalink.Duration {
 	if p.track == nil {
 		return 0
 	}
@@ -89,19 +89,19 @@ func (p *defaultPlayer) Position() lavalink.Duration {
 	return position
 }
 
-func (p *defaultPlayer) State() lavalink.PlayerState {
+func (p *defaultImpl) State() lavalink.PlayerState {
 	return p.state
 }
 
-func (p *defaultPlayer) Volume() int {
+func (p *defaultImpl) Volume() int {
 	return p.volume
 }
 
-func (p *defaultPlayer) Filters() lavalink.Filters {
+func (p *defaultImpl) Filters() lavalink.Filters {
 	return p.filters
 }
 
-func (p *defaultPlayer) Update(ctx context.Context, opts ...lavalink.PlayerUpdateOpt) error {
+func (p *defaultImpl) Update(ctx context.Context, opts ...lavalink.PlayerUpdateOpt) error {
 	if p.node == nil {
 		return ErrPlayerNoNode
 	}
@@ -126,11 +126,11 @@ func (p *defaultPlayer) Update(ctx context.Context, opts ...lavalink.PlayerUpdat
 	// dispatch artificial player resume/pause event
 	if update.Paused != nil {
 		if p.paused && !*update.Paused {
-			go p.OnEvent(lavalink.EventPlayerResume{
+			go p.OnEvent(lavalink.PlayerResumeEvent{
 				GuildID_: p.guildID,
 			})
 		} else if !p.paused && *update.Paused {
-			go p.OnEvent(lavalink.EventPlayerPause{
+			go p.OnEvent(lavalink.PlayerPauseEvent{
 				GuildID_: p.guildID,
 			})
 		}
@@ -142,7 +142,7 @@ func (p *defaultPlayer) Update(ctx context.Context, opts ...lavalink.PlayerUpdat
 	return nil
 }
 
-func (p *defaultPlayer) Destroy(ctx context.Context) error {
+func (p *defaultImpl) Destroy(ctx context.Context) error {
 	if p.node == nil {
 		return ErrPlayerNoNode
 	}
@@ -150,45 +150,45 @@ func (p *defaultPlayer) Destroy(ctx context.Context) error {
 	return p.node.Rest().DestroyPlayer(ctx, p.node.SessionID(), p.guildID)
 }
 
-func (p *defaultPlayer) Node() Node {
+func (p *defaultImpl) Node() Node {
 	if p.node == nil {
 		p.node = p.lavalink.BestNode()
 	}
 	return p.node
 }
 
-func (p *defaultPlayer) Lavalink() Client {
+func (p *defaultImpl) Lavalink() Client {
 	return p.lavalink
 }
 
-func (p *defaultPlayer) OnEvent(event lavalink.Event) {
+func (p *defaultImpl) OnEvent(event lavalink.Event) {
 	switch e := event.(type) {
-	case lavalink.EventPlayerPause:
+	case lavalink.PlayerPauseEvent:
 		p.paused = true
 
-	case lavalink.EventPlayerResume:
+	case lavalink.PlayerResumeEvent:
 		p.paused = false
 
-	case lavalink.EventTrackEnd:
+	case lavalink.TrackEndEvent:
 		if e.Reason != lavalink.TrackEndReasonReplaced && e.Reason != lavalink.TrackEndReasonStopped {
 			p.track = nil
 		}
 
-	case lavalink.EventTrackException, lavalink.EventTrackStuck:
+	case lavalink.TrackExceptionEvent, lavalink.TrackStuckEvent:
 		p.track = nil
 
-	case lavalink.EventWebSocketClosed:
+	case lavalink.WebSocketClosedEvent:
 		p.voice = lavalink.VoiceState{}
 		p.state.Connected = false
 	}
 	p.lavalink.EmitEvent(p, event)
 }
 
-func (p *defaultPlayer) OnPlayerUpdate(state lavalink.PlayerState) {
+func (p *defaultImpl) OnPlayerUpdate(state lavalink.PlayerState) {
 	p.state = state
 }
 
-func (p *defaultPlayer) OnVoiceServerUpdate(token string, endpoint string) {
+func (p *defaultImpl) OnVoiceServerUpdate(token string, endpoint string) {
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
 
@@ -205,7 +205,7 @@ func (p *defaultPlayer) OnVoiceServerUpdate(token string, endpoint string) {
 	p.voice.Endpoint = endpoint
 }
 
-func (p *defaultPlayer) OnVoiceStateUpdate(channelID *snowflake.ID, sessionID string) {
+func (p *defaultImpl) OnVoiceStateUpdate(channelID *snowflake.ID, sessionID string) {
 	if channelID == nil {
 		p.channelID = nil
 		ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)

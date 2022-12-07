@@ -16,7 +16,7 @@ type Client interface {
 	Logger() log.Logger
 
 	AddNode(ctx context.Context, config NodeConfig) (Node, error)
-	Nodes() []Node
+	ForNodes(nodeFunc func(node Node))
 	Node(name string) Node
 	BestNode() Node
 	RemoveNode(name string)
@@ -96,16 +96,12 @@ func (l *clientImpl) AddNode(ctx context.Context, config NodeConfig) (Node, erro
 	return node, nil
 }
 
-func (l *clientImpl) Nodes() []Node {
+func (l *clientImpl) ForNodes(nodeFunc func(node Node)) {
 	l.nodesMu.Lock()
 	defer l.nodesMu.Unlock()
-	nodes := make([]Node, len(l.nodes))
-	i := 0
-	for _, node := range l.nodes {
-		nodes[i] = node
-		i++
+	for i := range l.nodes {
+		nodeFunc(l.nodes[i])
 	}
-	return nodes
 }
 
 func (l *clientImpl) Node(name string) Node {

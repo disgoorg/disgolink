@@ -49,7 +49,7 @@ func (q *Queue) Clear() {
 }
 
 type QueueManager struct {
-    queues map[snowflake.ID]*Queue
+	queues map[snowflake.ID]*Queue
 }
 
 func (q *QueueManager) Get(guildID snowflake.ID) *Queue {

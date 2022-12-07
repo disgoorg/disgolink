@@ -5,21 +5,21 @@ import (
 	"time"
 )
 
-func Now() Time {
-	return Time{
+func Now() Timestamp {
+	return Timestamp{
 		Time: time.Now(),
 	}
 }
 
-type Time struct {
+type Timestamp struct {
 	time.Time
 }
 
-func (t Time) MarshalJSON() ([]byte, error) {
+func (t Timestamp) MarshalJSON() ([]byte, error) {
 	return []byte(strconv.FormatInt(t.UnixMilli(), 10)), nil
 }
 
-func (t *Time) UnmarshalJSON(data []byte) error {
+func (t *Timestamp) UnmarshalJSON(data []byte) error {
 	// Ignore null, like in the main JSON package.
 	if string(data) == "null" {
 		return nil
@@ -29,6 +29,6 @@ func (t *Time) UnmarshalJSON(data []byte) error {
 	if err != nil {
 		return err
 	}
-	*t = Time{Time: time.UnixMilli(timestamp)}
+	*t = Timestamp{Time: time.UnixMilli(timestamp)}
 	return nil
 }

@@ -43,7 +43,7 @@ var commands = []*discordgo.ApplicationCommand{
 		Description: "Clears the current queue",
 	},
 	{
-		Name: "queue-type",
+		Name:        "queue-type",
 		Description: "Sets the queue type",
 		Options: []*discordgo.ApplicationCommandOption{
 			{

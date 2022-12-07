@@ -1,11 +1,10 @@
 package lavalink
 
 type LoadResult struct {
-	LoadType     LoadType       `json:"loadType"`
-	PlaylistInfo PlaylistInfo   `json:"playlistInfo"`
-	PluginInfo   map[string]any `json:"pluginInfo"`
-	Tracks       []Track        `json:"tracks"`
-	Exception    Exception      `json:"exception"`
+	LoadType     LoadType     `json:"loadType"`
+	PlaylistInfo PlaylistInfo `json:"playlistInfo"`
+	Tracks       []Track      `json:"tracks"`
+	Exception    Exception    `json:"exception"`
 }
 
 var _ error = (*Exception)(nil)

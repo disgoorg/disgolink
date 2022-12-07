@@ -1,14 +1,14 @@
 package lavalink
 
 type Info struct {
-	Version        Version  `json:"version"`
-	BuildTime      Time     `json:"buildTime"`
-	Git            Git      `json:"git"`
-	JVM            string   `json:"jvm"`
-	Lavaplayer     string   `json:"lavaplayer"`
-	SourceManagers []string `json:"sourceManagers"`
-	Filters        []string `json:"filters"`
-	Plugins        []Plugin `json:"plugins"`
+	Version        Version   `json:"version"`
+	BuildTime      Timestamp `json:"buildTime"`
+	Git            Git       `json:"git"`
+	JVM            string    `json:"jvm"`
+	Lavaplayer     string    `json:"lavaplayer"`
+	SourceManagers []string  `json:"sourceManagers"`
+	Filters        []string  `json:"filters"`
+	Plugins        []Plugin  `json:"plugins"`
 }
 
 type Version struct {
@@ -20,7 +20,7 @@ type Version struct {
 }
 
 type Git struct {
-	Branch     string `json:"branch"`
-	Commit     string `json:"commit"`
-	CommitTime Time   `json:"commitTime"`
+	Branch     string    `json:"branch"`
+	Commit     string    `json:"commit"`
+	CommitTime Timestamp `json:"commitTime"`
 }
