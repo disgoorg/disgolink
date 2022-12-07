@@ -185,11 +185,13 @@ func (l *clientImpl) EmitEvent(player Player, event lavalink.Event) {
 		listener.OnEvent(player, event)
 	}
 }
+
 func (l *clientImpl) AddListeners(listeners ...EventListener) {
 	l.listenersMu.Lock()
 	defer l.listenersMu.Unlock()
 	l.listeners = append(l.listeners, listeners...)
 }
+
 func (l *clientImpl) RemoveListeners(listeners ...EventListener) {
 	l.listenersMu.Lock()
 	defer l.listenersMu.Unlock()
