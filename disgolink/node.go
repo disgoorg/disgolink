@@ -136,9 +136,8 @@ func (n *nodeImpl) LoadTracks(ctx context.Context, identifier string, handler Au
 
 	case lavalink.LoadTypePlaylistLoaded:
 		handler.PlaylistLoaded(lavalink.Playlist{
-			Info:       result.PlaylistInfo,
-			PluginInfo: result.PluginInfo,
-			Tracks:     result.Tracks,
+			Info:   result.PlaylistInfo,
+			Tracks: result.Tracks,
 		})
 
 	case lavalink.LoadTypeSearchResult:
