@@ -18,7 +18,6 @@ func getVersion() string {
 	bi, ok := debug.ReadBuildInfo()
 	if ok {
 		for _, dep := range bi.Deps {
-			println(dep.Path)
 			if dep.Path == Module {
 				return dep.Version
 			}
