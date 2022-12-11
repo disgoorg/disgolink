@@ -24,13 +24,13 @@ var (
 	urlPattern    = regexp.MustCompile("^https?://[-a-zA-Z0-9+&@#/%?=~_|!:,.;]*[-a-zA-Z0-9+&@#/%=~_|]?")
 	searchPattern = regexp.MustCompile(`^(.{2})search:(.+)`)
 
-	TOKEN    = os.Getenv("TOKEN")
-	GUILD_ID = snowflake.GetEnv("GUILD_ID")
+	Token   = os.Getenv("TOKEN")
+	GuildId = snowflake.GetEnv("GUILD_ID")
 
-	NODE_NAME      = os.Getenv("NODE_NAME")
-	NODE_ADDRESS   = os.Getenv("NODE_ADDRESS")
-	NODE_PASSWORD  = os.Getenv("NODE_PASSWORD")
-	NODE_SECURE, _ = strconv.ParseBool(os.Getenv("NODE_SECURE"))
+	NodeName      = os.Getenv("NODE_NAME")
+	NodeAddress   = os.Getenv("NODE_ADDRESS")
+	NodePassword  = os.Getenv("NODE_PASSWORD")
+	NodeSecure, _ = strconv.ParseBool(os.Getenv("NODE_SECURE"))
 )
 
 func main() {
@@ -42,7 +42,7 @@ func main() {
 
 	b := newBot()
 
-	client, err := disgo.New(TOKEN,
+	client, err := disgo.New(Token,
 		bot.WithGatewayConfigOpts(
 			gateway.WithIntents(gateway.IntentGuilds, gateway.IntentGuildVoiceStates),
 		),
@@ -87,15 +87,11 @@ func main() {
 	}
 	defer client.Close(context.TODO())
 
-	client.AddEventListeners(bot.NewListenerFunc(func(event *events.MessageCreate) {
-
-	}))
-
 	node, err := b.Lavalink.AddNode(ctx, disgolink.NodeConfig{
-		Name:     NODE_NAME,
-		Address:  NODE_ADDRESS,
-		Password: NODE_PASSWORD,
-		Secure:   NODE_SECURE,
+		Name:     NodeName,
+		Address:  NodeAddress,
+		Password: NodePassword,
+		Secure:   NodeSecure,
 	})
 	if err != nil {
 		log.Fatal(err)
