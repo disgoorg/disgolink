@@ -3,7 +3,13 @@ package main
 import (
 	"github.com/disgoorg/disgolink/v2/lavalink"
 	"github.com/disgoorg/snowflake/v2"
+	"math/rand"
+	"time"
 )
+
+func init() {
+	rand.Seed(time.Now().UnixNano())
+}
 
 type QueueType string
 
@@ -31,6 +37,12 @@ type Queue struct {
 	Type   QueueType
 }
 
+func (q *Queue) Shuffle() {
+	rand.Shuffle(len(q.Tracks), func(i, j int) {
+		q.Tracks[i], q.Tracks[j] = q.Tracks[j], q.Tracks[i]
+	})
+}
+
 func (q *Queue) Add(track ...lavalink.Track) {
 	q.Tracks = append(q.Tracks, track...)
 }
@@ -42,6 +54,17 @@ func (q *Queue) Next() (lavalink.Track, bool) {
 	track := q.Tracks[0]
 	q.Tracks = q.Tracks[1:]
 	return track, true
+}
+
+func (q *Queue) Skip(amount int) (lavalink.Track, bool) {
+	if len(q.Tracks) == 0 {
+		return lavalink.Track{}, false
+	}
+	if amount > len(q.Tracks) {
+		amount = len(q.Tracks)
+	}
+	q.Tracks = q.Tracks[amount:]
+	return q.Tracks[0], true
 }
 
 func (q *Queue) Clear() {

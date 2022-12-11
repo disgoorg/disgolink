@@ -78,6 +78,10 @@ func main() {
 		"queue":       b.queue,
 		"clear-queue": b.clearQueue,
 		"queue-type":  b.queueType,
+		"shuffle":     b.shuffle,
+		"seek":        b.seek,
+		"volume":      b.volume,
+		"skip":        b.skip,
 	}
 
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)

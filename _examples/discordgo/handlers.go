@@ -11,6 +11,26 @@ import (
 	"time"
 )
 
+func (b *Bot) shuffle(event *discordgo.InteractionCreate, data discordgo.ApplicationCommandInteractionData) error {
+	queue := b.Queues.Get(event.GuildID)
+	if queue == nil {
+		return b.Session.InteractionRespond(event.Interaction, &discordgo.InteractionResponse{
+			Type: discordgo.InteractionResponseChannelMessageWithSource,
+			Data: &discordgo.InteractionResponseData{
+				Content: "No player found",
+			},
+		})
+	}
+
+	queue.Shuffle()
+	return b.Session.InteractionRespond(event.Interaction, &discordgo.InteractionResponse{
+		Type: discordgo.InteractionResponseChannelMessageWithSource,
+		Data: &discordgo.InteractionResponseData{
+			Content: "Queue shuffled",
+		},
+	})
+}
+
 func (b *Bot) queueType(event *discordgo.InteractionCreate, data discordgo.ApplicationCommandInteractionData) error {
 	queue := b.Queues.Get(event.GuildID)
 	if queue == nil {

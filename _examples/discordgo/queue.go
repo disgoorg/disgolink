@@ -1,6 +1,14 @@
 package main
 
-import "github.com/disgoorg/disgolink/v2/lavalink"
+import (
+	"github.com/disgoorg/disgolink/v2/lavalink"
+	"math/rand"
+	"time"
+)
+
+func init() {
+	rand.Seed(time.Now().UnixNano())
+}
 
 type QueueType string
 
@@ -26,6 +34,12 @@ func (q QueueType) String() string {
 type Queue struct {
 	Tracks []lavalink.Track
 	Type   QueueType
+}
+
+func (q *Queue) Shuffle() {
+	rand.Shuffle(len(q.Tracks), func(i, j int) {
+		q.Tracks[i], q.Tracks[j] = q.Tracks[j], q.Tracks[i]
+	})
 }
 
 func (q *Queue) Add(track ...lavalink.Track) {

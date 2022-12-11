@@ -35,6 +35,10 @@ var commands = []*discordgo.ApplicationCommand{
 		Description: "Shows all active players",
 	},
 	{
+		Name:        "shuffle",
+		Description: "Shuffles the current queue",
+	},
+	{
 		Name:        "queue",
 		Description: "Shows the current queue",
 	},
@@ -71,7 +75,7 @@ var commands = []*discordgo.ApplicationCommand{
 }
 
 func registerCommands(s *discordgo.Session) {
-	if _, err := s.ApplicationCommandBulkOverwrite(s.State.User.ID, GUILD_ID, commands); err != nil {
+	if _, err := s.ApplicationCommandBulkOverwrite(s.State.User.ID, GuildId, commands); err != nil {
 		log.Warn(err)
 	}
 }

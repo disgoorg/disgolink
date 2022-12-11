@@ -19,13 +19,13 @@ var (
 	urlPattern    = regexp.MustCompile("^https?://[-a-zA-Z0-9+&@#/%?=~_|!:,.;]*[-a-zA-Z0-9+&@#/%=~_|]?")
 	searchPattern = regexp.MustCompile(`^(.{2})search:(.+)`)
 
-	TOKEN    = os.Getenv("TOKEN")
-	GUILD_ID = os.Getenv("GUILD_ID")
+	Token   = os.Getenv("TOKEN")
+	GuildId = os.Getenv("GUILD_ID")
 
-	NODE_NAME      = os.Getenv("NODE_NAME")
-	NODE_ADDRESS   = os.Getenv("NODE_ADDRESS")
-	NODE_PASSWORD  = os.Getenv("NODE_PASSWORD")
-	NODE_SECURE, _ = strconv.ParseBool(os.Getenv("NODE_SECURE"))
+	NodeName      = os.Getenv("NODE_NAME")
+	NodeAddress   = os.Getenv("NODE_ADDRESS")
+	NodePassword  = os.Getenv("NODE_PASSWORD")
+	NodeSecure, _ = strconv.ParseBool(os.Getenv("NODE_SECURE"))
 )
 
 type Bot struct {
@@ -48,7 +48,7 @@ func main() {
 		},
 	}
 
-	session, err := discordgo.New("Bot " + TOKEN)
+	session, err := discordgo.New("Bot " + Token)
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -85,15 +85,16 @@ func main() {
 		"queue":       b.queue,
 		"clear-queue": b.clearQueue,
 		"queue-type":  b.queueType,
+		"shuffle":     b.shuffle,
 	}
 
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
 	node, err := b.Lavalink.AddNode(ctx, disgolink.NodeConfig{
-		Name:     NODE_NAME,
-		Address:  NODE_ADDRESS,
-		Password: NODE_PASSWORD,
-		Secure:   NODE_SECURE,
+		Name:     NodeName,
+		Address:  NodeAddress,
+		Password: NodePassword,
+		Secure:   NodeSecure,
 	})
 	if err != nil {
 		log.Fatal(err)

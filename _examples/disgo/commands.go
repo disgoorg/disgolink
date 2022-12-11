@@ -4,6 +4,7 @@ import (
 	"github.com/disgoorg/disgo/bot"
 	"github.com/disgoorg/disgo/discord"
 	"github.com/disgoorg/disgolink/v2/lavalink"
+	"github.com/disgoorg/json"
 	"github.com/disgoorg/log"
 )
 
@@ -69,6 +70,68 @@ var commands = []discord.ApplicationCommandCreate{
 	discord.SlashCommandCreate{
 		Name:        "players",
 		Description: "Shows all active players",
+	},
+	discord.SlashCommandCreate{
+		Name:        "skip",
+		Description: "Skips the current song",
+		Options: []discord.ApplicationCommandOption{
+			discord.ApplicationCommandOptionInt{
+				Name:        "amount",
+				Description: "The amount of songs to skip",
+				Required:    false,
+			},
+		},
+	},
+	discord.SlashCommandCreate{
+		Name:        "volume",
+		Description: "Sets the volume of the player",
+		Options: []discord.ApplicationCommandOption{
+			discord.ApplicationCommandOptionInt{
+				Name:        "volume",
+				Description: "The volume to set",
+				Required:    true,
+				MaxValue:    json.Ptr(1000),
+				MinValue:    json.Ptr(0),
+			},
+		},
+	},
+	discord.SlashCommandCreate{
+		Name:        "seek",
+		Description: "Seeks to a specific position in the current song",
+		Options: []discord.ApplicationCommandOption{
+			discord.ApplicationCommandOptionInt{
+				Name:        "position",
+				Description: "The position to seek to",
+				Required:    true,
+			},
+			discord.ApplicationCommandOptionInt{
+				Name:        "unit",
+				Description: "The unit of the position",
+				Required:    false,
+				Choices: []discord.ApplicationCommandOptionChoiceInt{
+					{
+						Name:  "Milliseconds",
+						Value: int(lavalink.Millisecond),
+					},
+					{
+						Name:  "Seconds",
+						Value: int(lavalink.Second),
+					},
+					{
+						Name:  "Minutes",
+						Value: int(lavalink.Minute),
+					},
+					{
+						Name:  "Hours",
+						Value: int(lavalink.Hour),
+					},
+				},
+			},
+		},
+	},
+	discord.SlashCommandCreate{
+		Name:        "shuffle",
+		Description: "Shuffles the current queue",
 	},
 }
 

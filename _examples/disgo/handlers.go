@@ -11,6 +11,97 @@ import (
 	"time"
 )
 
+func (b *Bot) shuffle(event *events.ApplicationCommandInteractionCreate, data discord.SlashCommandInteractionData) error {
+	queue := b.Queues.Get(*event.GuildID())
+	if queue == nil {
+		return event.CreateMessage(discord.MessageCreate{
+			Content: "No player found",
+		})
+	}
+
+	queue.Shuffle()
+	return event.CreateMessage(discord.MessageCreate{
+		Content: "Queue shuffled",
+	})
+}
+
+func (b *Bot) volume(event *events.ApplicationCommandInteractionCreate, data discord.SlashCommandInteractionData) error {
+	player := b.Lavalink.ExistingPlayer(*event.GuildID())
+	if player == nil {
+		return event.CreateMessage(discord.MessageCreate{
+			Content: "No player found",
+		})
+	}
+
+	volume := data.Int("volume")
+	if err := player.Update(context.TODO(), lavalink.WithVolume(volume)); err != nil {
+		return event.CreateMessage(discord.MessageCreate{
+			Content: fmt.Sprintf("Error while setting volume: `%s`", err),
+		})
+	}
+
+	return event.CreateMessage(discord.MessageCreate{
+		Content: fmt.Sprintf("Volume set to `%d`", volume),
+	})
+}
+
+func (b *Bot) seek(event *events.ApplicationCommandInteractionCreate, data discord.SlashCommandInteractionData) error {
+	player := b.Lavalink.ExistingPlayer(*event.GuildID())
+	if player == nil {
+		return event.CreateMessage(discord.MessageCreate{
+			Content: "No player found",
+		})
+	}
+
+	position := data.Int("position")
+	unit, ok := data.OptInt("unit")
+	if !ok {
+		unit = 1
+	}
+	finalPosition := lavalink.Duration(position * unit)
+	if err := player.Update(context.TODO(), lavalink.WithPosition(finalPosition)); err != nil {
+		return event.CreateMessage(discord.MessageCreate{
+			Content: fmt.Sprintf("Error while seeking: `%s`", err),
+		})
+	}
+
+	return event.CreateMessage(discord.MessageCreate{
+		Content: fmt.Sprintf("Seeked to `%s`", formatPosition(finalPosition)),
+	})
+}
+
+func (b *Bot) skip(event *events.ApplicationCommandInteractionCreate, data discord.SlashCommandInteractionData) error {
+	player := b.Lavalink.ExistingPlayer(*event.GuildID())
+	queue := b.Queues.Get(*event.GuildID())
+	if player == nil || queue == nil {
+		return event.CreateMessage(discord.MessageCreate{
+			Content: "No player found",
+		})
+	}
+
+	amount, ok := data.OptInt("amount")
+	if !ok {
+		amount = 1
+	}
+
+	track, ok := queue.Skip(amount)
+	if !ok {
+		return event.CreateMessage(discord.MessageCreate{
+			Content: "No tracks in queue",
+		})
+	}
+
+	if err := player.Update(context.TODO(), lavalink.WithTrack(track)); err != nil {
+		return event.CreateMessage(discord.MessageCreate{
+			Content: fmt.Sprintf("Error while skipping track: `%s`", err),
+		})
+	}
+
+	return event.CreateMessage(discord.MessageCreate{
+		Content: "Skipped track",
+	})
+}
+
 func (b *Bot) queueType(event *events.ApplicationCommandInteractionCreate, data discord.SlashCommandInteractionData) error {
 	queue := b.Queues.Get(*event.GuildID())
 	if queue == nil {
