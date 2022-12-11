@@ -34,8 +34,8 @@ type Client interface {
 	UserID() snowflake.ID
 	Close()
 
-	OnVoiceServerUpdate(guildID snowflake.ID, token string, endpoint string)
-	OnVoiceStateUpdate(guildID snowflake.ID, channelID *snowflake.ID, sessionID string)
+	OnVoiceServerUpdate(ctx context.Context, guildID snowflake.ID, token string, endpoint string)
+	OnVoiceStateUpdate(ctx context.Context, guildID snowflake.ID, channelID *snowflake.ID, sessionID string)
 }
 
 func New(userID snowflake.ID, opts ...ConfigOpt) Client {
@@ -216,18 +216,18 @@ func (l *clientImpl) Close() {
 	}
 }
 
-func (l *clientImpl) OnVoiceServerUpdate(guildID snowflake.ID, token string, endpoint string) {
+func (l *clientImpl) OnVoiceServerUpdate(ctx context.Context, guildID snowflake.ID, token string, endpoint string) {
 	player := l.ExistingPlayer(guildID)
 	if player == nil {
 		return
 	}
-	player.OnVoiceServerUpdate(token, endpoint)
+	player.OnVoiceServerUpdate(ctx, token, endpoint)
 }
 
-func (l *clientImpl) OnVoiceStateUpdate(guildID snowflake.ID, channelID *snowflake.ID, sessionID string) {
+func (l *clientImpl) OnVoiceStateUpdate(ctx context.Context, guildID snowflake.ID, channelID *snowflake.ID, sessionID string) {
 	player := l.ExistingPlayer(guildID)
 	if player == nil {
 		return
 	}
-	player.OnVoiceStateUpdate(channelID, sessionID)
+	player.OnVoiceStateUpdate(ctx, channelID, sessionID)
 }

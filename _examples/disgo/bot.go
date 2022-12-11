@@ -1,6 +1,7 @@
 package main
 
 import (
+	"context"
 	"github.com/disgoorg/disgo/bot"
 	"github.com/disgoorg/disgo/discord"
 	"github.com/disgoorg/disgo/events"
@@ -38,9 +39,9 @@ func (b *Bot) onApplicationCommand(event *events.ApplicationCommandInteractionCr
 }
 
 func (b *Bot) onVoiceStateUpdate(event *events.GuildVoiceStateUpdate) {
-	b.Lavalink.OnVoiceStateUpdate(event.VoiceState.GuildID, event.VoiceState.ChannelID, event.VoiceState.SessionID)
+	b.Lavalink.OnVoiceStateUpdate(context.TODO(), event.VoiceState.GuildID, event.VoiceState.ChannelID, event.VoiceState.SessionID)
 }
 
 func (b *Bot) onVoiceServerUpdate(event *events.VoiceServerUpdate) {
-	b.Lavalink.OnVoiceServerUpdate(event.GuildID, event.Token, *event.Endpoint)
+	b.Lavalink.OnVoiceServerUpdate(context.TODO(), event.GuildID, event.Token, *event.Endpoint)
 }

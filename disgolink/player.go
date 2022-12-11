@@ -29,12 +29,12 @@ type Player interface {
 
 	OnEvent(event lavalink.Event)
 	OnPlayerUpdate(state lavalink.PlayerState)
-	OnVoiceServerUpdate(token string, endpoint string)
-	OnVoiceStateUpdate(channelID *snowflake.ID, sessionID string)
+	OnVoiceServerUpdate(ctx context.Context, token string, endpoint string)
+	OnVoiceStateUpdate(ctx context.Context, channelID *snowflake.ID, sessionID string)
 }
 
 func NewPlayer(lavalink Client, node Node, guildID snowflake.ID) Player {
-	return &defaultImpl{
+	return &playerImpl{
 		lavalink: lavalink,
 		node:     node,
 		guildID:  guildID,
@@ -42,7 +42,7 @@ func NewPlayer(lavalink Client, node Node, guildID snowflake.ID) Player {
 	}
 }
 
-type defaultImpl struct {
+type playerImpl struct {
 	guildID   snowflake.ID
 	channelID *snowflake.ID
 	track     *lavalink.Track
@@ -56,23 +56,23 @@ type defaultImpl struct {
 	lavalink Client
 }
 
-func (p *defaultImpl) GuildID() snowflake.ID {
+func (p *playerImpl) GuildID() snowflake.ID {
 	return p.guildID
 }
 
-func (p *defaultImpl) ChannelID() *snowflake.ID {
+func (p *playerImpl) ChannelID() *snowflake.ID {
 	return p.channelID
 }
 
-func (p *defaultImpl) Track() *lavalink.Track {
+func (p *playerImpl) Track() *lavalink.Track {
 	return p.track
 }
 
-func (p *defaultImpl) Paused() bool {
+func (p *playerImpl) Paused() bool {
 	return p.paused
 }
 
-func (p *defaultImpl) Position() lavalink.Duration {
+func (p *playerImpl) Position() lavalink.Duration {
 	if p.track == nil {
 		return 0
 	}
@@ -89,19 +89,19 @@ func (p *defaultImpl) Position() lavalink.Duration {
 	return position
 }
 
-func (p *defaultImpl) State() lavalink.PlayerState {
+func (p *playerImpl) State() lavalink.PlayerState {
 	return p.state
 }
 
-func (p *defaultImpl) Volume() int {
+func (p *playerImpl) Volume() int {
 	return p.volume
 }
 
-func (p *defaultImpl) Filters() lavalink.Filters {
+func (p *playerImpl) Filters() lavalink.Filters {
 	return p.filters
 }
 
-func (p *defaultImpl) Update(ctx context.Context, opts ...lavalink.PlayerUpdateOpt) error {
+func (p *playerImpl) Update(ctx context.Context, opts ...lavalink.PlayerUpdateOpt) error {
 	if p.node == nil {
 		return ErrPlayerNoNode
 	}
@@ -142,7 +142,7 @@ func (p *defaultImpl) Update(ctx context.Context, opts ...lavalink.PlayerUpdateO
 	return nil
 }
 
-func (p *defaultImpl) Destroy(ctx context.Context) error {
+func (p *playerImpl) Destroy(ctx context.Context) error {
 	if p.node == nil {
 		return ErrPlayerNoNode
 	}
@@ -150,18 +150,18 @@ func (p *defaultImpl) Destroy(ctx context.Context) error {
 	return p.node.Rest().DestroyPlayer(ctx, p.node.SessionID(), p.guildID)
 }
 
-func (p *defaultImpl) Node() Node {
+func (p *playerImpl) Node() Node {
 	if p.node == nil {
 		p.node = p.lavalink.BestNode()
 	}
 	return p.node
 }
 
-func (p *defaultImpl) Lavalink() Client {
+func (p *playerImpl) Lavalink() Client {
 	return p.lavalink
 }
 
-func (p *defaultImpl) OnEvent(event lavalink.Event) {
+func (p *playerImpl) OnEvent(event lavalink.Event) {
 	switch e := event.(type) {
 	case lavalink.PlayerPauseEvent:
 		p.paused = true
@@ -184,14 +184,11 @@ func (p *defaultImpl) OnEvent(event lavalink.Event) {
 	p.lavalink.EmitEvent(p, event)
 }
 
-func (p *defaultImpl) OnPlayerUpdate(state lavalink.PlayerState) {
+func (p *playerImpl) OnPlayerUpdate(state lavalink.PlayerState) {
 	p.state = state
 }
 
-func (p *defaultImpl) OnVoiceServerUpdate(token string, endpoint string) {
-	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
-	defer cancel()
-
+func (p *playerImpl) OnVoiceServerUpdate(ctx context.Context, token string, endpoint string) {
 	if _, err := p.Node().Rest().UpdatePlayer(ctx, p.node.SessionID(), p.guildID, lavalink.PlayerUpdate{
 		Voice: &lavalink.VoiceState{
 			Token:     token,
@@ -205,11 +202,9 @@ func (p *defaultImpl) OnVoiceServerUpdate(token string, endpoint string) {
 	p.voice.Endpoint = endpoint
 }
 
-func (p *defaultImpl) OnVoiceStateUpdate(channelID *snowflake.ID, sessionID string) {
+func (p *playerImpl) OnVoiceStateUpdate(ctx context.Context, channelID *snowflake.ID, sessionID string) {
 	if channelID == nil {
 		p.channelID = nil
-		ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
-		defer cancel()
 		if err := p.Destroy(ctx); err != nil {
 			p.node.Lavalink().Logger().Error("error while destroying player: ", err)
 		}
