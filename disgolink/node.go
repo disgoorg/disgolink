@@ -160,10 +160,10 @@ func (n *nodeImpl) DecodeTracks(ctx context.Context, encodedTracks []string) ([]
 }
 
 func (n *nodeImpl) Open(ctx context.Context) error {
-	return n.reconnectTry(ctx, 0)
+	return n.reconnectTry(ctx, 0, false)
 }
 
-func (n *nodeImpl) open(ctx context.Context) error {
+func (n *nodeImpl) open(ctx context.Context, reconnecting bool) error {
 	n.lavalink.Logger().Debug("opening connection to node...")
 
 	n.connMu.Lock()
@@ -172,7 +172,11 @@ func (n *nodeImpl) open(ctx context.Context) error {
 		return ErrNodeAlreadyConnected
 	}
 
-	n.status = StatusConnecting
+	if reconnecting {
+		n.status = StatusReconnecting
+	} else {
+		n.status = StatusConnecting
+	}
 
 	header := http.Header{
 		"Authorization": []string{n.config.Password},
@@ -210,6 +214,7 @@ func (n *nodeImpl) open(ctx context.Context) error {
 			n.lavalink.Logger().Warn("failed to resume session with key: ", n.config.ResumingKey)
 		}
 	}
+	n.status = StatusConnected
 
 	conn.SetCloseHandler(func(code int, text string) error {
 		return nil
@@ -231,7 +236,7 @@ func (n *nodeImpl) Close() {
 	}
 }
 
-func (n *nodeImpl) reconnectTry(ctx context.Context, try int) error {
+func (n *nodeImpl) reconnectTry(ctx context.Context, try int, reconnecting bool) error {
 	delay := time.Duration(try) * 2 * time.Second
 	if delay > 30*time.Second {
 		delay = 30 * time.Second
@@ -246,19 +251,19 @@ func (n *nodeImpl) reconnectTry(ctx context.Context, try int) error {
 	case <-timer.C:
 	}
 
-	if err := n.open(ctx); err != nil {
+	if err := n.open(ctx, reconnecting); err != nil {
 		if err == ErrNodeAlreadyConnected {
 			return err
 		}
 		n.lavalink.Logger().Error("failed to reconnect node. error: ", err)
 		n.status = StatusDisconnected
-		return n.reconnectTry(ctx, try+1)
+		return n.reconnectTry(ctx, try+1, reconnecting)
 	}
 	return nil
 }
 
 func (n *nodeImpl) reconnect() {
-	if err := n.reconnectTry(context.Background(), 0); err != nil {
+	if err := n.reconnectTry(context.Background(), 0, true); err != nil {
 		n.lavalink.Logger().Error("failed to reopen node. error: ", err)
 	}
 }
