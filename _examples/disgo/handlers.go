@@ -196,6 +196,25 @@ func (b *Bot) stop(event *events.ApplicationCommandInteractionCreate, data disco
 		})
 	}
 
+	if err := player.Update(context.TODO(), lavalink.WithNullTrack()); err != nil {
+		return event.CreateMessage(discord.MessageCreate{
+			Content: fmt.Sprintf("Error while stopping: `%s`", err),
+		})
+	}
+
+	return event.CreateMessage(discord.MessageCreate{
+		Content: "Player stopped",
+	})
+}
+
+func (b *Bot) disconnect(event *events.ApplicationCommandInteractionCreate, data discord.SlashCommandInteractionData) error {
+	player := b.Lavalink.ExistingPlayer(*event.GuildID())
+	if player == nil {
+		return event.CreateMessage(discord.MessageCreate{
+			Content: "No player found",
+		})
+	}
+
 	if err := b.Client.Disconnect(context.TODO(), *event.GuildID()); err != nil {
 		return event.CreateMessage(discord.MessageCreate{
 			Content: fmt.Sprintf("Error while disconnecting: `%s`", err),
@@ -203,7 +222,7 @@ func (b *Bot) stop(event *events.ApplicationCommandInteractionCreate, data disco
 	}
 
 	return event.CreateMessage(discord.MessageCreate{
-		Content: "Player stopped",
+		Content: "Player disconnected",
 	})
 }
 

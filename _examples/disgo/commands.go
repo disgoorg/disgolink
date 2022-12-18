@@ -68,6 +68,10 @@ var commands = []discord.ApplicationCommandCreate{
 		Description: "Stops the current song and stops the player",
 	},
 	discord.SlashCommandCreate{
+		Name:        "disconnect",
+		Description: "Disconnects the player",
+	},
+	discord.SlashCommandCreate{
 		Name:        "players",
 		Description: "Shows all active players",
 	},
