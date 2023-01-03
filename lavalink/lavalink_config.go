@@ -17,10 +17,11 @@ func DefaultConfig() *Config {
 }
 
 type Config struct {
-	Logger     log.Logger
-	HTTPClient *http.Client
-	UserID     snowflake.ID
-	Plugins    []any
+	Logger              log.Logger
+	HTTPClient          *http.Client
+	UserID              snowflake.ID
+	Plugins             []any
+	CustomPlayerCreator func(node Node, lavalink Lavalink, guildID snowflake.ID) Player
 }
 
 type ConfigOpt func(config *Config)
@@ -69,5 +70,11 @@ func WithPlugins(plugins ...any) ConfigOpt {
 func WithOverwritePlugins(plugins ...any) ConfigOpt {
 	return func(config *Config) {
 		config.Plugins = plugins
+	}
+}
+
+func WithCustomPlayer(creator func(node Node, lavalink Lavalink, guildID snowflake.ID) Player) ConfigOpt {
+	return func(config *Config) {
+		config.CustomPlayerCreator = creator
 	}
 }

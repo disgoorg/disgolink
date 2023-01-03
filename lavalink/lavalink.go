@@ -218,7 +218,12 @@ func (l *lavalinkImpl) PlayerOnNode(name string, guildID snowflake.ID) Player {
 	if node == nil {
 		node = l.BestNode()
 	}
-	player := NewPlayer(node, l, guildID)
+	var player Player
+	if l.config.CustomPlayerCreator != nil {
+		player = l.config.CustomPlayerCreator(node, l, guildID)
+	} else {
+		player = NewPlayer(node, l, guildID)
+	}
 	for _, pl := range l.config.Plugins {
 		if plugin, ok := pl.(PluginEventHandler); ok {
 			plugin.OnNewPlayer(player)
