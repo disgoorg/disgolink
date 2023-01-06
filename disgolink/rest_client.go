@@ -20,21 +20,22 @@ func (e Endpoint) Format(a ...any) string {
 }
 
 var (
+	EndpointBase    Endpoint = "/v4"
 	EndpointVersion Endpoint = "/version"
-	EndpointInfo    Endpoint = "/v3/info"
-	EndpointStats   Endpoint = "/v3/stats"
+	EndpointInfo             = EndpointBase + "/info"
+	EndpointStats            = EndpointBase + "/stats"
 
-	EndpointUpdateSession Endpoint = "/v3/sessions/%s"
-	EndpointPlayers       Endpoint = "/v3/sessions/%s/players"
-	EndpointPlayer        Endpoint = "/v3/sessions/%s/players/%s"
-	EndpointUpdatePlayer  Endpoint = "/v3/sessions/%s/players/%s?noReplace=%t"
-	EndpointDestroyPlayer Endpoint = "/v3/sessions/%s/players/%s"
+	EndpointUpdateSession = EndpointBase + "/sessions/%s"
+	EndpointPlayers       = EndpointBase + "/sessions/%s/players"
+	EndpointPlayer        = EndpointBase + "/sessions/%s/players/%s"
+	EndpointUpdatePlayer  = EndpointBase + "/sessions/%s/players/%s?noReplace=%t"
+	EndpointDestroyPlayer = EndpointBase + "/sessions/%s/players/%s"
 
-	EndpointLoadTracks   Endpoint = "/v3/loadtracks?identifier=%s"
-	EndpointDecodeTrack  Endpoint = "/v3/decodetrack?track=%s"
-	EndpointDecodeTracks Endpoint = "/v3/decodetracks"
+	EndpointLoadTracks   = EndpointBase + "/loadtracks?identifier=%s"
+	EndpointDecodeTrack  = EndpointBase + "/decodetrack?track=%s"
+	EndpointDecodeTracks = EndpointBase + "/decodetracks"
 
-	EndpointWebSocket Endpoint = "/v3/websocket"
+	EndpointWebSocket = EndpointBase + "/websocket"
 )
 
 type RestClient interface {

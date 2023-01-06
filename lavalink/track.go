@@ -14,4 +14,6 @@ type TrackInfo struct {
 	URI        *string  `json:"uri"`
 	SourceName string   `json:"sourceName"`
 	Position   Duration `json:"position"`
+	ArtworkURL *string  `json:"artwork"`
+	ISRC       *string  `json:"isrc"`
 }

@@ -49,11 +49,11 @@ type Node interface {
 }
 
 type NodeConfig struct {
-	Name        string `json:"name"`
-	Address     string `json:"address"`
-	Password    string `json:"password"`
-	Secure      bool   `json:"secure"`
-	ResumingKey string `json:"resumingKey"`
+	Name      string `json:"name"`
+	Address   string `json:"address"`
+	Password  string `json:"password"`
+	Secure    bool   `json:"secure"`
+	SessionID string `json:"session_id"`
 }
 
 func (c NodeConfig) RestURL() string {
@@ -120,7 +120,10 @@ func (n *nodeImpl) Info(ctx context.Context) (*lavalink.Info, error) {
 }
 
 func (n *nodeImpl) Update(ctx context.Context, update lavalink.SessionUpdate) error {
-	_, err := n.rest.UpdateSession(ctx, n.sessionID, update)
+	session, err := n.rest.UpdateSession(ctx, n.sessionID, update)
+	if session != nil && session.Resuming {
+		n.config.SessionID = n.sessionID
+	}
 	return err
 }
 
@@ -183,8 +186,8 @@ func (n *nodeImpl) open(ctx context.Context, reconnecting bool) error {
 		"User-Id":       []string{n.lavalink.UserID().String()},
 		"Client-Name":   []string{fmt.Sprintf("%s/%s", Name, Version)},
 	}
-	if n.config.ResumingKey != "" {
-		header.Add("Resume-Key", n.config.ResumingKey)
+	if n.config.SessionID != "" {
+		header.Add("Session-Id", n.config.SessionID)
 	}
 
 	conn, _, err := websocket.DefaultDialer.DialContext(ctx, n.config.WsURL(), header)
@@ -207,11 +210,11 @@ func (n *nodeImpl) open(ctx context.Context, reconnecting bool) error {
 	}
 
 	n.sessionID = ready.SessionID
-	if n.config.ResumingKey != "" {
+	if n.config.SessionID != "" {
 		if ready.Resumed {
-			n.lavalink.Logger().Info("successfully resumed session with key: %s", n.config.ResumingKey)
+			n.lavalink.Logger().Info("successfully resumed session: %s", n.config.SessionID)
 		} else {
-			n.lavalink.Logger().Warn("failed to resume session with key: ", n.config.ResumingKey)
+			n.lavalink.Logger().Warn("failed to resume session: ", n.config.SessionID)
 		}
 	}
 	n.status = StatusConnected
