@@ -181,6 +181,13 @@ func (p *playerImpl) OnEvent(event lavalink.Event) {
 			if pl, ok := plugin.(EventPlugin); ok && pl.Event() == e.Type() {
 				pl.OnEventInvocation(p, e.Data)
 			}
+			if pl, ok := plugin.(EventPlugins); ok {
+				for _, pls := range pl.EventPlugins() {
+					if pls.Event() == e.Type() {
+						pls.OnEventInvocation(p, e.Data)
+					}
+				}
+			}
 		})
 	case lavalink.PlayerPauseEvent:
 		p.paused = true

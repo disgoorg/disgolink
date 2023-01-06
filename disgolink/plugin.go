@@ -17,6 +17,10 @@ type EventPlugin interface {
 	OnEventInvocation(player Player, data []byte)
 }
 
+type EventPlugins interface {
+	EventPlugins() []EventPlugin
+}
+
 type PluginEventHandler interface {
 	OnNodeOpen(node Node)
 	OnNodeClose(node Node)
