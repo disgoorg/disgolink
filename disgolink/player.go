@@ -147,7 +147,20 @@ func (p *playerImpl) Destroy(ctx context.Context) error {
 		return ErrPlayerNoNode
 	}
 
-	return p.node.Rest().DestroyPlayer(ctx, p.node.SessionID(), p.guildID)
+	err := p.node.Rest().DestroyPlayer(ctx, p.node.SessionID(), p.guildID)
+	if err != nil {
+		return err
+	}
+
+	p.lavalink.ForPlugins(func(plugin Plugin) {
+		if pl, ok := plugin.(PluginEventHandler); ok {
+			pl.OnDestroyPlayer(p)
+		}
+	})
+
+	p.lavalink.RemovePlayer(p.guildID)
+
+	return nil
 }
 
 func (p *playerImpl) Node() Node {
@@ -163,6 +176,12 @@ func (p *playerImpl) Lavalink() Client {
 
 func (p *playerImpl) OnEvent(event lavalink.Event) {
 	switch e := event.(type) {
+	case lavalink.UnknownEvent:
+		p.lavalink.ForPlugins(func(plugin Plugin) {
+			if pl, ok := plugin.(EventPlugin); ok && pl.Event() == e.Type() {
+				pl.OnEventInvocation(p, e.Data)
+			}
+		})
 	case lavalink.PlayerPauseEvent:
 		p.paused = true
 
@@ -206,7 +225,7 @@ func (p *playerImpl) OnVoiceStateUpdate(ctx context.Context, channelID *snowflak
 	if channelID == nil {
 		p.channelID = nil
 		if err := p.Destroy(ctx); err != nil {
-			p.node.Lavalink().Logger().Error("error while destroying player: ", err)
+			p.lavalink.Logger().Error("error while destroying player: ", err)
 		}
 		p.lavalink.RemovePlayer(p.guildID)
 		return

@@ -19,6 +19,7 @@ type Config struct {
 	Logger     log.Logger
 	HTTPClient *http.Client
 	Listeners  []EventListener
+	Plugins    []Plugin
 }
 
 type ConfigOpt func(config *Config)
@@ -50,4 +51,10 @@ func WithListeners(listeners ...EventListener) ConfigOpt {
 
 func WithListenerFunc[E lavalink.Event](listenerFunc func(p Player, e E)) ConfigOpt {
 	return WithListeners(NewListenerFunc(listenerFunc))
+}
+
+func WithPlugins(plugins ...Plugin) ConfigOpt {
+	return func(config *Config) {
+		config.Plugins = append(config.Plugins, plugins...)
+	}
 }

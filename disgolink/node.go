@@ -224,10 +224,21 @@ func (n *nodeImpl) open(ctx context.Context, reconnecting bool) error {
 
 	go n.listen(conn)
 
+	n.Lavalink().ForPlugins(func(plugin Plugin) {
+		if pl, ok := plugin.(PluginEventHandler); ok {
+			pl.OnNodeOpen(n)
+		}
+	})
+
 	return nil
 }
 
 func (n *nodeImpl) Close() {
+	n.Lavalink().ForPlugins(func(plugin Plugin) {
+		if pl, ok := plugin.(PluginEventHandler); ok {
+			pl.OnNodeClose(n)
+		}
+	})
 	n.status = StatusDisconnected
 	if n.conn != nil {
 		if err := n.conn.Close(); err != nil {
@@ -290,6 +301,14 @@ loop:
 			break loop
 		}
 
+		n.lavalink.Logger().Debug("received message: ", string(data))
+
+		n.Lavalink().ForPlugins(func(plugin Plugin) {
+			if pl, ok := plugin.(PluginEventHandler); ok {
+				pl.OnNodeMessageIn(n, data)
+			}
+		})
+
 		m, err := lavalink.UnmarshalMessage(data)
 		if err != nil {
 			n.lavalink.Logger().Errorf("error while unmarshalling ws data: %s", err)
@@ -297,6 +316,13 @@ loop:
 		}
 
 		switch message := m.(type) {
+		case lavalink.UnknownMessage:
+			n.Lavalink().ForPlugins(func(plugin Plugin) {
+				if pl, ok := plugin.(OpPlugin); ok {
+					pl.OnOpInvocation(n, message.Data)
+				}
+			})
+
 		case lavalink.StatsMessage:
 			n.stats = lavalink.Stats(message)
 
@@ -313,8 +339,6 @@ loop:
 				continue
 			}
 			player.OnEvent(message)
-
 		}
-
 	}
 }

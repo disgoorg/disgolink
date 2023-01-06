@@ -1,8 +1,6 @@
 package lavalink
 
 import (
-	"fmt"
-
 	"github.com/disgoorg/json"
 	"github.com/disgoorg/snowflake/v2"
 )
@@ -86,10 +84,14 @@ func UnmarshalMessage(data []byte) (Message, error) {
 			err = json.Unmarshal(data, &m)
 			message = m
 		default:
-			err = fmt.Errorf("unknown event type: %s", v.Event)
+			var m UnknownEvent
+			err = json.Unmarshal(data, &m)
+			message = m
 		}
 	default:
-		err = fmt.Errorf("unknown op: %s", v.Op)
+		var m UnknownMessage
+		err = json.Unmarshal(data, &m)
+		message = m
 	}
 	if err != nil {
 		return nil, err
@@ -118,6 +120,26 @@ func (PlayerUpdateMessage) Op() Op { return OpPlayerUpdate }
 type StatsMessage Stats
 
 func (StatsMessage) Op() Op { return OpStats }
+
+type UnknownMessage struct {
+	Op_  Op              `json:"op"`
+	Data json.RawMessage `json:"-"`
+}
+
+func (e *UnknownMessage) UnmarshalJSON(data []byte) error {
+	type unknownMessage UnknownMessage
+	if err := json.Unmarshal(data, (*unknownMessage)(e)); err != nil {
+		return err
+	}
+	e.Data = data
+	return nil
+}
+
+func (e UnknownMessage) MarshalJSON() ([]byte, error) {
+	return e.Data, nil
+}
+
+func (m UnknownMessage) Op() Op { return m.Op_ }
 
 type Event interface {
 	Type() EventType
@@ -189,3 +211,26 @@ type PlayerResumeEvent struct {
 func (PlayerResumeEvent) Op() Op                  { return OpEvent }
 func (PlayerResumeEvent) Type() EventType         { return EventTypePlayerResume }
 func (e PlayerResumeEvent) GuildID() snowflake.ID { return e.GuildID_ }
+
+type UnknownEvent struct {
+	Type_    EventType       `json:"type"`
+	GuildID_ snowflake.ID    `json:"guildId"`
+	Data     json.RawMessage `json:"-"`
+}
+
+func (e *UnknownEvent) UnmarshalJSON(data []byte) error {
+	type unknownEvent UnknownEvent
+	if err := json.Unmarshal(data, (*unknownEvent)(e)); err != nil {
+		return err
+	}
+	e.Data = data
+	return nil
+}
+
+func (e UnknownEvent) MarshalJSON() ([]byte, error) {
+	return e.Data, nil
+}
+
+func (UnknownEvent) Op() Op                  { return OpEvent }
+func (e UnknownEvent) Type() EventType       { return e.Type_ }
+func (e UnknownEvent) GuildID() snowflake.ID { return e.GuildID_ }

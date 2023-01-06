@@ -31,6 +31,10 @@ type Client interface {
 	AddListeners(listeners ...EventListener)
 	RemoveListeners(listeners ...EventListener)
 
+	AddPlugins(plugins ...Plugin)
+	ForPlugins(pluginFunc func(plugin Plugin))
+	RemovePlugins(plugins ...Plugin)
+
 	UserID() snowflake.ID
 	Close()
 
@@ -55,6 +59,7 @@ func New(userID snowflake.ID, opts ...ConfigOpt) Client {
 		nodes:      map[string]Node{},
 		players:    map[snowflake.ID]Player{},
 		listeners:  config.Listeners,
+		plugins:    config.Plugins,
 	}
 }
 
@@ -73,48 +78,51 @@ type clientImpl struct {
 
 	listenersMu sync.Mutex
 	listeners   []EventListener
+
+	pluginsMu sync.Mutex
+	plugins   []Plugin
 }
 
-func (l *clientImpl) Logger() log.Logger {
-	return l.logger
+func (c *clientImpl) Logger() log.Logger {
+	return c.logger
 }
 
-func (l *clientImpl) AddNode(ctx context.Context, config NodeConfig) (Node, error) {
+func (c *clientImpl) AddNode(ctx context.Context, config NodeConfig) (Node, error) {
 	node := &nodeImpl{
 		config:   config,
-		lavalink: l,
+		lavalink: c,
 		status:   StatusDisconnected,
 	}
-	node.rest = newRestClientImpl(node, l.httpClient)
+	node.rest = newRestClientImpl(node, c.httpClient)
 	if err := node.Open(ctx); err != nil {
 		return nil, err
 	}
 
-	l.nodesMu.Lock()
-	defer l.nodesMu.Unlock()
-	l.nodes[config.Name] = node
+	c.nodesMu.Lock()
+	defer c.nodesMu.Unlock()
+	c.nodes[config.Name] = node
 	return node, nil
 }
 
-func (l *clientImpl) ForNodes(nodeFunc func(node Node)) {
-	l.nodesMu.Lock()
-	defer l.nodesMu.Unlock()
-	for i := range l.nodes {
-		nodeFunc(l.nodes[i])
+func (c *clientImpl) ForNodes(nodeFunc func(node Node)) {
+	c.nodesMu.Lock()
+	defer c.nodesMu.Unlock()
+	for i := range c.nodes {
+		nodeFunc(c.nodes[i])
 	}
 }
 
-func (l *clientImpl) Node(name string) Node {
-	l.nodesMu.Lock()
-	defer l.nodesMu.Unlock()
-	return l.nodes[name]
+func (c *clientImpl) Node(name string) Node {
+	c.nodesMu.Lock()
+	defer c.nodesMu.Unlock()
+	return c.nodes[name]
 }
 
-func (l *clientImpl) BestNode() Node {
-	l.nodesMu.Lock()
-	defer l.nodesMu.Unlock()
+func (c *clientImpl) BestNode() Node {
+	c.nodesMu.Lock()
+	defer c.nodesMu.Unlock()
 	var bestNode Node
-	for _, node := range l.nodes {
+	for _, node := range c.nodes {
 		if bestNode == nil || node.Stats().Better(bestNode.Stats()) {
 			bestNode = node
 		}
@@ -122,110 +130,141 @@ func (l *clientImpl) BestNode() Node {
 	return bestNode
 }
 
-func (l *clientImpl) RemoveNode(name string) {
-	l.nodesMu.Lock()
-	defer l.nodesMu.Unlock()
-	if node, ok := l.nodes[name]; ok {
+func (c *clientImpl) RemoveNode(name string) {
+	c.nodesMu.Lock()
+	defer c.nodesMu.Unlock()
+	if node, ok := c.nodes[name]; ok {
 		node.Close()
-		delete(l.nodes, name)
+		delete(c.nodes, name)
 	}
 }
 
-func (l *clientImpl) Player(guildID snowflake.ID) Player {
-	return l.PlayerOnNode("", guildID)
+func (c *clientImpl) Player(guildID snowflake.ID) Player {
+	return c.PlayerOnNode("", guildID)
 }
 
-func (l *clientImpl) PlayerOnNode(name string, guildID snowflake.ID) Player {
-	l.playersMu.Lock()
-	defer l.playersMu.Unlock()
-	if player, ok := l.players[guildID]; ok {
+func (c *clientImpl) PlayerOnNode(name string, guildID snowflake.ID) Player {
+	c.playersMu.Lock()
+	defer c.playersMu.Unlock()
+	if player, ok := c.players[guildID]; ok {
 		return player
 	}
-	node := l.Node(name)
+	node := c.Node(name)
 	if node == nil {
-		node = l.BestNode()
+		node = c.BestNode()
 	}
 
-	player := NewPlayer(l, node, guildID)
-	l.players[guildID] = player
+	player := NewPlayer(c, node, guildID)
+	c.ForPlugins(func(plugin Plugin) {
+		if pl, ok := plugin.(PluginEventHandler); ok {
+			pl.OnNewPlayer(player)
+		}
+	})
+	c.players[guildID] = player
 	return player
 }
 
-func (l *clientImpl) ExistingPlayer(guildID snowflake.ID) Player {
-	l.playersMu.Lock()
-	defer l.playersMu.Unlock()
-	return l.players[guildID]
+func (c *clientImpl) ExistingPlayer(guildID snowflake.ID) Player {
+	c.playersMu.Lock()
+	defer c.playersMu.Unlock()
+	return c.players[guildID]
 }
 
-func (l *clientImpl) RemovePlayer(guildID snowflake.ID) {
-	l.playersMu.Lock()
-	defer l.playersMu.Unlock()
-	delete(l.players, guildID)
+func (c *clientImpl) RemovePlayer(guildID snowflake.ID) {
+	c.playersMu.Lock()
+	defer c.playersMu.Unlock()
+	delete(c.players, guildID)
 }
 
-func (l *clientImpl) ForPlayers(playerFunc func(player Player)) {
-	l.playersMu.Lock()
-	defer l.playersMu.Unlock()
-	for _, player := range l.players {
+func (c *clientImpl) ForPlayers(playerFunc func(player Player)) {
+	c.playersMu.Lock()
+	defer c.playersMu.Unlock()
+	for _, player := range c.players {
 		playerFunc(player)
 	}
 }
 
-func (l *clientImpl) EmitEvent(player Player, event lavalink.Event) {
-	l.listenersMu.Lock()
-	defer l.listenersMu.Unlock()
+func (c *clientImpl) EmitEvent(player Player, event lavalink.Event) {
+	c.listenersMu.Lock()
+	defer c.listenersMu.Unlock()
 
 	defer func() {
 		if r := recover(); r != nil {
-			l.Logger().Errorf("recovered from panic in event listener: %#v\nstack: %s", r, string(debug.Stack()))
+			c.Logger().Errorf("recovered from panic in event listener: %#v\nstack: %s", r, string(debug.Stack()))
 			return
 		}
 	}()
-	for _, listener := range l.listeners {
+	for _, listener := range c.listeners {
 		listener.OnEvent(player, event)
 	}
 }
 
-func (l *clientImpl) AddListeners(listeners ...EventListener) {
-	l.listenersMu.Lock()
-	defer l.listenersMu.Unlock()
-	l.listeners = append(l.listeners, listeners...)
+func (c *clientImpl) AddListeners(listeners ...EventListener) {
+	c.listenersMu.Lock()
+	defer c.listenersMu.Unlock()
+	c.listeners = append(c.listeners, listeners...)
 }
 
-func (l *clientImpl) RemoveListeners(listeners ...EventListener) {
-	l.listenersMu.Lock()
-	defer l.listenersMu.Unlock()
+func (c *clientImpl) RemoveListeners(listeners ...EventListener) {
+	c.listenersMu.Lock()
+	defer c.listenersMu.Unlock()
 	for _, listener := range listeners {
-		for i, ln := range l.listeners {
+		for i, ln := range c.listeners {
 			if ln == listener {
-				l.listeners = append(l.listeners[:i], l.listeners[i+1:]...)
+				c.listeners = append(c.listeners[:i], c.listeners[i+1:]...)
 			}
 		}
 	}
 }
 
-func (l *clientImpl) UserID() snowflake.ID {
-	return l.userID
+func (c *clientImpl) AddPlugins(plugins ...Plugin) {
+	c.pluginsMu.Lock()
+	defer c.pluginsMu.Unlock()
+	c.plugins = append(c.plugins, plugins...)
 }
 
-func (l *clientImpl) Close() {
-	l.nodesMu.Lock()
-	defer l.nodesMu.Unlock()
-	for _, node := range l.nodes {
+func (c *clientImpl) ForPlugins(pluginFunc func(plugin Plugin)) {
+	c.pluginsMu.Lock()
+	defer c.pluginsMu.Unlock()
+	for _, plugin := range c.plugins {
+		pluginFunc(plugin)
+	}
+}
+
+func (c *clientImpl) RemovePlugins(plugins ...Plugin) {
+	c.pluginsMu.Lock()
+	defer c.pluginsMu.Unlock()
+	for _, plugin := range plugins {
+		for i, pl := range c.plugins {
+			if pl == plugin {
+				c.plugins = append(c.plugins[:i], c.plugins[i+1:]...)
+			}
+		}
+	}
+}
+
+func (c *clientImpl) UserID() snowflake.ID {
+	return c.userID
+}
+
+func (c *clientImpl) Close() {
+	c.nodesMu.Lock()
+	defer c.nodesMu.Unlock()
+	for _, node := range c.nodes {
 		node.Close()
 	}
 }
 
-func (l *clientImpl) OnVoiceServerUpdate(ctx context.Context, guildID snowflake.ID, token string, endpoint string) {
-	player := l.ExistingPlayer(guildID)
+func (c *clientImpl) OnVoiceServerUpdate(ctx context.Context, guildID snowflake.ID, token string, endpoint string) {
+	player := c.ExistingPlayer(guildID)
 	if player == nil {
 		return
 	}
 	player.OnVoiceServerUpdate(ctx, token, endpoint)
 }
 
-func (l *clientImpl) OnVoiceStateUpdate(ctx context.Context, guildID snowflake.ID, channelID *snowflake.ID, sessionID string) {
-	player := l.ExistingPlayer(guildID)
+func (c *clientImpl) OnVoiceStateUpdate(ctx context.Context, guildID snowflake.ID, channelID *snowflake.ID, sessionID string) {
+	player := c.ExistingPlayer(guildID)
 	if player == nil {
 		return
 	}
