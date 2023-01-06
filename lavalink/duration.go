@@ -64,5 +64,8 @@ func (d Duration) String() string {
 	if seconds := d.SecondsPart(); seconds > 0 {
 		str += strconv.FormatInt(seconds, 10) + "s"
 	}
+	if milliseconds := d.MillisecondsPart(); milliseconds > 0 {
+		str += strconv.FormatInt(milliseconds, 10) + "ms"
+	}
 	return str
 }
