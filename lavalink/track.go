@@ -1,9 +1,9 @@
 package lavalink
 
 type Track struct {
-	Encoded    string         `json:"encoded"`
-	Info       TrackInfo      `json:"info"`
-	PluginInfo map[string]any `json:"pluginInfo"`
+	Encoded    string     `json:"encoded"`
+	Info       TrackInfo  `json:"info"`
+	PluginInfo PluginInfo `json:"pluginInfo"`
 }
 
 type TrackInfo struct {

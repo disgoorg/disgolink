@@ -3,6 +3,7 @@ package lavalink
 type LoadResult struct {
 	LoadType     LoadType     `json:"loadType"`
 	PlaylistInfo PlaylistInfo `json:"playlistInfo"`
+	PluginInfo   PluginInfo   `json:"pluginInfo"`
 	Tracks       []Track      `json:"tracks"`
 	Exception    Exception    `json:"exception"`
 }

@@ -126,17 +126,17 @@ type UnknownMessage struct {
 	Data json.RawMessage `json:"-"`
 }
 
-func (e *UnknownMessage) UnmarshalJSON(data []byte) error {
+func (m *UnknownMessage) UnmarshalJSON(data []byte) error {
 	type unknownMessage UnknownMessage
-	if err := json.Unmarshal(data, (*unknownMessage)(e)); err != nil {
+	if err := json.Unmarshal(data, (*unknownMessage)(m)); err != nil {
 		return err
 	}
-	e.Data = data
+	m.Data = data
 	return nil
 }
 
-func (e UnknownMessage) MarshalJSON() ([]byte, error) {
-	return e.Data, nil
+func (m UnknownMessage) MarshalJSON() ([]byte, error) {
+	return m.Data, nil
 }
 
 func (m UnknownMessage) Op() Op { return m.Op_ }
@@ -148,6 +148,7 @@ type Event interface {
 
 type TrackStartEvent struct {
 	EncodedTrack string       `json:"encodedTrack"`
+	Track        Track        `json:"track"`
 	GuildID_     snowflake.ID `json:"guildId"`
 }
 
@@ -157,6 +158,7 @@ func (e TrackStartEvent) GuildID() snowflake.ID { return e.GuildID_ }
 
 type TrackEndEvent struct {
 	EncodedTrack string         `json:"encodedTrack"`
+	Track        Track          `json:"track"`
 	Reason       TrackEndReason `json:"reason"`
 	GuildID_     snowflake.ID   `json:"guildId"`
 }
@@ -167,6 +169,7 @@ func (e TrackEndEvent) GuildID() snowflake.ID { return e.GuildID_ }
 
 type TrackExceptionEvent struct {
 	EncodedTrack string       `json:"encodedTrack"`
+	Track        Track        `json:"track"`
 	Exception    Exception    `json:"exception"`
 	GuildID_     snowflake.ID `json:"guildId"`
 }
@@ -177,6 +180,7 @@ func (e TrackExceptionEvent) GuildID() snowflake.ID { return e.GuildID_ }
 
 type TrackStuckEvent struct {
 	EncodedTrack string       `json:"encodedTrack"`
+	Track        Track        `json:"track"`
 	ThresholdMs  int          `json:"thresholdMs"`
 	GuildID_     snowflake.ID `json:"guildId"`
 }

@@ -123,21 +123,24 @@ func (p *playerImpl) Update(ctx context.Context, opts ...lavalink.PlayerUpdateOp
 	p.state.Time = lavalink.Now()
 	p.volume = updatedPlayer.Volume
 
-	// dispatch artificial player resume/pause event
-	if update.Paused != nil {
-		if p.paused && !*update.Paused {
-			go p.OnEvent(lavalink.PlayerResumeEvent{
-				GuildID_: p.guildID,
-			})
-		} else if !p.paused && *update.Paused {
-			go p.OnEvent(lavalink.PlayerPauseEvent{
-				GuildID_: p.guildID,
-			})
-		}
-	}
-	p.paused = updatedPlayer.Paused
 	p.voice = updatedPlayer.Voice
 	p.filters = updatedPlayer.Filters
+
+	// dispatch artificial player resume/pause event
+	if update.Paused != nil {
+		var event lavalink.Event
+		if p.paused && !*update.Paused {
+			event = lavalink.PlayerResumeEvent{
+				GuildID_: p.guildID,
+			}
+		} else if !p.paused && *update.Paused {
+			event = lavalink.PlayerPauseEvent{
+				GuildID_: p.guildID,
+			}
+		}
+		p.paused = updatedPlayer.Paused
+		go p.OnEvent(event)
+	}
 
 	return nil
 }
@@ -196,11 +199,23 @@ func (p *playerImpl) OnEvent(event lavalink.Event) {
 		p.paused = false
 
 	case lavalink.TrackEndEvent:
+		if p.track != nil {
+			e.Track = *p.track
+		}
 		if e.Reason != lavalink.TrackEndReasonReplaced && e.Reason != lavalink.TrackEndReasonStopped {
 			p.track = nil
 		}
 
-	case lavalink.TrackExceptionEvent, lavalink.TrackStuckEvent:
+	case lavalink.TrackExceptionEvent:
+		if p.track != nil {
+			e.Track = *p.track
+		}
+		p.track = nil
+
+	case lavalink.TrackStuckEvent:
+		if p.track != nil {
+			e.Track = *p.track
+		}
 		p.track = nil
 
 	case lavalink.WebSocketClosedEvent:
