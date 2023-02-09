@@ -4,8 +4,8 @@ type SearchType string
 
 // search prefixes
 const (
-	SearchTypeYoutube      SearchType = "ytsearch"
-	SearchTypeYoutubeMusic SearchType = "ytmsearch"
+	SearchTypeYouTube      SearchType = "ytsearch"
+	SearchTypeYouTubeMusic SearchType = "ytmsearch"
 	SearchTypeSoundCloud   SearchType = "scsearch"
 )
 
