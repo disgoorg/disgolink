@@ -6,6 +6,6 @@ type Session struct {
 }
 
 type SessionUpdate struct {
-	Resuming *bool `json:"resuming"`
-	Timeout  *int  `json:"timeout"`
+	Resuming *bool `json:"resuming,omitempty"`
+	Timeout  *int  `json:"timeout,omitempty"`
 }
