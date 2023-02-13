@@ -51,6 +51,9 @@ func (d Duration) Days() int64 {
 }
 
 func (d Duration) String() string {
+	if d == 0 {
+		return "0ms"
+	}
 	var str string
 	if days := d.Days(); days > 0 {
 		str += strconv.FormatInt(days, 10) + "d"

@@ -9,8 +9,9 @@ import (
 	"sync"
 	"time"
 
-	"github.com/disgoorg/disgolink/v2/lavalink"
 	"github.com/gorilla/websocket"
+
+	"github.com/disgoorg/disgolink/v2/lavalink"
 )
 
 type Status string
@@ -212,7 +213,7 @@ func (n *nodeImpl) open(ctx context.Context, reconnecting bool) error {
 	n.sessionID = ready.SessionID
 	if n.config.SessionID != "" {
 		if ready.Resumed {
-			n.lavalink.Logger().Info("successfully resumed session: %s", n.config.SessionID)
+			n.lavalink.Logger().Info("successfully resumed session: ", n.config.SessionID)
 		} else {
 			n.lavalink.Logger().Warn("failed to resume session: ", n.config.SessionID)
 		}
@@ -304,7 +305,7 @@ loop:
 			break loop
 		}
 
-		n.lavalink.Logger().Debug("received message: ", string(data))
+		n.lavalink.Logger().Trace("received message: ", string(data))
 
 		n.Lavalink().ForPlugins(func(plugin Plugin) {
 			if pl, ok := plugin.(PluginEventHandler); ok {
