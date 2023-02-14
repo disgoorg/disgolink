@@ -2,11 +2,12 @@ package disgolink
 
 import (
 	"context"
-	"github.com/disgoorg/disgolink/v2/lavalink"
 	"net/http"
 	"runtime/debug"
 	"sync"
 	"time"
+
+	"github.com/disgoorg/disgolink/v2/lavalink"
 
 	"github.com/disgoorg/log"
 	"github.com/disgoorg/snowflake/v2"
@@ -22,7 +23,7 @@ type Client interface {
 	RemoveNode(name string)
 
 	Player(guildID snowflake.ID) Player
-	PlayerOnNode(name string, guildID snowflake.ID) Player
+	PlayerOnNode(node Node, guildID snowflake.ID) Player
 	ExistingPlayer(guildID snowflake.ID) Player
 	RemovePlayer(guildID snowflake.ID)
 	ForPlayers(playerFunc func(player Player))
@@ -140,18 +141,14 @@ func (c *clientImpl) RemoveNode(name string) {
 }
 
 func (c *clientImpl) Player(guildID snowflake.ID) Player {
-	return c.PlayerOnNode("", guildID)
+	return c.PlayerOnNode(c.BestNode(), guildID)
 }
 
-func (c *clientImpl) PlayerOnNode(name string, guildID snowflake.ID) Player {
+func (c *clientImpl) PlayerOnNode(node Node, guildID snowflake.ID) Player {
 	c.playersMu.Lock()
 	defer c.playersMu.Unlock()
 	if player, ok := c.players[guildID]; ok {
 		return player
-	}
-	node := c.Node(name)
-	if node == nil {
-		node = c.BestNode()
 	}
 
 	player := NewPlayer(c, node, guildID)

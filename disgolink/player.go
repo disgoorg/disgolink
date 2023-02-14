@@ -5,8 +5,9 @@ import (
 	"errors"
 	"time"
 
-	"github.com/disgoorg/disgolink/v2/lavalink"
 	"github.com/disgoorg/snowflake/v2"
+
+	"github.com/disgoorg/disgolink/v2/lavalink"
 )
 
 var ErrPlayerNoNode = errors.New("player has no node")
@@ -27,6 +28,7 @@ type Player interface {
 	Lavalink() Client
 	Node() Node
 
+	Restore(player lavalink.Player)
 	OnEvent(event lavalink.Event)
 	OnPlayerUpdate(state lavalink.PlayerState)
 	OnVoiceServerUpdate(ctx context.Context, token string, endpoint string)
@@ -175,6 +177,23 @@ func (p *playerImpl) Node() Node {
 
 func (p *playerImpl) Lavalink() Client {
 	return p.lavalink
+}
+
+func (p *playerImpl) Restore(player lavalink.Player) {
+	p.track = player.Track
+	if player.Track != nil {
+		p.state.Position = player.Track.Info.Position
+	} else {
+		p.state.Position = 0
+	}
+	p.state.Time = lavalink.Now()
+	p.state.Ping = player.Voice.Ping
+	p.state.Connected = player.Voice.Connected
+
+	p.paused = player.Paused
+	p.voice = player.Voice
+	p.filters = player.Filters
+	p.volume = player.Volume
 }
 
 func (p *playerImpl) OnEvent(event lavalink.Event) {

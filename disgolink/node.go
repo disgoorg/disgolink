@@ -155,6 +155,23 @@ func (n *nodeImpl) LoadTracks(ctx context.Context, identifier string, handler Au
 	}
 }
 
+func (n *nodeImpl) syncPlayers(ctx context.Context) error {
+	players, err := n.rest.Players(ctx, n.sessionID)
+	if err != nil {
+		return err
+	}
+
+	for _, player := range players {
+		p := n.lavalink.PlayerOnNode(n, player.GuildID)
+		if p == nil {
+			continue
+		}
+		p.Restore(player)
+	}
+
+	return nil
+}
+
 func (n *nodeImpl) DecodeTrack(ctx context.Context, encodedTrack string) (*lavalink.Track, error) {
 	return n.rest.DecodeTrack(ctx, encodedTrack)
 }
@@ -214,6 +231,9 @@ func (n *nodeImpl) open(ctx context.Context, reconnecting bool) error {
 	if n.config.SessionID != "" {
 		if ready.Resumed {
 			n.lavalink.Logger().Info("successfully resumed session: ", n.config.SessionID)
+			if err = n.syncPlayers(ctx); err != nil {
+				n.lavalink.Logger().Warn("failed to sync players: ", err)
+			}
 		} else {
 			n.lavalink.Logger().Warn("failed to resume session: ", n.config.SessionID)
 		}
