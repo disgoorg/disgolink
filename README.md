@@ -181,7 +181,7 @@ Here is a list of plugins(you can pr your own to here):
 ## Examples
 
 You can find examples under 
-* lavalink:  [_example](https://github.com/disgoorg/disgolink/tree/master/_example)
+* lavalink:  [_example](https://github.com/disgoorg/disgolink/tree/master/lavalink/_example)
 * disgolink: [_example](https://github.com/disgoorg/disgolink/tree/master/disgolink/_example)
 * dgolink:   [_examples](https://github.com/disgoorg/disgolink/tree/master/dgolink/_example)
 
