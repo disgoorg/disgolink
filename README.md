@@ -1,6 +1,6 @@
 [![Go Reference](https://pkg.go.dev/badge/github.com/disgoorg/disgolink.svg)](https://pkg.go.dev/github.com/disgoorg/disgolink)
-[![Go Report](https://goreportcard.com/badge/github.com/disgoorg/disgolink)](https://goreportcard.com/report/github.com/disgoorg/disgolink)
-[![Go Version](https://img.shields.io/github/go-mod/go-version/disgoorg/disgolink?filename=lavalink%2Fgo.mod)](https://golang.org/doc/devel/release.html)
+[![Go Report](https://goreportcard.com/badge/github.com/disgoorg/disgolink/v2)](https://goreportcard.com/report/github.com/disgoorg/disgolink)
+[![Go Version](https://img.shields.io/github/go-mod/go-version/disgoorg/disgolink?filename=go.mod)](https://golang.org/doc/devel/release.html)
 [![License](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](https://github.com/disgoorg/disgolink/blob/master/LICENSE)
 [![Disgolink Version](https://img.shields.io/github/v/release/disgoorg/disgolink?label=release)](https://github.com/disgoorg/disgolink/releases/latest)
 [![Support Discord](https://discord.com/api/guilds/817327181659111454/widget.png)](https://discord.gg/NFmvZYmZMF)
