@@ -11,6 +11,7 @@ type Player struct {
 	Track   *Track       `json:"track"`
 	Volume  int          `json:"volume"`
 	Paused  bool         `json:"paused"`
+	State   PlayerState  `json:"state"`
 	Voice   VoiceState   `json:"voice"`
 	Filters Filters      `json:"filters"`
 }
@@ -19,8 +20,6 @@ type VoiceState struct {
 	Token     string `json:"token"`
 	Endpoint  string `json:"endpoint"`
 	SessionID string `json:"sessionId"`
-	Connected bool   `json:"connected,omitempty"`
-	Ping      int    `json:"ping,omitempty"`
 }
 
 type PlayerState struct {

@@ -181,15 +181,7 @@ func (p *playerImpl) Lavalink() Client {
 
 func (p *playerImpl) Restore(player lavalink.Player) {
 	p.track = player.Track
-	if player.Track != nil {
-		p.state.Position = player.Track.Info.Position
-	} else {
-		p.state.Position = 0
-	}
-	p.state.Time = lavalink.Now()
-	p.state.Ping = player.Voice.Ping
-	p.state.Connected = player.Voice.Connected
-
+	p.state = player.State
 	p.paused = player.Paused
 	p.voice = player.Voice
 	p.filters = player.Filters
