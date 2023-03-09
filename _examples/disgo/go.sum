@@ -1,8 +1,8 @@
 github.com/davecgh/go-spew v1.1.1 h1:vj9j/u1bqnvCEfJOwUhtlOARqs3+rkHYY13jYWTU97c=
-github.com/disgoorg/disgo v0.14.0 h1:/m94GQbWREOI4wLiUf5XxHV/0BaJ2vZJmJe7xFWMJfk=
-github.com/disgoorg/disgo v0.14.0/go.mod h1:YiVpXSmyXLRalYQHTHUFWEQvolCNzw0zh6nfug07b/M=
-github.com/disgoorg/disgolink/v2 v2.0.0-20221202182417-6fda63ee401a h1:fld3r9K+H4turQRW2bE/n+SgC5Ef/gzUUbmsjAMpt4Y=
-github.com/disgoorg/disgolink/v2 v2.0.0-20221202182417-6fda63ee401a/go.mod h1:7O/vysHd+a5eqxLTv0aZqU9lfqovSLpY1jBPL7hwEKM=
+github.com/disgoorg/disgo v0.15.2 h1:cmdMCHBL17GgkYOJl6d2Btc3MbQiIdzwF6D8lwdJ7L8=
+github.com/disgoorg/disgo v0.15.2/go.mod h1:hUkznOmm+f+owh/MuOBX0sDviQV5cL0FqcWbpIyV1Y0=
+github.com/disgoorg/disgolink/v2 v2.0.0-20230303085516-bfdc2e50d639 h1:lUbmx020hDlyAZWTIn/Nm5vosqWbMWpwT5/JBg3FYpI=
+github.com/disgoorg/disgolink/v2 v2.0.0-20230303085516-bfdc2e50d639/go.mod h1:v7jTmaR9vSbbNZh/xBmxU7gdI4lE5mQlSr0eSghjCr4=
 github.com/disgoorg/json v1.0.0 h1:kDhSM661fgIuNoZF3BO5/odaR5NSq80AWb937DH+Pdo=
 github.com/disgoorg/json v1.0.0/go.mod h1:BHDwdde0rpQFDVsRLKhma6Y7fTbQKub/zdGO5O9NqqA=
 github.com/disgoorg/log v1.2.0 h1:sqlXnu/ZKAlIlHV9IO+dbMto7/hCQ474vlIdMWk8QKo=
@@ -15,6 +15,10 @@ github.com/pmezard/go-difflib v1.0.0 h1:4DBwDE0NGyQoBHbLQYPwSUPoCMWR5BEzIk/f1lZb
 github.com/sasha-s/go-csync v0.0.0-20210812194225-61421b77c44b h1:qYTY2tN72LhgDj2rtWG+LI6TXFl2ygFQQ4YezfVaGQE=
 github.com/sasha-s/go-csync v0.0.0-20210812194225-61421b77c44b/go.mod h1:/pA7k3zsXKdjjAiUhB5CjuKib9KJGCaLvZwtxGC8U0s=
 github.com/stretchr/testify v1.8.1 h1:w7B6lhMri9wdJUVmEZPGGhZzrYTPvgJArz7wNPgYKsk=
-golang.org/x/exp v0.0.0-20221126150942-6ab00d035af9 h1:yZNXmy+j/JpX19vZkVktWqAo7Gny4PBWYYK3zskGpx4=
-golang.org/x/exp v0.0.0-20221126150942-6ab00d035af9/go.mod h1:CxIveKay+FTh1D0yPZemJVgC/95VzuuOLq5Qi4xnoYc=
+golang.org/x/crypto v0.7.0 h1:AvwMYaRytfdeVt3u6mLaxYtErKYjxA2OXjJ1HHq6t3A=
+golang.org/x/crypto v0.7.0/go.mod h1:pYwdfH91IfpZVANVyUOhSIPZaFoJGxTFbZhFTx+dXZU=
+golang.org/x/exp v0.0.0-20230307190834-24139beb5833 h1:SChBja7BCQewoTAU7IgvucQKMIXrEpFxNMs0spT3/5s=
+golang.org/x/exp v0.0.0-20230307190834-24139beb5833/go.mod h1:CxIveKay+FTh1D0yPZemJVgC/95VzuuOLq5Qi4xnoYc=
+golang.org/x/sys v0.6.0 h1:MVltZSvRTcU2ljQOhs94SXPftV6DCNnZViHeQps87pQ=
+golang.org/x/sys v0.6.0/go.mod h1:oPkhp1MJrh7nUepCBck5+mAzfO9JrbApNNgaTdGDITg=
 gopkg.in/yaml.v3 v3.0.1 h1:fxVm/GzAzEWqLHuvctI91KS9hhNmmWOoWu0XTYJS7CA=

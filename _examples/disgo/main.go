@@ -47,7 +47,7 @@ func main() {
 			gateway.WithIntents(gateway.IntentGuilds, gateway.IntentGuildVoiceStates),
 		),
 		bot.WithCacheConfigOpts(
-			cache.WithCacheFlags(cache.FlagVoiceStates),
+			cache.WithCaches(cache.FlagVoiceStates),
 		),
 		bot.WithEventListenerFunc(b.onApplicationCommand),
 		bot.WithEventListenerFunc(b.onVoiceStateUpdate),
