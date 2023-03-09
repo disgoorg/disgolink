@@ -260,7 +260,7 @@ func (b *Bot) play(event *events.ApplicationCommandInteractionCreate, data disco
 	if source, ok := data.OptString("source"); ok {
 		identifier = lavalink.SearchType(source).Apply(identifier)
 	} else if !urlPattern.MatchString(identifier) && !searchPattern.MatchString(identifier) {
-		identifier = lavalink.SearchTypeYoutube.Apply(identifier)
+		identifier = lavalink.SearchTypeYouTube.Apply(identifier)
 	}
 
 	voiceState, ok := b.Client.Caches().VoiceState(*event.GuildID(), event.User().ID)
@@ -278,7 +278,7 @@ func (b *Bot) play(event *events.ApplicationCommandInteractionCreate, data disco
 	defer cancel()
 
 	var toPlay *lavalink.Track
-	b.Lavalink.BestNode().LoadTracks(ctx, identifier, disgolink.NewResultHandler(
+	b.Lavalink.BestNode().LoadTracksHandler(ctx, identifier, disgolink.NewResultHandler(
 		func(track lavalink.Track) {
 			_, _ = b.Client.Rest().UpdateInteractionResponse(event.ApplicationID(), event.Token(), discord.MessageUpdate{
 				Content: json.Ptr(fmt.Sprintf("Loaded track: [`%s`](<%s>)", track.Info.Title, *track.Info.URI)),

@@ -206,7 +206,7 @@ func formatPosition(position lavalink.Duration) string {
 func (b *Bot) play(event *discordgo.InteractionCreate, data discordgo.ApplicationCommandInteractionData) error {
 	identifier := data.Options[0].StringValue()
 	if !urlPattern.MatchString(identifier) && !searchPattern.MatchString(identifier) {
-		identifier = lavalink.SearchTypeYoutube.Apply(identifier)
+		identifier = lavalink.SearchTypeYouTube.Apply(identifier)
 	}
 
 	voiceState, err := b.Session.State.VoiceState(event.GuildID, event.Member.User.ID)
@@ -232,7 +232,7 @@ func (b *Bot) play(event *discordgo.InteractionCreate, data discordgo.Applicatio
 	defer cancel()
 
 	var toPlay *lavalink.Track
-	b.Lavalink.BestNode().LoadTracks(ctx, identifier, disgolink.NewResultHandler(
+	b.Lavalink.BestNode().LoadTracksHandler(ctx, identifier, disgolink.NewResultHandler(
 		func(track lavalink.Track) {
 			_, _ = b.Session.InteractionResponseEdit(event.Interaction, &discordgo.WebhookEdit{
 				Content: json.Ptr(fmt.Sprintf("Loading track: [`%s`](<%s>)", track.Info.Title, *track.Info.URI)),

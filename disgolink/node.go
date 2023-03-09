@@ -40,7 +40,8 @@ type Node interface {
 	Version(ctx context.Context) (string, error)
 	Info(ctx context.Context) (*lavalink.Info, error)
 	Update(ctx context.Context, update lavalink.SessionUpdate) error
-	LoadTracks(ctx context.Context, identifier string, handler AudioLoadResultHandler)
+	LoadTracks(ctx context.Context, identifier string) (*lavalink.LoadResult, error)
+	LoadTracksHandler(ctx context.Context, identifier string, handler AudioLoadResultHandler)
 
 	DecodeTrack(ctx context.Context, encodedTrack string) (*lavalink.Track, error)
 	DecodeTracks(ctx context.Context, encodedTracks []string) ([]lavalink.Track, error)
@@ -128,8 +129,12 @@ func (n *nodeImpl) Update(ctx context.Context, update lavalink.SessionUpdate) er
 	return err
 }
 
-func (n *nodeImpl) LoadTracks(ctx context.Context, identifier string, handler AudioLoadResultHandler) {
-	result, err := n.rest.LoadTracks(ctx, identifier)
+func (n *nodeImpl) LoadTracks(ctx context.Context, identifier string) (*lavalink.LoadResult, error) {
+	return n.rest.LoadTracks(ctx, identifier)
+}
+
+func (n *nodeImpl) LoadTracksHandler(ctx context.Context, identifier string, handler AudioLoadResultHandler) {
+	result, err := n.LoadTracks(ctx, identifier)
 	if err != nil {
 		handler.LoadFailed(err)
 	}
