@@ -2,11 +2,12 @@ package disgolink
 
 import (
 	"context"
-	"github.com/disgoorg/disgolink/v2/lavalink"
 	"net/http"
 	"runtime/debug"
 	"sync"
 	"time"
+
+	"github.com/disgoorg/disgolink/v2/lavalink"
 
 	"github.com/disgoorg/log"
 	"github.com/disgoorg/snowflake/v2"
@@ -35,14 +36,13 @@ type Client interface {
 	ForPlugins(pluginFunc func(plugin Plugin))
 	RemovePlugins(plugins ...Plugin)
 
-	UserID() snowflake.ID
 	Close()
 
 	OnVoiceServerUpdate(ctx context.Context, guildID snowflake.ID, token string, endpoint string)
 	OnVoiceStateUpdate(ctx context.Context, guildID snowflake.ID, channelID *snowflake.ID, sessionID string)
 }
 
-func New(userID snowflake.ID, opts ...ConfigOpt) Client {
+func New(opts ...ConfigOpt) Client {
 	config := DefaultConfig()
 	config.Apply(opts)
 
@@ -55,7 +55,6 @@ func New(userID snowflake.ID, opts ...ConfigOpt) Client {
 	return &clientImpl{
 		logger:     config.Logger,
 		httpClient: config.HTTPClient,
-		userID:     userID,
 		nodes:      map[string]Node{},
 		players:    map[snowflake.ID]Player{},
 		listeners:  config.Listeners,
@@ -68,7 +67,6 @@ var _ Client = (*clientImpl)(nil)
 type clientImpl struct {
 	logger     log.Logger
 	httpClient *http.Client
-	userID     snowflake.ID
 
 	nodesMu sync.Mutex
 	nodes   map[string]Node
@@ -241,10 +239,6 @@ func (c *clientImpl) RemovePlugins(plugins ...Plugin) {
 			}
 		}
 	}
-}
-
-func (c *clientImpl) UserID() snowflake.ID {
-	return c.userID
 }
 
 func (c *clientImpl) Close() {
