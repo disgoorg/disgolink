@@ -2,11 +2,12 @@ package disgolink
 
 import (
 	"context"
-	"github.com/disgoorg/disgolink/v2/lavalink"
 	"net/http"
 	"runtime/debug"
 	"sync"
 	"time"
+
+	"github.com/disgoorg/disgolink/v2/lavalink"
 
 	"github.com/disgoorg/log"
 	"github.com/disgoorg/snowflake/v2"
@@ -153,6 +154,9 @@ func (c *clientImpl) PlayerOnNode(name string, guildID snowflake.ID) Player {
 	if node == nil {
 		node = c.BestNode()
 	}
+	if node == nil {
+		panic("no node available")
+	}
 
 	player := NewPlayer(c, node, guildID)
 	c.ForPlugins(func(plugin Plugin) {
@@ -256,17 +260,9 @@ func (c *clientImpl) Close() {
 }
 
 func (c *clientImpl) OnVoiceServerUpdate(ctx context.Context, guildID snowflake.ID, token string, endpoint string) {
-	player := c.ExistingPlayer(guildID)
-	if player == nil {
-		return
-	}
-	player.OnVoiceServerUpdate(ctx, token, endpoint)
+	c.Player(guildID).OnVoiceServerUpdate(ctx, token, endpoint)
 }
 
 func (c *clientImpl) OnVoiceStateUpdate(ctx context.Context, guildID snowflake.ID, channelID *snowflake.ID, sessionID string) {
-	player := c.ExistingPlayer(guildID)
-	if player == nil {
-		return
-	}
-	player.OnVoiceStateUpdate(ctx, channelID, sessionID)
+	c.Player(guildID).OnVoiceStateUpdate(ctx, channelID, sessionID)
 }
