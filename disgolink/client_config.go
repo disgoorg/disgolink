@@ -1,9 +1,10 @@
 package disgolink
 
 import (
-	"github.com/disgoorg/disgolink/v2/lavalink"
 	"net/http"
 	"time"
+
+	"github.com/disgoorg/disgolink/v2/lavalink"
 
 	"github.com/disgoorg/log"
 )
