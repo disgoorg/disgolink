@@ -215,7 +215,7 @@ func (b *Bot) disconnect(event *events.ApplicationCommandInteractionCreate, data
 		})
 	}
 
-	if err := b.Client.Disconnect(context.TODO(), *event.GuildID()); err != nil {
+	if err := b.Client.UpdateVoiceState(context.TODO(), *event.GuildID(), nil, false, false); err != nil {
 		return event.CreateMessage(discord.MessageCreate{
 			Content: fmt.Sprintf("Error while disconnecting: `%s`", err),
 		})
@@ -261,7 +261,7 @@ func (b *Bot) play(event *events.ApplicationCommandInteractionCreate, data disco
 		identifier = lavalink.SearchTypeYoutube.Apply(identifier)
 	}
 
-	voiceState, ok := b.Client.Caches().VoiceStates().Get(*event.GuildID(), event.User().ID)
+	voiceState, ok := b.Client.Caches().VoiceState(*event.GuildID(), event.User().ID)
 	if !ok {
 		return event.CreateMessage(discord.MessageCreate{
 			Content: "You need to be in a voice channel to use this command",
@@ -310,7 +310,7 @@ func (b *Bot) play(event *events.ApplicationCommandInteractionCreate, data disco
 		return nil
 	}
 
-	if err := b.Client.Connect(context.TODO(), *event.GuildID(), *voiceState.ChannelID); err != nil {
+	if err := b.Client.UpdateVoiceState(context.TODO(), *event.GuildID(), voiceState.ChannelID, false, false); err != nil {
 		return err
 	}
 
