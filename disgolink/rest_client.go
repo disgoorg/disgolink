@@ -83,7 +83,7 @@ func (c *restClientImpl) Stats(ctx context.Context) (stats *lavalink.Stats, err 
 }
 
 func (c *restClientImpl) UpdateSession(ctx context.Context, sessionID string, sessionUpdate lavalink.SessionUpdate) (session *lavalink.Session, err error) {
-	err = c.doJSON(ctx, http.MethodPost, EndpointUpdateSession.Format(sessionID), sessionUpdate, &session)
+	err = c.doJSON(ctx, http.MethodPatch, EndpointUpdateSession.Format(sessionID), sessionUpdate, &session)
 	return
 }
 
