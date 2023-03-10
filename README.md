@@ -7,9 +7,9 @@
 
 <img align="right" src="/.github/disgolink.png" width=192 alt="discord gopher">
 
-# DisGolink
+# DisGoLink
 
-DisGolink is a [Lavalink](https://github.com/freyacodes/Lavalink) Client written in [Golang](https://golang.org/) which supports the latest Lavalink 3.4 release and the new plugin system([lavalink dev](https://github.com/freyacodes/Lavalink/tree/dev) only). 
+DisGoLink is a [Lavalink](https://github.com/freyacodes/Lavalink) Client written in [Golang](https://golang.org/) which supports the latest Lavalink 3.4 release and the new plugin system([lavalink dev](https://github.com/freyacodes/Lavalink/tree/dev) only). 
 
 While DisGoLink can be used with any [Discord](https://discord.com) Library [DisGo](https://github.com/disgoorg/disgo) is the best fit for it as usage with other Libraries can be a bit annoying due to different [Snowflake](https://github.com/disgoorg/snowflake) implementations.
 
@@ -35,21 +35,44 @@ go get github.com/disgoorg/disgolink/v2
 First create a new lavalink instance. You can do this either with
 
 ```go
-import "github.com/disgoorg/disgolink/disgolink"
+import (
+	"github.com/disgoorg/snowflake/v2"
+	"github.com/disgoorg/disgolink/v2/disgolink"
+)
 
-var userID = snowflake.MustParse("1234567890")
-client := disgolink.New(disgolink.WithUserID(userID))
+var userID = snowflake.ID(1234567890)
+lavalinkClient := disgolink.New(userID)
 ```
 
-then you add your lavalink nodes. This directly connects to the nodes and is a blocking call
+You also need to forward the `VOICE_STATE_UPDATE` and `VOICE_SERVER_UPDATE` events to DisGoLink.
+Just register an event listener for those events with your library and call `lavalinkClient.OnVoiceStateUpdate` (make sure to only forward your bots voice update event!) and `lavalinkClient.OnVoiceServerUpdate`
+
+
+For DisGo this would look like this
 ```go
-node, err := client.AddNode(context.TODO(), lavalink.NodeConfig{
-		Name:        "test", // a unique node name
-		Host:        "localhost",
-		Port:        "2333",
-		Password:    "youshallnotpass",
-		Secure:      false, // ws or wss
-		ResumingKey: "", // only needed if you want to resume a disgolink session
+client, err := disgo.New(Token,
+    bot.WithEventListenerFunc(b.onVoiceStateUpdate),
+    bot.WithEventListenerFunc(b.onVoiceServerUpdate),
+)
+
+func onVoiceStateUpdate(event *events.GuildVoiceStateUpdate) {
+    lavalinkClient.OnVoiceStateUpdate(context.TODO(), event.VoiceState.GuildID, event.VoiceState.ChannelID, event.VoiceState.SessionID)
+}
+
+func onVoiceServerUpdate(event *events.VoiceServerUpdate) {
+    lavalinkClient.OnVoiceServerUpdate(context.TODO(), event.GuildID, event.Token, *event.Endpoint)
+}
+```
+
+Then you add your lavalink nodes. This directly connects to the nodes and is a blocking call
+```go
+node, err := lavalinkClient.AddNode(context.TODO(), lavalink.NodeConfig{
+		Name:      "test", // a unique node name
+		Host:      "localhost",
+		Port:      "2333",
+		Password:  "youshallnotpass",
+		Secure:    false, // ws or wss
+		SessionID: "", // only needed if you want to resume a previous lavalink session
 })
 ```
 
@@ -61,21 +84,21 @@ To play a track you first need to resolve the song. For this you need to call th
 ```go
 query := "ytsearch:Rick Astley - Never Gonna Give You Up"
 
-err := link.BestRestClient().LoadItemHandler(context.TODO(), query, lavalink.NewResultHandler(
+err := lavalinkClient.BestNode().LoadTracksHandler(context.TODO(), query, lavalink.NewResultHandler(
 		func(track lavalink.AudioTrack) {
-				// Loaded a single track
+			// Loaded a single track
 		},
 		func(playlist lavalink.AudioPlaylist) {
-				// Loaded a playlist
+			// Loaded a playlist
 		},
 		func(tracks []lavalink.AudioTrack) {
-				// Loaded a search result
+			// Loaded a search result
 		},
 		func() {
-				// nothing matching the query found
+			// nothing matching the query found
 		},
 		func(ex lavalink.FriendlyException) {
-				// something went wrong while loading the track
+			// something went wrong while loading the track
 		},
 ))
 ```
@@ -86,7 +109,7 @@ To play a track we first need to connect to the voice channel.
 Connecting to a voice channel differs with every lib but here are some quick usages with some
 ```go
 // DisGo
-err := client.Connect(context.TODO(), guildID, channelID)
+err := client.UpdateVoiceState(context.TODO(), guildID, channelID, false, false)
 
 // DiscordGo
 err := session.ChannelVoiceJoinManual(guildID, channelID, false, false)
@@ -94,9 +117,9 @@ err := session.ChannelVoiceJoinManual(guildID, channelID, false, false)
 
 after this you can get/create your player and play the track
 ```go
-player := link.Player("guild_id") // This will either return an existing or new player
+player := lavalinkClient.Player("guild_id") // This will either return an existing or new player
 
-var track lavalink.channelID // track from result handler before
+var track lavalink.Track // track from result handler before
 err := player.Play(track)
 ```
 now audio should start playing
@@ -104,57 +127,79 @@ now audio should start playing
 ### Listening for events
 
 You can listen for following lavalink events
-* `PlayerUpdate`
-* `PlayerPause`
-* `PlayerResume`
-* `TrackStart`
-* `TrackEnd`
-* `TrackException`
-* `TrackStuck`
-* `WebsocketClosed`
+* `PlayerUpdate` Emitted every x seconds (default 5) with the current player state
+* `PlayerPause` Emitted when the player is paused
+* `PlayerResume` Emitted when the player is resumed
+* `TrackStart` Emitted when a track starts playing
+* `TrackEnd` Emitted when a track ends
+* `TrackException` Emitted when a track throws an exception
+* `TrackStuck` Emitted when a track gets stuck
+* `WebsocketClosed` Emitted when the voice gateway connection to lavalink is closed
 
-for this implement the [`PlayerEventListener`](https://github.com/disgoorg/disgolink/blob/master/lavalink/player_listener.go) interface. 
-To listen to only a few events you can optionally embed the `PlayerEventAdapter` struct which has empty dummy methods.
-
-After implementing the interface you can add the listener to the player and your methods should start getting called
+for this add and event listener for each event to your `Client` instance when you create it or with `Client.AddEventListener`
 ```go
+lavalinkClient := disgolink.New(userID,
+    disgolink.WithListenerFunc(onPlayerUpdate),
+    disgolink.WithListenerFunc(onPlayerPause),
+	disgolink.WithListenerFunc(onPlayerResume),
+	disgolink.WithListenerFunc(onTrackStart),
+	disgolink.WithListenerFunc(onTrackEnd),
+	disgolink.WithListenerFunc(onTrackException),
+	disgolink.WithListenerFunc(onTrackStuck),
+	disgolink.WithListenerFunc(onWebSocketClosed),
+)
 
-type EventListener struct {
-    lavalink.PlayerEventAdapter
+func onPlayerUpdate(player disgolink.Player, event lavalink.PlayerUpdateEvent) {
+    // do something with the event
 }
-func (l *EventListener) OnTrackStart(player Player, track AudioTrack)                                  {}
-func (l *EventListener) OnTrackEnd(player Player, track AudioTrack, endReason AudioTrackEndReason)     {}
-func (l *EventListener) OnTrackException(player Player, track AudioTrack, exception FriendlyException) {}
 
-player.AddListener(&EventListener{})
+func onPlayerPause(player disgolink.Player, event lavalink.PlayerPauseEvent) {
+    // do something with the event
+}
+
+func onPlayerResume(player disgolink.Player, event lavalink.PlayerResumeEvent) {
+    // do something with the event
+}
+
+func onTrackStart(player disgolink.Player, event lavalink.TrackStartEvent) {
+    // do something with the event
+}
+
+func onTrackEnd(player disgolink.Player, event lavalink.TrackEndEvent) {
+    // do something with the event
+}
+
+func onTrackException(player disgolink.Player, event lavalink.TrackExceptionEvent) {
+    // do something with the event
+}
+
+func onTrackStuck(player disgolink.Player, event lavalink.TrackStuckEvent) {
+    // do something with the event
+}
+
+func onWebSocketClosed(player disgolink.Player, event lavalink.WebSocketClosedEvent) {
+    // do something with the event
+}
 ```
 
 ### Plugins
 
-Lavalink added plugins on the [dev branch](https://github.com/freyacodes/Lavalink/blob/dev/PLUGINS.md). DisGolink exposes a similar API for you to use. With that you can create plugins which require server & client work.
-To see what you can do with plugins see [here](https://github.com/disgoorg/disgolink/blob/master/lavalink/plugin.go)
+Lavalink added [plugins](https://github.com/freyacodes/Lavalink/blob/master/PLUGINS.md) in `v3.5` . DisGoLink exposes a similar API for you to use. With that you can create plugins which require server & client work.
+To see what you can do with plugins see [here](https://github.com/disgoorg/disgolink/blob/v2/disgolink/plugin.go)
 
-You register plugins when creating the link instance like this
+You register plugins when creating the client instance like this
 ```go
-link := lavalink.New(lavalink.WithUserID("user_id_here"), lavalink.WithPlugins(yourPlugin))
-
-// DisGo
-link := disgolink.New(client, lavalink.WithPlugins(yourPlugin)) 
-
-// DiscordGo
-link := dgolink.New(session, lavalink.WithPlugins(yourPlugin))
+lavalinkClient := disgolink.New(userID, disgolink.WithPlugins(yourPlugin))
 ```
 
 Here is a list of plugins(you can pr your own to here):
-* [source-extensions](https://github.com/disgoorg/source-extensions-plugin) adds source track encoder & decoder for [Lavalink Topis-Source-Managers-Plugin](https://github.com/Topis-Lavalink-Plugins/Topis-Source-Managers-Plugin)
 * [sponsorblock](https://github.com/disgoorg/sponsorblock-plugin) adds payloads and listeners for [Lavalink Sponsorblock-Plugin](https://github.com/Topis-Lavalink-Plugins/Sponsorblock-Plugin)
 
 ## Examples
 
 You can find examples under 
-* lavalink:  [_example](https://github.com/disgoorg/disgolink/tree/master/_example)
-* disgolink: [_example](https://github.com/disgoorg/disgolink/tree/master/disgolink/_example)
-* dgolink:   [_examples](https://github.com/disgoorg/disgolink/tree/master/dgolink/_example)
+* disgo: [_example](https://github.com/disgoorg/disgolink/tree/v2/_examples/disgo)
+* discordgo:   [_examples](https://github.com/disgoorg/disgolink/tree/v2/_examples/discordgo)
 
 ## Troubleshooting
 

@@ -40,7 +40,8 @@ type Node interface {
 	Version(ctx context.Context) (string, error)
 	Info(ctx context.Context) (*lavalink.Info, error)
 	Update(ctx context.Context, update lavalink.SessionUpdate) error
-	LoadTracks(ctx context.Context, identifier string, handler AudioLoadResultHandler)
+	LoadTracks(ctx context.Context, identifier string) (*lavalink.LoadResult, error)
+	LoadTracksHandler(ctx context.Context, identifier string, handler AudioLoadResultHandler)
 
 	DecodeTrack(ctx context.Context, encodedTrack string) (*lavalink.Track, error)
 	DecodeTracks(ctx context.Context, encodedTracks []string) ([]lavalink.Track, error)
@@ -50,11 +51,11 @@ type Node interface {
 }
 
 type NodeConfig struct {
-	Name        string `json:"name"`
-	Address     string `json:"address"`
-	Password    string `json:"password"`
-	Secure      bool   `json:"secure"`
-	ResumingKey string `json:"resumingKey"`
+	Name      string `json:"name"`
+	Address   string `json:"address"`
+	Password  string `json:"password"`
+	Secure    bool   `json:"secure"`
+	SessionID string `json:"session_id"`
 }
 
 func (c NodeConfig) RestURL() string {
@@ -125,8 +126,12 @@ func (n *nodeImpl) Update(ctx context.Context, update lavalink.SessionUpdate) er
 	return err
 }
 
-func (n *nodeImpl) LoadTracks(ctx context.Context, identifier string, handler AudioLoadResultHandler) {
-	result, err := n.rest.LoadTracks(ctx, identifier)
+func (n *nodeImpl) LoadTracks(ctx context.Context, identifier string) (*lavalink.LoadResult, error) {
+	return n.rest.LoadTracks(ctx, identifier)
+}
+
+func (n *nodeImpl) LoadTracksHandler(ctx context.Context, identifier string, handler AudioLoadResultHandler) {
+	result, err := n.LoadTracks(ctx, identifier)
 	if err != nil {
 		handler.LoadFailed(err)
 	}
@@ -184,8 +189,8 @@ func (n *nodeImpl) open(ctx context.Context, reconnecting bool) error {
 		"User-Id":       []string{n.lavalink.UserID().String()},
 		"Client-Name":   []string{fmt.Sprintf("%s/%s", Name, Version)},
 	}
-	if n.config.ResumingKey != "" {
-		header.Add("Resume-Key", n.config.ResumingKey)
+	if n.config.SessionID != "" {
+		header.Add("Session-ID", n.config.SessionID)
 	}
 
 	conn, _, err := websocket.DefaultDialer.DialContext(ctx, n.config.WsURL(), header)
@@ -208,11 +213,11 @@ func (n *nodeImpl) open(ctx context.Context, reconnecting bool) error {
 	}
 
 	n.sessionID = ready.SessionID
-	if n.config.ResumingKey != "" {
+	if n.config.SessionID != "" {
 		if ready.Resumed {
-			n.lavalink.Logger().Info("successfully resumed session with key: %s", n.config.ResumingKey)
+			n.lavalink.Logger().Info("successfully resumed session with id: %s", n.config.SessionID)
 		} else {
-			n.lavalink.Logger().Warn("failed to resume session with key: ", n.config.ResumingKey)
+			n.lavalink.Logger().Warn("failed to resume session with id: ", n.config.SessionID)
 		}
 	}
 	n.status = StatusConnected
