@@ -2,12 +2,14 @@ package main
 
 import (
 	"context"
+
 	"github.com/disgoorg/disgo/bot"
 	"github.com/disgoorg/disgo/discord"
 	"github.com/disgoorg/disgo/events"
-	"github.com/disgoorg/disgolink/v2/disgolink"
 	"github.com/disgoorg/log"
 	"github.com/disgoorg/snowflake/v2"
+
+	"github.com/disgoorg/disgolink/v2/disgolink"
 )
 
 func newBot() *Bot {

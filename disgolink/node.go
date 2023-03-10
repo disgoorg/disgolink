@@ -9,8 +9,9 @@ import (
 	"sync"
 	"time"
 
-	"github.com/disgoorg/disgolink/v2/lavalink"
 	"github.com/gorilla/websocket"
+
+	"github.com/disgoorg/disgolink/v2/lavalink"
 )
 
 type Status string

@@ -2,11 +2,12 @@ package disgolink
 
 import (
 	"context"
-	"github.com/disgoorg/disgolink/v2/lavalink"
 	"net/http"
 	"runtime/debug"
 	"sync"
 	"time"
+
+	"github.com/disgoorg/disgolink/v2/lavalink"
 
 	"github.com/disgoorg/log"
 	"github.com/disgoorg/snowflake/v2"

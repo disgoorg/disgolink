@@ -9,8 +9,9 @@ import (
 	"net/http"
 	"net/url"
 
-	"github.com/disgoorg/disgolink/v2/lavalink"
 	"github.com/disgoorg/snowflake/v2"
+
+	"github.com/disgoorg/disgolink/v2/lavalink"
 )
 
 type Endpoint string

@@ -3,9 +3,10 @@ package main
 import (
 	"github.com/disgoorg/disgo/bot"
 	"github.com/disgoorg/disgo/discord"
-	"github.com/disgoorg/disgolink/v2/lavalink"
 	"github.com/disgoorg/json"
 	"github.com/disgoorg/log"
+
+	"github.com/disgoorg/disgolink/v2/lavalink"
 )
 
 var commands = []discord.ApplicationCommandCreate{

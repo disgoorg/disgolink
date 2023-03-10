@@ -1,9 +1,10 @@
 package main
 
 import (
-	"github.com/disgoorg/disgolink/v2/lavalink"
 	"math/rand"
 	"time"
+
+	"github.com/disgoorg/disgolink/v2/lavalink"
 )
 
 func init() {

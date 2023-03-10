@@ -3,12 +3,14 @@ package main
 import (
 	"context"
 	"fmt"
+	"time"
+
 	"github.com/bwmarrin/discordgo"
-	"github.com/disgoorg/disgolink/v2/disgolink"
-	"github.com/disgoorg/disgolink/v2/lavalink"
 	"github.com/disgoorg/json"
 	"github.com/disgoorg/snowflake/v2"
-	"time"
+
+	"github.com/disgoorg/disgolink/v2/disgolink"
+	"github.com/disgoorg/disgolink/v2/lavalink"
 )
 
 func (b *Bot) shuffle(event *discordgo.InteractionCreate, data discordgo.ApplicationCommandInteractionData) error {

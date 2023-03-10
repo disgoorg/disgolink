@@ -1,10 +1,12 @@
 package main
 
 import (
-	"github.com/disgoorg/disgolink/v2/lavalink"
-	"github.com/disgoorg/snowflake/v2"
 	"math/rand"
 	"time"
+
+	"github.com/disgoorg/snowflake/v2"
+
+	"github.com/disgoorg/disgolink/v2/lavalink"
 )
 
 func init() {
