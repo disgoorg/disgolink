@@ -232,7 +232,7 @@ func (b *Bot) play(event *discordgo.InteractionCreate, data discordgo.Applicatio
 	defer cancel()
 
 	var toPlay *lavalink.Track
-	b.Lavalink.BestNode().LoadTracks(ctx, identifier, disgolink.NewResultHandler(
+	b.Lavalink.BestNode().LoadTracksHandler(ctx, identifier, disgolink.NewResultHandler(
 		func(track lavalink.Track) {
 			_, _ = b.Session.InteractionResponseEdit(event.Interaction, &discordgo.WebhookEdit{
 				Content: json.Ptr(fmt.Sprintf("Loading track: [`%s`](<%s>)", track.Info.Title, *track.Info.URI)),
