@@ -190,7 +190,7 @@ func (n *nodeImpl) open(ctx context.Context, reconnecting bool) error {
 		"Client-Name":   []string{fmt.Sprintf("%s/%s", Name, Version)},
 	}
 	if n.config.SessionID != "" {
-		header.Add("Session-ID", n.config.SessionID)
+		header.Add("Session-Id", n.config.SessionID)
 	}
 
 	conn, _, err := websocket.DefaultDialer.DialContext(ctx, n.config.WsURL(), header)
