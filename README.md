@@ -9,7 +9,7 @@
 
 # DisGoLink
 
-DisGoLink is a [Lavalink](https://github.com/freyacodes/Lavalink) Client written in [Golang](https://golang.org/) which supports the latest Lavalink 3.4 release and the new plugin system([lavalink dev](https://github.com/freyacodes/Lavalink/tree/dev) only). 
+DisGoLink is a [Lavalink](https://github.com/freyacodes/Lavalink) Client written in [Golang](https://golang.org/) which supports the latest Lavalink 3.7+ release and the new plugin system. 
 
 While DisGoLink can be used with any [Discord](https://discord.com) Library [DisGo](https://github.com/disgoorg/disgo) is the best fit for it as usage with other Libraries can be a bit annoying due to different [Snowflake](https://github.com/disgoorg/snowflake) implementations.
 
