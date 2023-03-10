@@ -150,13 +150,6 @@ func (c *clientImpl) PlayerOnNode(node Node, guildID snowflake.ID) Player {
 	if player, ok := c.players[guildID]; ok {
 		return player
 	}
-	node := c.Node(name)
-	if node == nil {
-		node = c.BestNode()
-	}
-	if node == nil {
-		panic("no node available")
-	}
 
 	player := NewPlayer(c, node, guildID)
 	c.ForPlugins(func(plugin Plugin) {
