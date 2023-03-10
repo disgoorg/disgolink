@@ -147,9 +147,8 @@ type Event interface {
 }
 
 type TrackStartEvent struct {
-	EncodedTrack string       `json:"encodedTrack"`
-	Track        Track        `json:"track"`
-	GuildID_     snowflake.ID `json:"guildId"`
+	Track    Track        `json:"track"`
+	GuildID_ snowflake.ID `json:"guildId"`
 }
 
 func (TrackStartEvent) Op() Op                  { return OpEvent }
@@ -157,10 +156,9 @@ func (TrackStartEvent) Type() EventType         { return EventTypeTrackStart }
 func (e TrackStartEvent) GuildID() snowflake.ID { return e.GuildID_ }
 
 type TrackEndEvent struct {
-	EncodedTrack string         `json:"encodedTrack"`
-	Track        Track          `json:"track"`
-	Reason       TrackEndReason `json:"reason"`
-	GuildID_     snowflake.ID   `json:"guildId"`
+	Track    Track          `json:"track"`
+	Reason   TrackEndReason `json:"reason"`
+	GuildID_ snowflake.ID   `json:"guildId"`
 }
 
 func (TrackEndEvent) Op() Op                  { return OpEvent }
@@ -168,10 +166,9 @@ func (TrackEndEvent) Type() EventType         { return EventTypeTrackStart }
 func (e TrackEndEvent) GuildID() snowflake.ID { return e.GuildID_ }
 
 type TrackExceptionEvent struct {
-	EncodedTrack string       `json:"encodedTrack"`
-	Track        Track        `json:"track"`
-	Exception    Exception    `json:"exception"`
-	GuildID_     snowflake.ID `json:"guildId"`
+	Track     Track        `json:"track"`
+	Exception Exception    `json:"exception"`
+	GuildID_  snowflake.ID `json:"guildId"`
 }
 
 func (TrackExceptionEvent) Op() Op                  { return OpEvent }
@@ -179,10 +176,9 @@ func (TrackExceptionEvent) Type() EventType         { return EventTypeTrackExcep
 func (e TrackExceptionEvent) GuildID() snowflake.ID { return e.GuildID_ }
 
 type TrackStuckEvent struct {
-	EncodedTrack string       `json:"encodedTrack"`
-	Track        Track        `json:"track"`
-	ThresholdMs  int          `json:"thresholdMs"`
-	GuildID_     snowflake.ID `json:"guildId"`
+	Track       Track        `json:"track"`
+	ThresholdMs int          `json:"thresholdMs"`
+	GuildID_    snowflake.ID `json:"guildId"`
 }
 
 func (TrackStuckEvent) Op() Op                  { return OpEvent }
