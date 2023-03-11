@@ -131,12 +131,12 @@ func (b *Bot) onVoiceStateUpdate(session *discordgo.Session, event *discordgo.Vo
 		return
 	}
 
-	var guildID *snowflake.ID
-	if event.GuildID != "" {
-		id := snowflake.MustParse(event.GuildID)
-		guildID = &id
+	var channelID *snowflake.ID
+	if event.ChannelID != "" {
+		id := snowflake.MustParse(event.ChannelID)
+		channelID = &id
 	}
-	b.Lavalink.OnVoiceStateUpdate(context.TODO(), snowflake.MustParse(event.GuildID), guildID, event.SessionID)
+	b.Lavalink.OnVoiceStateUpdate(context.TODO(), snowflake.MustParse(event.GuildID), channelID, event.SessionID)
 	if event.ChannelID == "" {
 		b.Queues.Delete(event.GuildID)
 	}

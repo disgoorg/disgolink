@@ -41,7 +41,13 @@ func (b *Bot) onApplicationCommand(event *events.ApplicationCommandInteractionCr
 }
 
 func (b *Bot) onVoiceStateUpdate(event *events.GuildVoiceStateUpdate) {
+	if event.VoiceState.UserID != b.Client.ApplicationID() {
+		return
+	}
 	b.Lavalink.OnVoiceStateUpdate(context.TODO(), event.VoiceState.GuildID, event.VoiceState.ChannelID, event.VoiceState.SessionID)
+	if event.VoiceState.ChannelID == nil {
+		b.Queues.Delete(event.VoiceState.GuildID)
+	}
 }
 
 func (b *Bot) onVoiceServerUpdate(event *events.VoiceServerUpdate) {
