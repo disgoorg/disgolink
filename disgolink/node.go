@@ -134,6 +134,7 @@ func (n *nodeImpl) LoadTracksHandler(ctx context.Context, identifier string, han
 	result, err := n.LoadTracks(ctx, identifier)
 	if err != nil {
 		handler.LoadFailed(err)
+		return
 	}
 
 	switch result.LoadType {
