@@ -19,6 +19,8 @@ type Track struct {
 	PluginInfo PluginInfo `json:"pluginInfo"`
 }
 
+func (Track) loadResultData() {}
+
 func (t Track) Value() (driver.Value, error) {
 	return json.Marshal(t)
 }

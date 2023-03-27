@@ -165,6 +165,25 @@ func (TrackEndEvent) Op() Op                  { return OpEvent }
 func (TrackEndEvent) Type() EventType         { return EventTypeTrackStart }
 func (e TrackEndEvent) GuildID() snowflake.ID { return e.GuildID_ }
 
+type TrackEndReason string
+
+const (
+	TrackEndReasonFinished   TrackEndReason = "finished"
+	TrackEndReasonLoadFailed TrackEndReason = "loadFailed"
+	TrackEndReasonStopped    TrackEndReason = "stopped"
+	TrackEndReasonReplaced   TrackEndReason = "replaced"
+	TrackEndReasonCleanup    TrackEndReason = "cleanup"
+)
+
+func (e TrackEndReason) MayStartNext() bool {
+	switch e {
+	case TrackEndReasonFinished, TrackEndReasonLoadFailed:
+		return true
+	default:
+		return false
+	}
+}
+
 type TrackExceptionEvent struct {
 	Track     Track        `json:"track"`
 	Exception Exception    `json:"exception"`
@@ -176,9 +195,9 @@ func (TrackExceptionEvent) Type() EventType         { return EventTypeTrackExcep
 func (e TrackExceptionEvent) GuildID() snowflake.ID { return e.GuildID_ }
 
 type TrackStuckEvent struct {
-	Track       Track        `json:"track"`
-	ThresholdMs int          `json:"thresholdMs"`
-	GuildID_    snowflake.ID `json:"guildId"`
+	Track     Track        `json:"track"`
+	Threshold Duration     `json:"thresholdMs"`
+	GuildID_  snowflake.ID `json:"guildId"`
 }
 
 func (TrackStuckEvent) Op() Op                  { return OpEvent }

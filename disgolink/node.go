@@ -140,24 +140,21 @@ func (n *nodeImpl) LoadTracksHandler(ctx context.Context, identifier string, han
 		return
 	}
 
-	switch result.LoadType {
-	case lavalink.LoadTypeTrackLoaded:
-		handler.TrackLoaded(result.Tracks[0])
+	switch d := result.Data.(type) {
+	case lavalink.Track:
+		handler.TrackLoaded(d)
 
-	case lavalink.LoadTypePlaylistLoaded:
-		handler.PlaylistLoaded(lavalink.Playlist{
-			Info:   result.PlaylistInfo,
-			Tracks: result.Tracks,
-		})
+	case lavalink.Playlist:
+		handler.PlaylistLoaded(d)
 
-	case lavalink.LoadTypeSearchResult:
-		handler.SearchResultLoaded(result.Tracks)
+	case lavalink.Search:
+		handler.SearchResultLoaded(d)
 
-	case lavalink.LoadTypeNoMatches:
+	case lavalink.Empty:
 		handler.NoMatches()
 
-	case lavalink.LoadTypeLoadFailed:
-		handler.LoadFailed(result.Exception)
+	case lavalink.Exception:
+		handler.LoadFailed(d)
 	}
 }
 
