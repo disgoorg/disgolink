@@ -73,6 +73,17 @@ var commands = []discord.ApplicationCommandCreate{
 		Description: "Disconnects the player",
 	},
 	discord.SlashCommandCreate{
+		Name:        "bass-boost",
+		Description: "Enables or disables bass boost",
+		Options: []discord.ApplicationCommandOption{
+			discord.ApplicationCommandOptionBool{
+				Name:        "enabled",
+				Description: "Whether bass boost should be enabled or disabled",
+				Required:    true,
+			},
+		},
+	},
+	discord.SlashCommandCreate{
 		Name:        "players",
 		Description: "Shows all active players",
 	},

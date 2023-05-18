@@ -13,6 +13,24 @@ import (
 	"github.com/disgoorg/disgolink/v2/lavalink"
 )
 
+var bassBoost = &lavalink.Equalizer{
+	0:  0.2,
+	1:  0.15,
+	2:  0.1,
+	3:  0.05,
+	4:  0.0,
+	5:  -0.05,
+	6:  -0.1,
+	7:  -0.1,
+	8:  -0.1,
+	9:  -0.1,
+	10: -0.1,
+	11: -0.1,
+	12: -0.1,
+	13: -0.1,
+	14: -0.1,
+}
+
 func (b *Bot) shuffle(event *events.ApplicationCommandInteractionCreate, data discord.SlashCommandInteractionData) error {
 	queue := b.Queues.Get(*event.GuildID())
 	if queue == nil {
@@ -69,6 +87,33 @@ func (b *Bot) seek(event *events.ApplicationCommandInteractionCreate, data disco
 
 	return event.CreateMessage(discord.MessageCreate{
 		Content: fmt.Sprintf("Seeked to `%s`", formatPosition(finalPosition)),
+	})
+}
+
+func (b *Bot) bassBoost(event *events.ApplicationCommandInteractionCreate, data discord.SlashCommandInteractionData) error {
+	player := b.Lavalink.ExistingPlayer(*event.GuildID())
+	if player == nil {
+		return event.CreateMessage(discord.MessageCreate{
+			Content: "No player found",
+		})
+	}
+
+	enabled := data.Bool("enabled")
+	filters := player.Filters()
+	if enabled {
+		filters.Equalizer = bassBoost
+	} else {
+		filters.Equalizer = nil
+	}
+
+	if err := player.Update(context.TODO(), lavalink.WithFilters(filters)); err != nil {
+		return event.CreateMessage(discord.MessageCreate{
+			Content: fmt.Sprintf("Error while setting bass boost: `%s`", err),
+		})
+	}
+
+	return event.CreateMessage(discord.MessageCreate{
+		Content: fmt.Sprintf("Bass boost set to `%t`", enabled),
 	})
 }
 

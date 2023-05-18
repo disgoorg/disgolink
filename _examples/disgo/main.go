@@ -84,6 +84,7 @@ func main() {
 		"seek":        b.seek,
 		"volume":      b.volume,
 		"skip":        b.skip,
+		"bass-boost":  b.bassBoost,
 	}
 
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
