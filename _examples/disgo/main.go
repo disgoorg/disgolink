@@ -19,7 +19,7 @@ import (
 	"github.com/disgoorg/disgo/gateway"
 	"github.com/disgoorg/log"
 
-	"github.com/disgoorg/disgolink/v2/disgolink"
+	"github.com/disgoorg/disgolink/v3/disgolink"
 )
 
 var (

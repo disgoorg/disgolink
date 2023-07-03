@@ -1,4 +1,4 @@
-module github.com/disgoorg/disgolink/v2
+module github.com/disgoorg/disgolink/v3
 
 go 1.18
 

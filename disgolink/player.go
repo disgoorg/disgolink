@@ -5,9 +5,8 @@ import (
 	"errors"
 	"time"
 
+	"github.com/disgoorg/disgolink/v3/lavalink"
 	"github.com/disgoorg/snowflake/v2"
-
-	"github.com/disgoorg/disgolink/v2/lavalink"
 )
 
 var ErrPlayerNoNode = errors.New("player has no node")

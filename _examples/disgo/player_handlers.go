@@ -6,8 +6,8 @@ import (
 
 	"github.com/disgoorg/log"
 
-	"github.com/disgoorg/disgolink/v2/disgolink"
-	"github.com/disgoorg/disgolink/v2/lavalink"
+	"github.com/disgoorg/disgolink/v3/disgolink"
+	"github.com/disgoorg/disgolink/v3/lavalink"
 )
 
 func (b *Bot) onPlayerPause(player disgolink.Player, event lavalink.PlayerPauseEvent) {

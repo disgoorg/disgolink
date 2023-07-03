@@ -9,8 +9,8 @@ import (
 	"github.com/disgoorg/json"
 	"github.com/disgoorg/snowflake/v2"
 
-	"github.com/disgoorg/disgolink/v2/disgolink"
-	"github.com/disgoorg/disgolink/v2/lavalink"
+	"github.com/disgoorg/disgolink/v3/disgolink"
+	"github.com/disgoorg/disgolink/v3/lavalink"
 )
 
 func (b *Bot) shuffle(event *discordgo.InteractionCreate, data discordgo.ApplicationCommandInteractionData) error {

@@ -1,5 +1,5 @@
 [![Go Reference](https://pkg.go.dev/badge/github.com/disgoorg/disgolink.svg)](https://pkg.go.dev/github.com/disgoorg/disgolink)
-[![Go Report](https://goreportcard.com/badge/github.com/disgoorg/disgolink/v2)](https://goreportcard.com/report/github.com/disgoorg/disgolink)
+[![Go Report](https://goreportcard.com/badge/github.com/disgoorg/disgolink/v3)](https://goreportcard.com/report/github.com/disgoorg/disgolink)
 [![Go Version](https://img.shields.io/github/go-mod/go-version/disgoorg/disgolink?filename=go.mod)](https://golang.org/doc/devel/release.html)
 [![License](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](https://github.com/disgoorg/disgolink/blob/master/LICENSE)
 [![Disgolink Version](https://img.shields.io/github/v/release/disgoorg/disgolink?label=release)](https://github.com/disgoorg/disgolink/releases/latest)
@@ -9,7 +9,7 @@
 
 # DisGoLink
 
-DisGoLink is a [Lavalink](https://github.com/freyacodes/Lavalink) Client written in [Golang](https://golang.org/) which supports the latest Lavalink 3.7+ release and the new plugin system. 
+DisGoLink is a [Lavalink](https://github.com/freyacodes/Lavalink) Client written in [Golang](https://golang.org/) which supports the latest Lavalink 4.0.0+ release and the new plugin system. 
 
 While DisGoLink can be used with any [Discord](https://discord.com) Library [DisGo](https://github.com/disgoorg/disgo) is the best fit for it as usage with other Libraries can be a bit annoying due to different [Snowflake](https://github.com/disgoorg/snowflake) implementations.
 
@@ -25,7 +25,7 @@ This Library uses the [Disgo Snowflake](https://github.com/disgoorg/snowflake) p
 ### Installing
 
 ```sh
-go get github.com/disgoorg/disgolink/v2
+go get github.com/disgoorg/disgolink/v3
 ```
 
 ## Usage
@@ -37,7 +37,7 @@ First create a new lavalink instance. You can do this either with
 ```go
 import (
 	"github.com/disgoorg/snowflake/v2"
-	"github.com/disgoorg/disgolink/v2/disgolink"
+	"github.com/disgoorg/disgolink/v3/disgolink"
 )
 
 var userID = snowflake.ID(1234567890)

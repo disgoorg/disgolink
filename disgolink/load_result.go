@@ -1,6 +1,6 @@
 package disgolink
 
-import "github.com/disgoorg/disgolink/v2/lavalink"
+import "github.com/disgoorg/disgolink/v3/lavalink"
 
 type AudioLoadResultHandler interface {
 	TrackLoaded(track lavalink.Track)
