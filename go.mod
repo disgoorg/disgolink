@@ -3,12 +3,12 @@ module github.com/disgoorg/disgolink/v2
 go 1.18
 
 require (
-	github.com/disgoorg/json v1.0.0
+	github.com/disgoorg/json v1.1.0
 	github.com/disgoorg/log v1.2.0
 	github.com/disgoorg/snowflake/v2 v2.0.1
 	github.com/gorilla/websocket v1.5.0
 	github.com/stretchr/testify v1.8.1
-	golang.org/x/exp v0.0.0-20230310171629-522b1b587ee0
+	golang.org/x/exp v0.0.0-20230626212559-97b1e661b5df
 )
 
 require (
