@@ -9,17 +9,15 @@ import (
 	"syscall"
 	"time"
 
-	"github.com/disgoorg/disgo/cache"
-	"github.com/disgoorg/disgo/discord"
-	"github.com/disgoorg/snowflake/v2"
-
 	"github.com/disgoorg/disgo"
 	"github.com/disgoorg/disgo/bot"
+	"github.com/disgoorg/disgo/cache"
+	"github.com/disgoorg/disgo/discord"
 	"github.com/disgoorg/disgo/events"
 	"github.com/disgoorg/disgo/gateway"
-	"github.com/disgoorg/log"
-
 	"github.com/disgoorg/disgolink/v3/disgolink"
+	"github.com/disgoorg/log"
+	"github.com/disgoorg/snowflake/v2"
 )
 
 var (
@@ -70,6 +68,7 @@ func main() {
 		disgolink.WithListenerFunc(b.onTrackException),
 		disgolink.WithListenerFunc(b.onTrackStuck),
 		disgolink.WithListenerFunc(b.onWebSocketClosed),
+		disgolink.WithListenerFunc(b.onUnknownEvent),
 	)
 	b.Handlers = map[string]func(event *events.ApplicationCommandInteractionCreate, data discord.SlashCommandInteractionData) error{
 		"play":        b.play,
@@ -108,6 +107,7 @@ func main() {
 		log.Fatal(err)
 	}
 	log.Infof("node version: %s", version)
+	log.Infof("node session id: %s", node.SessionID())
 
 	log.Info("DisGo example is now running. Press CTRL-C to exit.")
 	s := make(chan os.Signal, 1)

@@ -63,3 +63,7 @@ func (b *Bot) onTrackStuck(player disgolink.Player, event lavalink.TrackStuckEve
 func (b *Bot) onWebSocketClosed(player disgolink.Player, event lavalink.WebSocketClosedEvent) {
 	fmt.Printf("onWebSocketClosed: %v\n", event)
 }
+
+func (b *Bot) onUnknownEvent(p disgolink.Player, e lavalink.UnknownEvent) {
+	fmt.Printf("onUnknownEvent event: %s, data: %s\n", e.Type_, string(e.Data))
+}
