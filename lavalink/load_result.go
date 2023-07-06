@@ -52,7 +52,7 @@ func (r *LoadResult) UnmarshalJSON(data []byte) error {
 		if err := json.Unmarshal(raw.Data, &search); err != nil {
 			return err
 		}
-		r.Data = &search
+		r.Data = search
 	case LoadTypeEmpty:
 		r.Data = Empty{}
 	case LoadTypeError:
