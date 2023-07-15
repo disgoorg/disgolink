@@ -2,8 +2,6 @@ package lavalink
 
 import (
 	"encoding/json"
-
-	"golang.org/x/exp/slices"
 )
 
 var DefaultFilters = []string{"volume", "equalizer", "timescale", "tremolo", "vibrato", "rotation", "karaoke", "distortion", "channelMix", "lowPass"}
@@ -19,70 +17,7 @@ type Filters struct {
 	Distortion    *Distortion    `json:"distortion,omitempty"`
 	ChannelMix    *ChannelMix    `json:"channelMix,omitempty"`
 	LowPass       *LowPass       `json:"lowPass,omitempty"`
-	PluginFilters map[string]any `json:"-"`
-}
-
-func (f *Filters) UnmarshalJSON(data []byte) error {
-	type filters Filters
-	var v filters
-	if err := json.Unmarshal(data, &v); err != nil {
-		return err
-	}
-	*f = Filters(v)
-
-	// Unmarshal plugin filters
-	var pluginFilters map[string]any
-	if err := json.Unmarshal(data, &pluginFilters); err != nil {
-		return err
-	}
-	for k := range pluginFilters {
-		if slices.Contains(DefaultFilters, k) {
-			delete(pluginFilters, k)
-		}
-	}
-	f.PluginFilters = pluginFilters
-	return nil
-}
-
-func (f Filters) MarshalJSON() ([]byte, error) {
-	v := make(map[string]any)
-
-	if f.Volume != nil {
-		v["volume"] = f.Volume
-	}
-	if f.Equalizer != nil {
-		v["equalizer"] = f.Equalizer
-	}
-	if f.Timescale != nil {
-		v["timescale"] = f.Timescale
-	}
-	if f.Tremolo != nil {
-		v["tremolo"] = f.Tremolo
-	}
-	if f.Vibrato != nil {
-		v["vibrato"] = f.Vibrato
-	}
-	if f.Rotation != nil {
-		v["rotation"] = f.Rotation
-	}
-	if f.Karaoke != nil {
-		v["karaoke"] = f.Karaoke
-	}
-	if f.Distortion != nil {
-		v["distortion"] = f.Distortion
-	}
-	if f.ChannelMix != nil {
-		v["channelMix"] = f.ChannelMix
-	}
-	if f.LowPass != nil {
-		v["lowPass"] = f.LowPass
-	}
-
-	for k, val := range f.PluginFilters {
-		v[k] = val
-	}
-
-	return json.Marshal(v)
+	PluginFilters map[string]any `json:"pluginFilters,omitempty"`
 }
 
 type LowPass struct {
