@@ -267,10 +267,10 @@ func (n *nodeImpl) Close() {
 	})
 	n.status = StatusDisconnected
 	if n.conn != nil {
-		if err := n.conn.Close(); err != nil {
-			n.lavalink.Logger().Errorf("error while closing wsconn: %s", err)
-		}
+		_ = n.conn.Close()
+		n.conn = nil
 	}
+
 }
 
 func (n *nodeImpl) reconnectTry(ctx context.Context, try int, reconnecting bool) error {
@@ -319,11 +319,15 @@ loop:
 				return
 			}
 
-			if !errors.Is(err, net.ErrClosed) {
-				n.Close()
-				go n.reconnect()
+			reconnect := true
+			if errors.Is(err, net.ErrClosed) {
+				reconnect = false
 			}
 
+			n.Close()
+			if reconnect {
+				go n.reconnect()
+			}
 			break loop
 		}
 
