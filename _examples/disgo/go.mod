@@ -4,9 +4,9 @@ go 1.18
 
 require (
 	github.com/disgoorg/disgo v0.16.7
-	github.com/disgoorg/disgolink/v3 v3.0.0-20230704111222-f71f73b61d1a
+	github.com/disgoorg/disgolink/v3 v3.0.0-20230717123709-208f1c210164
 	github.com/disgoorg/json v1.1.0
-	github.com/disgoorg/log v1.2.0
+	github.com/disgoorg/log v1.2.1
 	github.com/disgoorg/snowflake/v2 v2.0.1
 )
 
