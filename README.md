@@ -68,8 +68,7 @@ Then you add your lavalink nodes. This directly connects to the nodes and is a b
 ```go
 node, err := lavalinkClient.AddNode(context.TODO(), lavalink.NodeConfig{
 		Name:      "test", // a unique node name
-		Host:      "localhost",
-		Port:      "2333",
+		Address:   "localhost:2333",
 		Password:  "youshallnotpass",
 		Secure:    false, // ws or wss
 		SessionID: "", // only needed if you want to resume a previous lavalink session
