@@ -39,6 +39,9 @@ var (
 )
 
 type RestClient interface {
+	// Do executes a http.Request and replaces the host and scheme with the node's config. It also sets the Authorization header to the node's password. It returns the http.Response or an error
+	Do(rq *http.Request) (*http.Response, error)
+
 	Version(ctx context.Context) (string, error)
 	Info(ctx context.Context) (*lavalink.Info, error)
 	Stats(ctx context.Context) (*lavalink.Stats, error)
@@ -120,6 +123,17 @@ func (c *restClientImpl) DecodeTrack(ctx context.Context, encodedTrack string) (
 func (c *restClientImpl) DecodeTracks(ctx context.Context, encodedTracks []string) (tracks []lavalink.Track, err error) {
 	err = c.doJSON(ctx, http.MethodPost, string(EndpointDecodeTracks), encodedTracks, &tracks)
 	return
+}
+
+func (c *restClientImpl) Do(rq *http.Request) (*http.Response, error) {
+	rq.Header.Set("Authorization", c.node.Config().Password)
+	rq.URL.Host = c.node.Config().Address
+	if c.node.Config().Secure {
+		rq.URL.Scheme = "https"
+	} else {
+		rq.URL.Scheme = "http"
+	}
+	return c.httpClient.Do(rq)
 }
 
 func (c *restClientImpl) do(ctx context.Context, method string, path string, rqBody io.Reader) (int, []byte, error) {
