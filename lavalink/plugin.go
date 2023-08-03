@@ -13,6 +13,10 @@ type Plugin struct {
 
 type PluginInfo json.RawMessage
 
+func (p PluginInfo) String() string {
+	return string(p)
+}
+
 func (p PluginInfo) Unmarshal(v any) error {
 	return json.Unmarshal(p, v)
 }
