@@ -369,6 +369,7 @@ loop:
 				continue
 			}
 			player.OnEvent(message)
+			n.lavalink.EmitEvent(player, message)
 		}
 	}
 }
