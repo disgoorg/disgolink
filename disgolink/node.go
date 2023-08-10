@@ -355,6 +355,7 @@ loop:
 
 		case lavalink.StatsMessage:
 			n.stats = lavalink.Stats(message)
+			n.lavalink.EmitEvent(nil, m)
 
 		case lavalink.PlayerUpdateMessage:
 			player := n.lavalink.ExistingPlayer(message.GuildID)
@@ -362,6 +363,7 @@ loop:
 				continue
 			}
 			player.OnPlayerUpdate(message.State)
+			n.lavalink.EmitEvent(player, m)
 
 		case lavalink.Event:
 			player := n.lavalink.ExistingPlayer(message.GuildID())
@@ -369,7 +371,7 @@ loop:
 				continue
 			}
 			player.OnEvent(message)
-			n.lavalink.EmitEvent(player, message)
+			n.lavalink.EmitEvent(player, m)
 		}
 	}
 }
