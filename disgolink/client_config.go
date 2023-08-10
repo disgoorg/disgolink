@@ -49,7 +49,7 @@ func WithListeners(listeners ...EventListener) ConfigOpt {
 	}
 }
 
-func WithListenerFunc[E lavalink.Event](listenerFunc func(p Player, e E)) ConfigOpt {
+func WithListenerFunc[E lavalink.Message](listenerFunc func(p Player, e E)) ConfigOpt {
 	return WithListeners(NewListenerFunc(listenerFunc))
 }
 

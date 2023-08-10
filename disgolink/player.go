@@ -28,7 +28,7 @@ type Player interface {
 	Node() Node
 
 	Restore(player lavalink.Player)
-	OnEvent(event lavalink.Event)
+	OnEvent(event lavalink.Message)
 	OnPlayerUpdate(state lavalink.PlayerState)
 	OnVoiceServerUpdate(ctx context.Context, token string, endpoint string)
 	OnVoiceStateUpdate(ctx context.Context, channelID *snowflake.ID, sessionID string)
@@ -129,7 +129,7 @@ func (p *playerImpl) Update(ctx context.Context, opts ...lavalink.PlayerUpdateOp
 
 	// dispatch artificial player resume/pause event
 	if update.Paused != nil {
-		var event lavalink.Event
+		var event lavalink.Message
 		if p.paused && !*update.Paused {
 			event = lavalink.PlayerResumeEvent{
 				GuildID_: p.guildID,
@@ -187,7 +187,7 @@ func (p *playerImpl) Restore(player lavalink.Player) {
 	p.volume = player.Volume
 }
 
-func (p *playerImpl) OnEvent(event lavalink.Event) {
+func (p *playerImpl) OnEvent(event lavalink.Message) {
 	switch e := event.(type) {
 	case lavalink.UnknownEvent:
 		p.lavalink.ForPlugins(func(plugin Plugin) {

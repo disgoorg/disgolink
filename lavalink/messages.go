@@ -142,6 +142,7 @@ func (m UnknownMessage) MarshalJSON() ([]byte, error) {
 func (m UnknownMessage) Op() Op { return m.Op_ }
 
 type Event interface {
+	Op() Op
 	Type() EventType
 	GuildID() snowflake.ID
 }
