@@ -232,7 +232,6 @@ func (p *playerImpl) OnEvent(event lavalink.Event) {
 		p.voice = lavalink.VoiceState{}
 		p.state.Connected = false
 	}
-	p.lavalink.EmitEvent(p, event)
 }
 
 func (p *playerImpl) OnPlayerUpdate(state lavalink.PlayerState) {

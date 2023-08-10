@@ -27,7 +27,7 @@ type Client interface {
 	RemovePlayer(guildID snowflake.ID)
 	ForPlayers(playerFunc func(player Player))
 
-	EmitEvent(player Player, event lavalink.Event)
+	EmitEvent(player Player, event lavalink.Message)
 	AddListeners(listeners ...EventListener)
 	RemoveListeners(listeners ...EventListener)
 
@@ -180,7 +180,7 @@ func (c *clientImpl) ForPlayers(playerFunc func(player Player)) {
 	}
 }
 
-func (c *clientImpl) EmitEvent(player Player, event lavalink.Event) {
+func (c *clientImpl) EmitEvent(player Player, event lavalink.Message) {
 	c.listenersMu.Lock()
 	defer c.listenersMu.Unlock()
 
