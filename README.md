@@ -126,7 +126,7 @@ now audio should start playing
 ### Listening for events
 
 You can listen for following lavalink events
-* `PlayerUpdate` Emitted every x seconds (default 5) with the current player state
+* `PlayerUpdateMessage` Emitted every x seconds (default 5) with the current player state
 * `PlayerPause` Emitted when the player is paused
 * `PlayerResume` Emitted when the player is resumed
 * `TrackStart` Emitted when a track starts playing
@@ -148,7 +148,7 @@ lavalinkClient := disgolink.New(userID,
 	disgolink.WithListenerFunc(onWebSocketClosed),
 )
 
-func onPlayerUpdate(player disgolink.Player, event lavalink.PlayerUpdateEvent) {
+func onPlayerUpdate(player disgolink.Player, event lavalink.PlayerUpdateMessage) {
     // do something with the event
 }
 
