@@ -25,7 +25,7 @@ This Library uses the [Disgo Snowflake](https://github.com/disgoorg/snowflake) p
 ### Installing
 
 ```sh
-go get github.com/disgoorg/disgolink/v3
+go get github.com/disgoorg/disgolink/v3/disgolink
 ```
 
 ## Usage
