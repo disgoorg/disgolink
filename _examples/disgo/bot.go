@@ -2,14 +2,13 @@ package main
 
 import (
 	"context"
+	"log/slog"
 
 	"github.com/disgoorg/disgo/bot"
 	"github.com/disgoorg/disgo/discord"
 	"github.com/disgoorg/disgo/events"
-	"github.com/disgoorg/log"
-	"github.com/disgoorg/snowflake/v2"
-
 	"github.com/disgoorg/disgolink/v3/disgolink"
+	"github.com/disgoorg/snowflake/v2"
 )
 
 func newBot() *Bot {
@@ -32,11 +31,11 @@ func (b *Bot) onApplicationCommand(event *events.ApplicationCommandInteractionCr
 
 	handler, ok := b.Handlers[data.CommandName()]
 	if !ok {
-		log.Info("unknown command: ", data.CommandName())
+		slog.Info("unknown command", slog.String("command", data.CommandName()))
 		return
 	}
 	if err := handler(event, data); err != nil {
-		log.Error("error handling command: ", err)
+		slog.Error("error handling command", slog.Any("err", err))
 	}
 }
 

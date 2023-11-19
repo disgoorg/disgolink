@@ -3,6 +3,7 @@ package disgolink
 import (
 	"context"
 	"errors"
+	"log/slog"
 	"time"
 
 	"github.com/disgoorg/disgolink/v3/lavalink"
@@ -44,6 +45,10 @@ func NewPlayer(lavalink Client, node Node, guildID snowflake.ID) Player {
 }
 
 type playerImpl struct {
+	logger   *slog.Logger
+	node     Node
+	lavalink Client
+
 	guildID   snowflake.ID
 	channelID *snowflake.ID
 	track     *lavalink.Track
@@ -52,9 +57,6 @@ type playerImpl struct {
 	state     lavalink.PlayerState
 	voice     lavalink.VoiceState
 	filters   lavalink.Filters
-
-	node     Node
-	lavalink Client
 }
 
 func (p *playerImpl) GuildID() snowflake.ID {
@@ -246,7 +248,7 @@ func (p *playerImpl) OnVoiceServerUpdate(ctx context.Context, token string, endp
 			SessionID: p.voice.SessionID,
 		},
 	}); err != nil {
-		p.lavalink.Logger().Error("error while sending voice server update: ", err)
+		p.logger.ErrorContext(ctx, "error while sending voice server update", slog.Any("err", err))
 	}
 	p.voice.Token = token
 	p.voice.Endpoint = endpoint
@@ -256,7 +258,7 @@ func (p *playerImpl) OnVoiceStateUpdate(ctx context.Context, channelID *snowflak
 	if channelID == nil {
 		p.channelID = nil
 		if err := p.Destroy(ctx); err != nil {
-			p.lavalink.Logger().Error("error while destroying player: ", err)
+			p.logger.ErrorContext(ctx, "error while destroying player", slog.Any("err", err))
 		}
 		p.lavalink.RemovePlayer(p.guildID)
 		return

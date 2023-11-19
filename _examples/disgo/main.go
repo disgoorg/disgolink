@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"log/slog"
 	"os"
 	"os/signal"
 	"regexp"
@@ -16,7 +17,6 @@ import (
 	"github.com/disgoorg/disgo/events"
 	"github.com/disgoorg/disgo/gateway"
 	"github.com/disgoorg/disgolink/v3/disgolink"
-	"github.com/disgoorg/log"
 	"github.com/disgoorg/snowflake/v2"
 )
 
@@ -34,11 +34,9 @@ var (
 )
 
 func main() {
-	log.SetFlags(log.LstdFlags | log.Lshortfile)
-	log.SetLevel(log.LevelInfo)
-	log.Info("starting disgo example...")
-	log.Info("disgo version: ", disgo.Version)
-	log.Info("disgolink version: ", disgolink.Version)
+	slog.Info("starting disgo example...")
+	slog.Info("disgo version", slog.String("version", disgo.Version))
+	slog.Info("disgolink version: ", slog.String("version", disgolink.Version))
 
 	b := newBot()
 
@@ -54,7 +52,8 @@ func main() {
 		bot.WithEventListenerFunc(b.onVoiceServerUpdate),
 	)
 	if err != nil {
-		log.Fatal(err)
+		slog.Error("error while building disgo client", slog.Any("err", err))
+		os.Exit(1)
 	}
 	b.Client = client
 
@@ -89,7 +88,8 @@ func main() {
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
 	if err = client.OpenGateway(ctx); err != nil {
-		log.Fatal(err)
+		slog.Error("failed to open gateway", slog.Any("err", err))
+		os.Exit(1)
 	}
 	defer client.Close(context.TODO())
 
@@ -100,16 +100,16 @@ func main() {
 		Secure:   NodeSecure,
 	})
 	if err != nil {
-		log.Fatal(err)
+		slog.Error("failed to add node", slog.Any("err", err))
+		os.Exit(1)
 	}
 	version, err := node.Version(ctx)
 	if err != nil {
-		log.Fatal(err)
+		slog.Error("failed to get node version", slog.Any("err", err))
+		os.Exit(1)
 	}
-	log.Infof("node version: %s", version)
-	log.Infof("node session id: %s", node.SessionID())
 
-	log.Info("DisGo example is now running. Press CTRL-C to exit.")
+	slog.Info("DisGo example is now running. Press CTRL-C to exit.", slog.String("node_version", version), slog.String("node_session_id", node.SessionID()))
 	s := make(chan os.Signal, 1)
 	signal.Notify(s, syscall.SIGINT, syscall.SIGTERM, os.Interrupt)
 	<-s

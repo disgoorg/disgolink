@@ -1,11 +1,12 @@
 package main
 
 import (
+	"log/slog"
+
 	"github.com/disgoorg/disgo/bot"
 	"github.com/disgoorg/disgo/discord"
 	"github.com/disgoorg/disgolink/v3/lavalink"
 	"github.com/disgoorg/json"
-	"github.com/disgoorg/log"
 )
 
 var commands = []discord.ApplicationCommandCreate{
@@ -152,6 +153,6 @@ var commands = []discord.ApplicationCommandCreate{
 
 func registerCommands(client bot.Client) {
 	if _, err := client.Rest().SetGuildCommands(client.ApplicationID(), GuildId, commands); err != nil {
-		log.Warn(err)
+		slog.Error("error while registering commands", slog.Any("err", err))
 	}
 }

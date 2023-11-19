@@ -6,6 +6,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
+	"log/slog"
 	"net/http"
 	"net/url"
 
@@ -58,11 +59,8 @@ type RestClient interface {
 	DecodeTracks(ctx context.Context, encodedTracks []string) ([]lavalink.Track, error)
 }
 
-func newRestClientImpl(node Node, httpClient *http.Client) RestClient {
-	return &restClientImpl{node: node, httpClient: httpClient}
-}
-
 type restClientImpl struct {
+	logger     *slog.Logger
 	node       Node
 	httpClient *http.Client
 }
@@ -136,15 +134,17 @@ func (c *restClientImpl) Do(rq *http.Request) (*http.Response, error) {
 	return c.httpClient.Do(rq)
 }
 
-func (c *restClientImpl) do(ctx context.Context, method string, path string, rqBody io.Reader) (int, []byte, error) {
-	rq, err := http.NewRequestWithContext(ctx, method, c.node.Config().RestURL()+path, rqBody)
+func (c *restClientImpl) do(ctx context.Context, method string, path string, rqBody []byte) (int, []byte, error) {
+	rq, err := http.NewRequestWithContext(ctx, method, c.node.Config().RestURL()+path, bytes.NewReader(rqBody))
 	if err != nil {
 		return 0, nil, err
 	}
 	rq.Header.Set("Authorization", c.node.Config().Password)
-	if rqBody != nil {
+	if len(rqBody) > 0 {
 		rq.Header.Set("Content-Type", "application/json")
 	}
+
+	c.logger.DebugContext(ctx, "sending request", slog.String("method", method), slog.String("path", path), slog.String("body", fmt.Sprintf("%v", rqBody)))
 
 	rs, err := c.httpClient.Do(rq)
 	if err != nil {
@@ -153,7 +153,7 @@ func (c *restClientImpl) do(ctx context.Context, method string, path string, rqB
 
 	defer rs.Body.Close()
 	rawBody, err := io.ReadAll(rs.Body)
-	c.node.Lavalink().Logger().Tracef("response from %s, code %d, body: %s", c.node.Config().RestURL()+path, rs.StatusCode, string(rawBody))
+	c.logger.DebugContext(ctx, "received response", slog.String("path", path), slog.Int("status_code", rs.StatusCode), slog.String("body", string(rawBody)))
 	if err != nil {
 		return rs.StatusCode, nil, fmt.Errorf("failed to read response body: %w", err)
 	}
@@ -170,16 +170,15 @@ func (c *restClientImpl) do(ctx context.Context, method string, path string, rqB
 }
 
 func (c *restClientImpl) doJSON(ctx context.Context, method string, path string, rqBody any, rsBody any) error {
-	var rqBodyReader io.Reader
+	var rawRqBody []byte
 	if rqBody != nil {
 		var err error
-		rawRqBody, err := json.Marshal(rqBody)
+		rawRqBody, err = json.Marshal(rqBody)
 		if err != nil {
 			return fmt.Errorf("failed to marshal request body: %w", err)
 		}
-		rqBodyReader = bytes.NewReader(rawRqBody)
 	}
-	statusCode, rawBody, err := c.do(ctx, method, path, rqBodyReader)
+	statusCode, rawBody, err := c.do(ctx, method, path, rawRqBody)
 	if err != nil {
 		return err
 	}

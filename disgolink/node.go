@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"log/slog"
 	"net"
 	"net/http"
 	"sync"
@@ -76,6 +77,7 @@ func (c NodeConfig) WsURL() string {
 }
 
 type nodeImpl struct {
+	logger   *slog.Logger
 	lavalink Client
 	config   NodeConfig
 	rest     RestClient
@@ -187,7 +189,7 @@ func (n *nodeImpl) Open(ctx context.Context) error {
 }
 
 func (n *nodeImpl) open(ctx context.Context, reconnecting bool) error {
-	n.lavalink.Logger().Debug("opening connection to node...")
+	n.logger.Debug("opening connection to node...")
 
 	n.connMu.Lock()
 	defer n.connMu.Unlock()
@@ -232,12 +234,12 @@ func (n *nodeImpl) open(ctx context.Context, reconnecting bool) error {
 	n.sessionID = ready.SessionID
 	if n.config.SessionID != "" {
 		if ready.Resumed {
-			n.lavalink.Logger().Info("successfully resumed session: ", n.config.SessionID)
+			n.logger.InfoContext(ctx, "successfully resumed session", slog.String("session_id", n.config.SessionID))
 			if err = n.syncPlayers(ctx); err != nil {
-				n.lavalink.Logger().Warn("failed to sync players: ", err)
+				n.logger.Warn("failed to sync players: ", err)
 			}
 		} else {
-			n.lavalink.Logger().Warn("failed to resume session: ", n.config.SessionID)
+			n.logger.Warn("failed to resume session", slog.String("session_id", n.config.SessionID))
 		}
 	}
 	n.status = StatusConnected
@@ -289,10 +291,10 @@ func (n *nodeImpl) reconnectTry(ctx context.Context, try int, reconnecting bool)
 	}
 
 	if err := n.open(ctx, reconnecting); err != nil {
-		if err == ErrNodeAlreadyConnected {
+		if errors.Is(err, ErrNodeAlreadyConnected) {
 			return err
 		}
-		n.lavalink.Logger().Error("failed to reconnect node. error: ", err)
+		n.logger.ErrorContext(ctx, "failed to reconnect node", slog.Any("err", err), slog.Int("try", try))
 		n.status = StatusDisconnected
 		return n.reconnectTry(ctx, try+1, reconnecting)
 	}
@@ -301,12 +303,12 @@ func (n *nodeImpl) reconnectTry(ctx context.Context, try int, reconnecting bool)
 
 func (n *nodeImpl) reconnect() {
 	if err := n.reconnectTry(context.Background(), 0, true); err != nil {
-		n.lavalink.Logger().Error("failed to reopen node. error: ", err)
+		n.logger.Error("failed to reopen node", slog.Any("err", err))
 	}
 }
 
 func (n *nodeImpl) listen(conn *websocket.Conn) {
-	defer n.lavalink.Logger().Debug("exiting listen goroutine...")
+	defer n.logger.Debug("exiting listen goroutine")
 loop:
 	for {
 		_, data, err := conn.ReadMessage()
@@ -331,7 +333,7 @@ loop:
 			break loop
 		}
 
-		n.lavalink.Logger().Trace("received message: ", string(data))
+		n.logger.Debug("received message", slog.String("data", string(data)))
 
 		n.Lavalink().ForPlugins(func(plugin Plugin) {
 			if pl, ok := plugin.(PluginEventHandler); ok {
@@ -341,7 +343,7 @@ loop:
 
 		m, err := lavalink.UnmarshalMessage(data)
 		if err != nil {
-			n.lavalink.Logger().Errorf("error while unmarshalling ws data: %s", err)
+			n.logger.Error("error while unmarshalling ws data", slog.Any("err", err))
 			return
 		}
 

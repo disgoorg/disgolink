@@ -1,22 +1,22 @@
 package disgolink
 
 import (
+	"log/slog"
 	"net/http"
 	"time"
 
 	"github.com/disgoorg/disgolink/v3/lavalink"
-	"github.com/disgoorg/log"
 )
 
 func DefaultConfig() *Config {
 	return &Config{
-		Logger:     log.Default(),
+		Logger:     slog.Default(),
 		HTTPClient: &http.Client{Timeout: 10 * time.Second},
 	}
 }
 
 type Config struct {
-	Logger     log.Logger
+	Logger     *slog.Logger
 	HTTPClient *http.Client
 	Listeners  []EventListener
 	Plugins    []Plugin
@@ -31,7 +31,7 @@ func (c *Config) Apply(opts []ConfigOpt) {
 }
 
 // WithLogger lets you inject your own logger implementing log.Logger
-func WithLogger(logger log.Logger) ConfigOpt {
+func WithLogger(logger *slog.Logger) ConfigOpt {
 	return func(config *Config) {
 		config.Logger = logger
 	}

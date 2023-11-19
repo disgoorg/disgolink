@@ -2,19 +2,16 @@ package disgolink
 
 import (
 	"context"
+	"log/slog"
 	"net/http"
 	"runtime/debug"
 	"sync"
-	"time"
 
 	"github.com/disgoorg/disgolink/v3/lavalink"
-	"github.com/disgoorg/log"
 	"github.com/disgoorg/snowflake/v2"
 )
 
 type Client interface {
-	Logger() log.Logger
-
 	AddNode(ctx context.Context, config NodeConfig) (Node, error)
 	ForNodes(nodeFunc func(node Node))
 	Node(name string) Node
@@ -43,30 +40,25 @@ type Client interface {
 }
 
 func New(userID snowflake.ID, opts ...ConfigOpt) Client {
-	config := DefaultConfig()
-	config.Apply(opts)
+	cfg := DefaultConfig()
+	cfg.Apply(opts)
+	cfg.Logger = cfg.Logger.With(slog.String("name", "disgolink_client"))
 
-	if config.Logger == nil {
-		config.Logger = log.Default()
-	}
-	if config.HTTPClient == nil {
-		config.HTTPClient = &http.Client{Timeout: 20 * time.Second}
-	}
 	return &clientImpl{
-		logger:     config.Logger,
-		httpClient: config.HTTPClient,
+		logger:     cfg.Logger,
+		httpClient: cfg.HTTPClient,
 		userID:     userID,
 		nodes:      map[string]Node{},
 		players:    map[snowflake.ID]Player{},
-		listeners:  config.Listeners,
-		plugins:    config.Plugins,
+		listeners:  cfg.Listeners,
+		plugins:    cfg.Plugins,
 	}
 }
 
 var _ Client = (*clientImpl)(nil)
 
 type clientImpl struct {
-	logger     log.Logger
+	logger     *slog.Logger
 	httpClient *http.Client
 	userID     snowflake.ID
 
@@ -83,17 +75,18 @@ type clientImpl struct {
 	plugins   []Plugin
 }
 
-func (c *clientImpl) Logger() log.Logger {
-	return c.logger
-}
-
 func (c *clientImpl) AddNode(ctx context.Context, config NodeConfig) (Node, error) {
 	node := &nodeImpl{
+		logger:   c.logger.With(slog.String("name", "disgolink_node"), slog.String("node_name", config.Name)),
 		config:   config,
 		lavalink: c,
 		status:   StatusDisconnected,
 	}
-	node.rest = newRestClientImpl(node, c.httpClient)
+	node.rest = &restClientImpl{
+		logger:     c.logger.With(slog.String("name", "disgolink_rest_client"), slog.String("node_name", config.Name)),
+		node:       node,
+		httpClient: c.httpClient,
+	}
 	if err := node.Open(ctx); err != nil {
 		return nil, err
 	}
@@ -186,7 +179,7 @@ func (c *clientImpl) EmitEvent(player Player, event lavalink.Message) {
 
 	defer func() {
 		if r := recover(); r != nil {
-			c.Logger().Errorf("recovered from panic in event listener: %#v\nstack: %s", r, string(debug.Stack()))
+			c.logger.Error("recovered from panic in event listener", slog.Any("r", r), slog.String("stack", string(debug.Stack())))
 			return
 		}
 	}()

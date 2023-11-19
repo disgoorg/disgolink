@@ -2,24 +2,22 @@ package main
 
 import (
 	"context"
-	"fmt"
-
-	"github.com/disgoorg/log"
+	"log/slog"
 
 	"github.com/disgoorg/disgolink/v3/disgolink"
 	"github.com/disgoorg/disgolink/v3/lavalink"
 )
 
 func (b *Bot) onPlayerPause(player disgolink.Player, event lavalink.PlayerPauseEvent) {
-	fmt.Printf("onPlayerPause: %v\n", event)
+	slog.Info("player paused", slog.Any("event", event))
 }
 
 func (b *Bot) onPlayerResume(player disgolink.Player, event lavalink.PlayerResumeEvent) {
-	fmt.Printf("onPlayerResume: %v\n", event)
+	slog.Info("player resumed", slog.Any("event", event))
 }
 
 func (b *Bot) onTrackStart(player disgolink.Player, event lavalink.TrackStartEvent) {
-	fmt.Printf("onTrackStart: %v\n", event)
+	slog.Info("track started", slog.Any("event", event))
 }
 
 func (b *Bot) onTrackEnd(player disgolink.Player, event lavalink.TrackEndEvent) {
@@ -48,22 +46,22 @@ func (b *Bot) onTrackEnd(player disgolink.Player, event lavalink.TrackEndEvent) 
 		return
 	}
 	if err := player.Update(context.TODO(), lavalink.WithTrack(nextTrack)); err != nil {
-		log.Error("Failed to play next track: ", err)
+		slog.Error("Failed to play next track", slog.Any("err", err))
 	}
 }
 
 func (b *Bot) onTrackException(player disgolink.Player, event lavalink.TrackExceptionEvent) {
-	fmt.Printf("onTrackException: %v\n", event)
+	slog.Info("track exception", slog.Any("event", event))
 }
 
 func (b *Bot) onTrackStuck(player disgolink.Player, event lavalink.TrackStuckEvent) {
-	fmt.Printf("onTrackStuck: %v\n", event)
+	slog.Info("track stuck", slog.Any("event", event))
 }
 
 func (b *Bot) onWebSocketClosed(player disgolink.Player, event lavalink.WebSocketClosedEvent) {
-	fmt.Printf("onWebSocketClosed: %v\n", event)
+	slog.Info("websocket closed", slog.Any("event", event))
 }
 
 func (b *Bot) onUnknownEvent(p disgolink.Player, e lavalink.UnknownEvent) {
-	fmt.Printf("onUnknownEvent event: %s, data: %s\n", e.Type_, string(e.Data))
+	slog.Info("unknown event", slog.Any("event", e.Type()), slog.String("data", string(e.Data)))
 }
