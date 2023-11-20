@@ -56,6 +56,10 @@ client, err := disgo.New(Token,
 )
 
 func onVoiceStateUpdate(event *events.GuildVoiceStateUpdate) {
+    // filter all non bot voice state updates out
+    if event.VoiceState.UserID != b.Client.ApplicationID() {
+        return
+    }
     lavalinkClient.OnVoiceStateUpdate(context.TODO(), event.VoiceState.GuildID, event.VoiceState.ChannelID, event.VoiceState.SessionID)
 }
 
