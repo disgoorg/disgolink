@@ -2,7 +2,7 @@ package lavalink
 
 type Playlist struct {
 	Info       PlaylistInfo `json:"info"`
-	PluginInfo PluginInfo   `json:"pluginInfo"`
+	PluginInfo RawData      `json:"pluginInfo"`
 	Tracks     []Track      `json:"tracks"`
 }
 

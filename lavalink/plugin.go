@@ -11,20 +11,20 @@ type Plugin struct {
 	Version string `json:"version"`
 }
 
-type PluginInfo json.RawMessage
+type RawData json.RawMessage
 
-func (p PluginInfo) String() string {
+func (p RawData) String() string {
 	return string(p)
 }
 
-func (p PluginInfo) Unmarshal(v any) error {
+func (p RawData) Unmarshal(v any) error {
 	return json.Unmarshal(p, v)
 }
 
-func (p *PluginInfo) UnmarshalJSON(data []byte) error {
+func (p *RawData) UnmarshalJSON(data []byte) error {
 	return json.Unmarshal(data, (*json.RawMessage)(p))
 }
 
-func (p PluginInfo) MarshalJSON() ([]byte, error) {
+func (p RawData) MarshalJSON() ([]byte, error) {
 	return json.Marshal(json.RawMessage(p))
 }
