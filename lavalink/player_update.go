@@ -6,16 +6,21 @@ func DefaultPlayerUpdate() *PlayerUpdate {
 	return &PlayerUpdate{}
 }
 
+type PlayerUpdateTrack struct {
+	Encoded    *json.Nullable[string] `json:"encoded,omitempty"`
+	Identifier *string                `json:"identifier,omitempty"`
+	UserData   any                    `json:"userData,omitempty"`
+}
+
 type PlayerUpdate struct {
-	EncodedTrack *json.Nullable[string] `json:"encodedTrack,omitempty"`
-	Identifier   *string                `json:"identifier,omitempty"`
-	Position     *Duration              `json:"position,omitempty"`
-	EndTime      *Duration              `json:"endTime,omitempty"`
-	Volume       *int                   `json:"volume,omitempty"`
-	Paused       *bool                  `json:"paused,omitempty"`
-	Voice        *VoiceState            `json:"voice,omitempty"`
-	Filters      *Filters               `json:"filters,omitempty"`
-	NoReplace    bool                   `json:"-"`
+	Track     *PlayerUpdateTrack `json:"track,omitempty"`
+	Position  *Duration          `json:"position,omitempty"`
+	EndTime   *Duration          `json:"endTime,omitempty"`
+	Volume    *int               `json:"volume,omitempty"`
+	Paused    *bool              `json:"paused,omitempty"`
+	Voice     *VoiceState        `json:"voice,omitempty"`
+	Filters   *Filters           `json:"filters,omitempty"`
+	NoReplace bool               `json:"-"`
 }
 
 type PlayerUpdateOpt func(update *PlayerUpdate)
@@ -26,31 +31,52 @@ func (u *PlayerUpdate) Apply(opts []PlayerUpdateOpt) {
 	}
 }
 
-func WithTrack(track Track) PlayerUpdateOpt {
-	return WithEncodedTrack(track.Encoded)
-}
-
-func WithEncodedTrack(encodedTrack string) PlayerUpdateOpt {
-	return func(update *PlayerUpdate) {
-		update.EncodedTrack = json.NewNullablePtr(encodedTrack)
-	}
-}
-
-func WithNullTrack() PlayerUpdateOpt {
-	return func(update *PlayerUpdate) {
-		update.EncodedTrack = json.NullPtr[string]()
-	}
-}
-
 func WithNoReplace(noReplace bool) PlayerUpdateOpt {
 	return func(update *PlayerUpdate) {
 		update.NoReplace = noReplace
 	}
 }
 
-func WithIdentifier(identifier string) PlayerUpdateOpt {
+func WithTrack(track Track) PlayerUpdateOpt {
 	return func(update *PlayerUpdate) {
-		update.Identifier = &identifier
+		WithEncodedTrack(track.Encoded)(update)
+		WithTrackUserData(track.UserData)(update)
+	}
+}
+
+func WithEncodedTrack(encodedTrack string) PlayerUpdateOpt {
+	return func(update *PlayerUpdate) {
+		if update.Track == nil {
+			update.Track = &PlayerUpdateTrack{}
+		}
+		update.Track.Encoded = json.NewNullablePtr(encodedTrack)
+	}
+}
+
+func WithNullTrack() PlayerUpdateOpt {
+	return func(update *PlayerUpdate) {
+		if update.Track == nil {
+			update.Track = &PlayerUpdateTrack{}
+		}
+		update.Track.Encoded = json.NullPtr[string]()
+	}
+}
+
+func WithTrackIdentifier(identifier string) PlayerUpdateOpt {
+	return func(update *PlayerUpdate) {
+		if update.Track == nil {
+			update.Track = &PlayerUpdateTrack{}
+		}
+		update.Track.Identifier = &identifier
+	}
+}
+
+func WithTrackUserData(userData any) PlayerUpdateOpt {
+	return func(update *PlayerUpdate) {
+		if update.Track == nil {
+			update.Track = &PlayerUpdateTrack{}
+		}
+		update.Track.UserData = userData
 	}
 }
 

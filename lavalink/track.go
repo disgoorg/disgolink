@@ -4,6 +4,7 @@ import (
 	"database/sql"
 	"database/sql/driver"
 	"errors"
+	"fmt"
 
 	"github.com/disgoorg/json"
 )
@@ -14,9 +15,20 @@ var (
 )
 
 type Track struct {
-	Encoded    string     `json:"encoded"`
-	Info       TrackInfo  `json:"info"`
-	PluginInfo PluginInfo `json:"pluginInfo"`
+	Encoded    string    `json:"encoded"`
+	Info       TrackInfo `json:"info"`
+	PluginInfo RawData   `json:"pluginInfo"`
+	UserData   RawData   `json:"userData"`
+}
+
+// WithUserData returns a copy of the Track with the given userData.
+func (t Track) WithUserData(userData any) (Track, error) {
+	userDataRaw, err := json.Marshal(userData)
+	if err != nil {
+		return t, fmt.Errorf("failed to marshal userData: %w", err)
+	}
+	t.UserData = userDataRaw
+	return t, nil
 }
 
 func (Track) loadResultData() {}
