@@ -35,8 +35,9 @@ type Player interface {
 	OnVoiceStateUpdate(ctx context.Context, channelID *snowflake.ID, sessionID string)
 }
 
-func NewPlayer(lavalink Client, node Node, guildID snowflake.ID) Player {
+func NewPlayer(logger *slog.Logger, lavalink Client, node Node, guildID snowflake.ID) Player {
 	return &playerImpl{
+		logger:   logger,
 		lavalink: lavalink,
 		node:     node,
 		guildID:  guildID,

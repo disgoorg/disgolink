@@ -143,7 +143,7 @@ func (c *clientImpl) PlayerOnNode(node Node, guildID snowflake.ID) Player {
 		return player
 	}
 
-	player := NewPlayer(c, node, guildID)
+	player := NewPlayer(c.logger.With(slog.String("name", "disgolink_node_player"), slog.Int64("guild_id", int64(guildID))), c, node, guildID)
 	c.ForPlugins(func(plugin Plugin) {
 		if pl, ok := plugin.(PluginEventHandler); ok {
 			pl.OnNewPlayer(player)
