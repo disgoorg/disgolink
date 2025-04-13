@@ -11,6 +11,7 @@ import (
 
 	"github.com/bwmarrin/discordgo"
 	"github.com/disgoorg/snowflake/v2"
+	"github.com/joho/godotenv"
 
 	"github.com/disgoorg/log"
 
@@ -21,13 +22,22 @@ var (
 	urlPattern    = regexp.MustCompile("^https?://[-a-zA-Z0-9+&@#/%?=~_|!:,.;]*[-a-zA-Z0-9+&@#/%=~_|]?")
 	searchPattern = regexp.MustCompile(`^(.{2})search:(.+)`)
 
-	Token   = os.Getenv("TOKEN")
-	GuildId = os.Getenv("GUILD_ID")
+	// Before
+	// Token   = os.Getenv("TOKEN")
+	// GuildId = os.Getenv("GUILD_ID")
 
-	NodeName      = os.Getenv("NODE_NAME")
-	NodeAddress   = os.Getenv("NODE_ADDRESS")
-	NodePassword  = os.Getenv("NODE_PASSWORD")
-	NodeSecure, _ = strconv.ParseBool(os.Getenv("NODE_SECURE"))
+	// NodeName      = os.Getenv("NODE_NAME")
+	// NodeAddress   = os.Getenv("NODE_ADDRESS")
+	// NodePassword  = os.Getenv("NODE_PASSWORD")
+	// NodeSecure, _ = strconv.ParseBool(os.Getenv("NODE_SECURE"))
+
+	Token   string
+	GuildId string
+
+	NodeName     string
+	NodeAddress  string
+	NodePassword string
+	NodeSecure   bool
 )
 
 type Bot struct {
@@ -40,6 +50,26 @@ type Bot struct {
 func main() {
 	log.SetFlags(log.LstdFlags | log.Lshortfile)
 	log.SetLevel(log.LevelInfo)
+
+	// Load Env
+	err := godotenv.Load()
+	if err != nil {
+		log.Warnf("Error loading .env file: %s", err)
+	}
+
+	// --- Read values ​​from the Environment after godotenv.Load() ---
+	Token = os.Getenv("TOKEN")
+	GuildId = os.Getenv("GUILD_ID")
+	NodeName = os.Getenv("NODE_NAME")
+	NodeAddress = os.Getenv("NODE_ADDRESS")
+	NodePassword = os.Getenv("NODE_PASSWORD")
+	NodeSecure, _ = strconv.ParseBool(os.Getenv("NODE_SECURE"))
+
+	// Check required values
+	if Token == "" {
+		log.Fatal("TOKEN environment variable not set.")
+	}
+
 	log.Info("starting discordgo example...")
 	log.Info("discordgo version: ", discordgo.VERSION)
 	log.Info("disgolink version: ", disgolink.Version)
