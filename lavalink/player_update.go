@@ -1,25 +1,27 @@
 package lavalink
 
-import "github.com/disgoorg/json"
+import (
+	"github.com/disgoorg/omit"
+)
 
-func DefaultPlayerUpdate() *PlayerUpdate {
-	return &PlayerUpdate{}
+func DefaultPlayerUpdate() PlayerUpdate {
+	return PlayerUpdate{}
 }
 
 type PlayerUpdateTrack struct {
-	Encoded    *json.Nullable[string] `json:"encoded,omitempty"`
-	Identifier *string                `json:"identifier,omitempty"`
-	UserData   any                    `json:"userData,omitempty"`
+	Encoded    omit.Omit[*string] `json:"encoded,omitzero"`
+	Identifier *string            `json:"identifier,omitzero"`
+	UserData   any                `json:"userData,omitzero"`
 }
 
 type PlayerUpdate struct {
-	Track     *PlayerUpdateTrack `json:"track,omitempty"`
-	Position  *Duration          `json:"position,omitempty"`
-	EndTime   *Duration          `json:"endTime,omitempty"`
-	Volume    *int               `json:"volume,omitempty"`
-	Paused    *bool              `json:"paused,omitempty"`
-	Voice     *VoiceState        `json:"voice,omitempty"`
-	Filters   *Filters           `json:"filters,omitempty"`
+	Track     *PlayerUpdateTrack `json:"track,omitzero"`
+	Position  *Duration          `json:"position,omitzero"`
+	EndTime   *Duration          `json:"endTime,omitzero"`
+	Volume    *int               `json:"volume,omitzero"`
+	Paused    *bool              `json:"paused,omitzero"`
+	Voice     *VoiceState        `json:"voice,omitzero"`
+	Filters   *Filters           `json:"filters,omitzero"`
 	NoReplace bool               `json:"-"`
 }
 
@@ -49,7 +51,7 @@ func WithEncodedTrack(encodedTrack string) PlayerUpdateOpt {
 		if update.Track == nil {
 			update.Track = &PlayerUpdateTrack{}
 		}
-		update.Track.Encoded = json.NewNullablePtr(encodedTrack)
+		update.Track.Encoded = omit.NewPtr(encodedTrack)
 	}
 }
 
@@ -58,7 +60,7 @@ func WithNullTrack() PlayerUpdateOpt {
 		if update.Track == nil {
 			update.Track = &PlayerUpdateTrack{}
 		}
-		update.Track.Encoded = json.NullPtr[string]()
+		update.Track.Encoded = omit.NewNilPtr[string]()
 	}
 }
 

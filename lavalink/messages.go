@@ -1,7 +1,7 @@
 package lavalink
 
 import (
-	"github.com/disgoorg/json"
+	"github.com/disgoorg/json/v2"
 	"github.com/disgoorg/snowflake/v2"
 )
 
@@ -144,27 +144,27 @@ func (m UnknownMessage) Op() Op { return m.Op_ }
 type Event interface {
 	Op() Op
 	Type() EventType
-	GuildID() snowflake.ID
+	GetGuildID() snowflake.ID
 }
 
 type TrackStartEvent struct {
-	Track    Track        `json:"track"`
-	GuildID_ snowflake.ID `json:"guildId"`
+	Track   Track        `json:"track"`
+	GuildID snowflake.ID `json:"guildID"`
 }
 
-func (TrackStartEvent) Op() Op                  { return OpEvent }
-func (TrackStartEvent) Type() EventType         { return EventTypeTrackStart }
-func (e TrackStartEvent) GuildID() snowflake.ID { return e.GuildID_ }
+func (TrackStartEvent) Op() Op                     { return OpEvent }
+func (TrackStartEvent) Type() EventType            { return EventTypeTrackStart }
+func (e TrackStartEvent) GetGuildID() snowflake.ID { return e.GuildID }
 
 type TrackEndEvent struct {
-	Track    Track          `json:"track"`
-	Reason   TrackEndReason `json:"reason"`
-	GuildID_ snowflake.ID   `json:"guildId"`
+	Track   Track          `json:"track"`
+	Reason  TrackEndReason `json:"reason"`
+	GuildID snowflake.ID   `json:"guildID"`
 }
 
-func (TrackEndEvent) Op() Op                  { return OpEvent }
-func (TrackEndEvent) Type() EventType         { return EventTypeTrackEnd }
-func (e TrackEndEvent) GuildID() snowflake.ID { return e.GuildID_ }
+func (TrackEndEvent) Op() Op                     { return OpEvent }
+func (TrackEndEvent) Type() EventType            { return EventTypeTrackEnd }
+func (e TrackEndEvent) GetGuildID() snowflake.ID { return e.GuildID }
 
 type TrackEndReason string
 
@@ -188,54 +188,54 @@ func (e TrackEndReason) MayStartNext() bool {
 type TrackExceptionEvent struct {
 	Track     Track        `json:"track"`
 	Exception Exception    `json:"exception"`
-	GuildID_  snowflake.ID `json:"guildId"`
+	GuildID   snowflake.ID `json:"guildID"`
 }
 
-func (TrackExceptionEvent) Op() Op                  { return OpEvent }
-func (TrackExceptionEvent) Type() EventType         { return EventTypeTrackException }
-func (e TrackExceptionEvent) GuildID() snowflake.ID { return e.GuildID_ }
+func (TrackExceptionEvent) Op() Op                     { return OpEvent }
+func (TrackExceptionEvent) Type() EventType            { return EventTypeTrackException }
+func (e TrackExceptionEvent) GetGuildID() snowflake.ID { return e.GuildID }
 
 type TrackStuckEvent struct {
 	Track     Track        `json:"track"`
 	Threshold Duration     `json:"thresholdMs"`
-	GuildID_  snowflake.ID `json:"guildId"`
+	GuildID   snowflake.ID `json:"guildID"`
 }
 
-func (TrackStuckEvent) Op() Op                  { return OpEvent }
-func (TrackStuckEvent) Type() EventType         { return EventTypeTrackStuck }
-func (e TrackStuckEvent) GuildID() snowflake.ID { return e.GuildID_ }
+func (TrackStuckEvent) Op() Op                     { return OpEvent }
+func (TrackStuckEvent) Type() EventType            { return EventTypeTrackStuck }
+func (e TrackStuckEvent) GetGuildID() snowflake.ID { return e.GuildID }
 
 type WebSocketClosedEvent struct {
 	Code     int          `json:"code"`
 	Reason   string       `json:"reason"`
 	ByRemote bool         `json:"byRemote"`
-	GuildID_ snowflake.ID `json:"guildId"`
+	GuildID  snowflake.ID `json:"guildID"`
 }
 
-func (WebSocketClosedEvent) Op() Op                  { return OpEvent }
-func (WebSocketClosedEvent) Type() EventType         { return EventTypeWebSocketClosed }
-func (e WebSocketClosedEvent) GuildID() snowflake.ID { return e.GuildID_ }
+func (WebSocketClosedEvent) Op() Op                     { return OpEvent }
+func (WebSocketClosedEvent) Type() EventType            { return EventTypeWebSocketClosed }
+func (e WebSocketClosedEvent) GetGuildID() snowflake.ID { return e.GuildID }
 
 type PlayerPauseEvent struct {
-	GuildID_ snowflake.ID `json:"guildId"`
+	GuildID snowflake.ID `json:"guildID"`
 }
 
-func (PlayerPauseEvent) Op() Op                  { return OpEvent }
-func (PlayerPauseEvent) Type() EventType         { return EventTypePlayerPause }
-func (e PlayerPauseEvent) GuildID() snowflake.ID { return e.GuildID_ }
+func (PlayerPauseEvent) Op() Op                     { return OpEvent }
+func (PlayerPauseEvent) Type() EventType            { return EventTypePlayerPause }
+func (e PlayerPauseEvent) GetGuildID() snowflake.ID { return e.GuildID }
 
 type PlayerResumeEvent struct {
-	GuildID_ snowflake.ID `json:"guildId"`
+	GuildID snowflake.ID `json:"guildID"`
 }
 
-func (PlayerResumeEvent) Op() Op                  { return OpEvent }
-func (PlayerResumeEvent) Type() EventType         { return EventTypePlayerResume }
-func (e PlayerResumeEvent) GuildID() snowflake.ID { return e.GuildID_ }
+func (PlayerResumeEvent) Op() Op                     { return OpEvent }
+func (PlayerResumeEvent) Type() EventType            { return EventTypePlayerResume }
+func (e PlayerResumeEvent) GetGuildID() snowflake.ID { return e.GuildID }
 
 type UnknownEvent struct {
-	Type_    EventType       `json:"type"`
-	GuildID_ snowflake.ID    `json:"guildId"`
-	Data     json.RawMessage `json:"-"`
+	EventType EventType       `json:"type"`
+	GuildID   snowflake.ID    `json:"guildID"`
+	Data      json.RawMessage `json:"-"`
 }
 
 func (e *UnknownEvent) UnmarshalJSON(data []byte) error {
@@ -251,6 +251,6 @@ func (e UnknownEvent) MarshalJSON() ([]byte, error) {
 	return e.Data, nil
 }
 
-func (UnknownEvent) Op() Op                  { return OpEvent }
-func (e UnknownEvent) Type() EventType       { return e.Type_ }
-func (e UnknownEvent) GuildID() snowflake.ID { return e.GuildID_ }
+func (UnknownEvent) Op() Op                     { return OpEvent }
+func (e UnknownEvent) Type() EventType          { return e.EventType }
+func (e UnknownEvent) GetGuildID() snowflake.ID { return e.GuildID }

@@ -7,17 +7,17 @@ import (
 var DefaultFilters = []string{"volume", "equalizer", "timescale", "tremolo", "vibrato", "rotation", "karaoke", "distortion", "channelMix", "lowPass"}
 
 type Filters struct {
-	Volume        *Volume        `json:"volume,omitempty"`
-	Equalizer     *Equalizer     `json:"equalizer,omitempty"`
-	Timescale     *Timescale     `json:"timescale,omitempty"`
-	Tremolo       *Tremolo       `json:"tremolo,omitempty"`
-	Vibrato       *Vibrato       `json:"vibrato,omitempty"`
-	Rotation      *Rotation      `json:"rotation,omitempty"`
-	Karaoke       *Karaoke       `json:"karaoke,omitempty"`
-	Distortion    *Distortion    `json:"distortion,omitempty"`
-	ChannelMix    *ChannelMix    `json:"channelMix,omitempty"`
-	LowPass       *LowPass       `json:"lowPass,omitempty"`
-	PluginFilters map[string]any `json:"pluginFilters,omitempty"`
+	Volume        *Volume        `json:"volume,omitzero"`
+	Equalizer     *Equalizer     `json:"equalizer,omitzero"`
+	Timescale     *Timescale     `json:"timescale,omitzero"`
+	Tremolo       *Tremolo       `json:"tremolo,omitzero"`
+	Vibrato       *Vibrato       `json:"vibrato,omitzero"`
+	Rotation      *Rotation      `json:"rotation,omitzero"`
+	Karaoke       *Karaoke       `json:"karaoke,omitzero"`
+	Distortion    *Distortion    `json:"distortion,omitzero"`
+	ChannelMix    *ChannelMix    `json:"channelMix,omitzero"`
+	LowPass       *LowPass       `json:"lowPass,omitzero"`
+	PluginFilters map[string]any `json:"pluginFilters,omitzero"`
 }
 
 type LowPass struct {

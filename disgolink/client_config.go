@@ -5,7 +5,7 @@ import (
 	"net/http"
 	"time"
 
-	"github.com/disgoorg/disgolink/v3/lavalink"
+	"github.com/disgoorg/disgolink/v4/lavalink"
 )
 
 func DefaultConfig() *Config {

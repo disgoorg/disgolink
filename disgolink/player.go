@@ -9,7 +9,7 @@ import (
 
 	"github.com/disgoorg/snowflake/v2"
 
-	"github.com/disgoorg/disgolink/v3/lavalink"
+	"github.com/disgoorg/disgolink/v4/lavalink"
 )
 
 var ErrPlayerNoNode = errors.New("player has no node")
@@ -117,7 +117,7 @@ func (p *playerImpl) Update(ctx context.Context, opts ...lavalink.PlayerUpdateOp
 	update := lavalink.DefaultPlayerUpdate()
 	update.Apply(opts)
 
-	updatedPlayer, err := p.node.Rest().UpdatePlayer(ctx, p.node.SessionID(), p.guildID, *update)
+	updatedPlayer, err := p.node.Rest().UpdatePlayer(ctx, p.node.SessionID(), p.guildID, update)
 	if err != nil {
 		return err
 	}
@@ -132,11 +132,11 @@ func (p *playerImpl) Update(ctx context.Context, opts ...lavalink.PlayerUpdateOp
 		var event lavalink.Event
 		if p.paused && !*update.Paused {
 			event = lavalink.PlayerResumeEvent{
-				GuildID_: p.guildID,
+				GuildID: p.guildID,
 			}
 		} else if !p.paused && *update.Paused {
 			event = lavalink.PlayerPauseEvent{
-				GuildID_: p.guildID,
+				GuildID: p.guildID,
 			}
 		}
 		p.paused = updatedPlayer.Paused

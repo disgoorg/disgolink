@@ -6,7 +6,7 @@ import (
 	"errors"
 	"fmt"
 
-	"github.com/disgoorg/json"
+	"github.com/disgoorg/json/v2"
 )
 
 var (

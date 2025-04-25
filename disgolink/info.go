@@ -6,7 +6,7 @@ import (
 
 const (
 	Name   = "disgolink"
-	Module = "github.com/disgoorg/disgolink/v3"
+	Module = "github.com/disgoorg/disgolink/v4"
 	GitHub = "https://github.com/disgoorg/disgo"
 )
 

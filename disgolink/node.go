@@ -12,7 +12,7 @@ import (
 
 	"github.com/gorilla/websocket"
 
-	"github.com/disgoorg/disgolink/v3/lavalink"
+	"github.com/disgoorg/disgolink/v4/lavalink"
 )
 
 type Status string
@@ -369,7 +369,7 @@ loop:
 			n.lavalink.EmitEvent(player, m)
 
 		case lavalink.Event:
-			player := n.lavalink.ExistingPlayer(message.GuildID())
+			player := n.lavalink.ExistingPlayer(message.GetGuildID())
 			if player == nil {
 				continue
 			}

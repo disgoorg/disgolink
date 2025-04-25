@@ -1,6 +1,6 @@
 package disgolink
 
-import "github.com/disgoorg/disgolink/v3/lavalink"
+import "github.com/disgoorg/disgolink/v4/lavalink"
 
 type EventListener interface {
 	OnEvent(player Player, event lavalink.Message)
