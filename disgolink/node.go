@@ -208,6 +208,7 @@ func (n *nodeImpl) open(ctx context.Context, reconnecting bool) error {
 		"Authorization": []string{n.config.Password},
 		"User-Id":       []string{n.lavalink.UserID().String()},
 		"Client-Name":   []string{fmt.Sprintf("%s/%s", Name, Version)},
+		"User-Agent":    []string{n.lavalink.UserAgent()},
 	}
 	if n.config.SessionID != "" {
 		header.Add("Session-Id", n.config.SessionID)

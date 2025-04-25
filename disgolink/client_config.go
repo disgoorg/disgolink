@@ -10,14 +10,18 @@ import (
 
 func DefaultConfig() *Config {
 	return &Config{
-		Logger:     slog.Default(),
-		HTTPClient: &http.Client{Timeout: 10 * time.Second},
+		Logger: slog.Default(),
+		HTTPClient: &http.Client{
+			Timeout: 10 * time.Second,
+		},
+		UserAgent: "disgolink/v3",
 	}
 }
 
 type Config struct {
 	Logger     *slog.Logger
 	HTTPClient *http.Client
+	UserAgent  string
 	Listeners  []EventListener
 	Plugins    []Plugin
 }
@@ -40,6 +44,12 @@ func WithLogger(logger *slog.Logger) ConfigOpt {
 func WithHTTPClient(httpClient *http.Client) ConfigOpt {
 	return func(config *Config) {
 		config.HTTPClient = httpClient
+	}
+}
+
+func WithUserAgent(userAgent string) ConfigOpt {
+	return func(config *Config) {
+		config.UserAgent = userAgent
 	}
 }
 

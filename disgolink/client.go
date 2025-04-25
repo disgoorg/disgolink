@@ -34,6 +34,7 @@ type Client interface {
 	RemovePlugins(plugins ...Plugin)
 
 	UserID() snowflake.ID
+	UserAgent() string
 	Close()
 
 	OnVoiceServerUpdate(ctx context.Context, guildID snowflake.ID, token string, endpoint string)
@@ -48,6 +49,7 @@ func New(userID snowflake.ID, opts ...ConfigOpt) Client {
 	return &clientImpl{
 		logger:     cfg.Logger,
 		httpClient: cfg.HTTPClient,
+		userAgent:  cfg.UserAgent,
 		userID:     userID,
 		nodes:      map[string]Node{},
 		players:    map[snowflake.ID]Player{},
@@ -61,6 +63,7 @@ var _ Client = (*clientImpl)(nil)
 type clientImpl struct {
 	logger     *slog.Logger
 	httpClient *http.Client
+	userAgent  string
 	userID     snowflake.ID
 
 	nodesMu sync.Mutex
@@ -83,11 +86,7 @@ func (c *clientImpl) AddNode(ctx context.Context, config NodeConfig) (Node, erro
 		lavalink: c,
 		status:   StatusDisconnected,
 	}
-	node.rest = &restClientImpl{
-		logger:     c.logger.With(slog.String("name", "disgolink_rest_client"), slog.String("node_name", config.Name)),
-		node:       node,
-		httpClient: c.httpClient,
-	}
+	node.rest = newRestClient(c.logger, node, c.httpClient, c.userAgent)
 	if err := node.Open(ctx); err != nil {
 		return nil, err
 	}
@@ -235,6 +234,10 @@ func (c *clientImpl) RemovePlugins(plugins ...Plugin) {
 
 func (c *clientImpl) UserID() snowflake.ID {
 	return c.userID
+}
+
+func (c *clientImpl) UserAgent() string {
+	return c.userAgent
 }
 
 func (c *clientImpl) Close() {

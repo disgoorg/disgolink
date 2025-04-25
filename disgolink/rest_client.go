@@ -60,10 +60,20 @@ type RestClient interface {
 	DecodeTracks(ctx context.Context, encodedTracks []string) ([]lavalink.Track, error)
 }
 
+func newRestClient(logger *slog.Logger, node Node, httpClient *http.Client, userAgent string) RestClient {
+	return &restClientImpl{
+		logger:     logger.With(slog.String("name", "disgolink_rest_client"), slog.String("node_name", node.Config().Name)),
+		node:       node,
+		httpClient: httpClient,
+		userAgent:  userAgent,
+	}
+}
+
 type restClientImpl struct {
 	logger     *slog.Logger
 	node       Node
 	httpClient *http.Client
+	userAgent  string
 }
 
 func (c *restClientImpl) Version(ctx context.Context) (string, error) {
@@ -126,6 +136,7 @@ func (c *restClientImpl) DecodeTracks(ctx context.Context, encodedTracks []strin
 
 func (c *restClientImpl) Do(rq *http.Request) (*http.Response, error) {
 	rq.Header.Set("Authorization", c.node.Config().Password)
+	rq.Header.Set("User-Agent", c.userAgent)
 	rq.URL.Host = c.node.Config().Address
 	if c.node.Config().Secure {
 		rq.URL.Scheme = "https"
@@ -141,6 +152,7 @@ func (c *restClientImpl) do(ctx context.Context, method string, path string, rqB
 		return 0, nil, err
 	}
 	rq.Header.Set("Authorization", c.node.Config().Password)
+	rq.Header.Set("User-Agent", c.userAgent)
 	if len(rqBody) > 0 {
 		rq.Header.Set("Content-Type", "application/json")
 	}
