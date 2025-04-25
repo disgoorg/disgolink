@@ -4,7 +4,7 @@ import (
 	"math/rand"
 	"time"
 
-	"github.com/disgoorg/disgolink/v3/lavalink"
+	"github.com/disgoorg/disgolink/v4/lavalink"
 )
 
 func init() {

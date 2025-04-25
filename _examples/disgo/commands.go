@@ -6,10 +6,10 @@ import (
 	"github.com/disgoorg/disgo/bot"
 	"github.com/disgoorg/disgo/discord"
 	"github.com/disgoorg/disgo/handler"
-	"github.com/disgoorg/json"
+	"github.com/disgoorg/omit"
 	"github.com/disgoorg/snowflake/v2"
 
-	"github.com/disgoorg/disgolink/v3/lavalink"
+	"github.com/disgoorg/disgolink/v4/lavalink"
 )
 
 var commands = []discord.ApplicationCommandCreate{
@@ -109,8 +109,8 @@ var commands = []discord.ApplicationCommandCreate{
 				Name:        "volume",
 				Description: "The volume to set",
 				Required:    true,
-				MaxValue:    json.Ptr(1000),
-				MinValue:    json.Ptr(0),
+				MaxValue:    omit.Ptr(1000),
+				MinValue:    omit.Ptr(0),
 			},
 		},
 	},

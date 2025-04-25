@@ -6,11 +6,11 @@ import (
 	"time"
 
 	"github.com/bwmarrin/discordgo"
-	"github.com/disgoorg/json"
+	"github.com/disgoorg/omit"
 	"github.com/disgoorg/snowflake/v2"
 
-	"github.com/disgoorg/disgolink/v3/disgolink"
-	"github.com/disgoorg/disgolink/v3/lavalink"
+	"github.com/disgoorg/disgolink/v4/disgolink"
+	"github.com/disgoorg/disgolink/v4/lavalink"
 )
 
 func (b *Bot) shuffle(event *discordgo.InteractionCreate, data discordgo.ApplicationCommandInteractionData) error {
@@ -235,7 +235,7 @@ func (b *Bot) play(event *discordgo.InteractionCreate, data discordgo.Applicatio
 	b.Lavalink.BestNode().LoadTracksHandler(ctx, identifier, disgolink.NewResultHandler(
 		func(track lavalink.Track) {
 			_, _ = b.Session.InteractionResponseEdit(event.Interaction, &discordgo.WebhookEdit{
-				Content: json.Ptr(fmt.Sprintf("Loading track: [`%s`](<%s>)", track.Info.Title, *track.Info.URI)),
+				Content: omit.Ptr(fmt.Sprintf("Loading track: [`%s`](<%s>)", track.Info.Title, *track.Info.URI)),
 			})
 			if player.Track() == nil {
 				toPlay = &track
@@ -245,7 +245,7 @@ func (b *Bot) play(event *discordgo.InteractionCreate, data discordgo.Applicatio
 		},
 		func(playlist lavalink.Playlist) {
 			_, _ = b.Session.InteractionResponseEdit(event.Interaction, &discordgo.WebhookEdit{
-				Content: json.Ptr(fmt.Sprintf("Loaded playlist: `%s` with `%d` tracks", playlist.Info.Name, len(playlist.Tracks))),
+				Content: omit.Ptr(fmt.Sprintf("Loaded playlist: `%s` with `%d` tracks", playlist.Info.Name, len(playlist.Tracks))),
 			})
 			if player.Track() == nil {
 				toPlay = &playlist.Tracks[0]
@@ -256,7 +256,7 @@ func (b *Bot) play(event *discordgo.InteractionCreate, data discordgo.Applicatio
 		},
 		func(tracks []lavalink.Track) {
 			_, _ = b.Session.InteractionResponseEdit(event.Interaction, &discordgo.WebhookEdit{
-				Content: json.Ptr(fmt.Sprintf("Loaded search result: [`%s`](<%s>)", tracks[0].Info.Title, *tracks[0].Info.URI)),
+				Content: omit.Ptr(fmt.Sprintf("Loaded search result: [`%s`](<%s>)", tracks[0].Info.Title, *tracks[0].Info.URI)),
 			})
 			if player.Track() == nil {
 				toPlay = &tracks[0]
@@ -266,12 +266,12 @@ func (b *Bot) play(event *discordgo.InteractionCreate, data discordgo.Applicatio
 		},
 		func() {
 			_, _ = b.Session.InteractionResponseEdit(event.Interaction, &discordgo.WebhookEdit{
-				Content: json.Ptr(fmt.Sprintf("Nothing found for: `%s`", identifier)),
+				Content: omit.Ptr(fmt.Sprintf("Nothing found for: `%s`", identifier)),
 			})
 		},
 		func(err error) {
 			_, _ = b.Session.InteractionResponseEdit(event.Interaction, &discordgo.WebhookEdit{
-				Content: json.Ptr(fmt.Sprintf("Error while looking up query: `%s`", err)),
+				Content: omit.Ptr(fmt.Sprintf("Error while looking up query: `%s`", err)),
 			})
 		},
 	))
@@ -279,7 +279,7 @@ func (b *Bot) play(event *discordgo.InteractionCreate, data discordgo.Applicatio
 		return nil
 	}
 
-	if err := b.Session.ChannelVoiceJoinManual(event.GuildID, voiceState.ChannelID, false, false); err != nil {
+	if err = b.Session.ChannelVoiceJoinManual(event.GuildID, voiceState.ChannelID, false, false); err != nil {
 		return err
 	}
 

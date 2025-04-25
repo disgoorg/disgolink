@@ -7,10 +7,10 @@ import (
 
 	"github.com/disgoorg/disgo/discord"
 	"github.com/disgoorg/disgo/events"
-	"github.com/disgoorg/json"
+	"github.com/disgoorg/json/v2"
 
-	"github.com/disgoorg/disgolink/v3/disgolink"
-	"github.com/disgoorg/disgolink/v3/lavalink"
+	"github.com/disgoorg/disgolink/v4/disgolink"
+	"github.com/disgoorg/disgolink/v4/lavalink"
 )
 
 var bassBoost = &lavalink.Equalizer{
@@ -204,7 +204,7 @@ func (b *Bot) queue(event *events.ApplicationCommandInteractionCreate, data disc
 func (b *Bot) players(event *events.ApplicationCommandInteractionCreate, data discord.SlashCommandInteractionData) error {
 	var description string
 	b.Lavalink.ForPlayers(func(player disgolink.Player) {
-		description += fmt.Sprintf("GuildID: `%s`\n", player.GuildID())
+		description += fmt.Sprintf("GetGuildID: `%s`\n", player.GuildID())
 	})
 
 	return event.CreateMessage(discord.MessageCreate{

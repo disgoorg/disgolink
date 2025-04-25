@@ -14,7 +14,7 @@ import (
 
 	"github.com/disgoorg/log"
 
-	"github.com/disgoorg/disgolink/v3/disgolink"
+	"github.com/disgoorg/disgolink/v4/disgolink"
 )
 
 var (

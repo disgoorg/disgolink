@@ -6,8 +6,8 @@ import (
 
 	"github.com/disgoorg/log"
 
-	"github.com/disgoorg/disgolink/v3/disgolink"
-	"github.com/disgoorg/disgolink/v3/lavalink"
+	"github.com/disgoorg/disgolink/v4/disgolink"
+	"github.com/disgoorg/disgolink/v4/lavalink"
 )
 
 func (b *Bot) onPlayerPause(player disgolink.Player, event lavalink.PlayerPauseEvent) {
@@ -29,7 +29,7 @@ func (b *Bot) onTrackEnd(player disgolink.Player, event lavalink.TrackEndEvent) 
 		return
 	}
 
-	queue := b.Queues.Get(event.GuildID().String())
+	queue := b.Queues.Get(event.GetGuildID().String())
 	var (
 		nextTrack lavalink.Track
 		ok        bool
