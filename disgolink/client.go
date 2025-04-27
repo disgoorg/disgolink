@@ -77,17 +77,7 @@ type clientImpl struct {
 }
 
 func (c *clientImpl) AddNode(ctx context.Context, config NodeConfig) (Node, error) {
-	node := &nodeImpl{
-		logger:   c.logger.With(slog.String("name", "disgolink_node"), slog.String("node_name", config.Name)),
-		config:   config,
-		lavalink: c,
-		status:   StatusDisconnected,
-	}
-	node.rest = &restClientImpl{
-		logger:     c.logger.With(slog.String("name", "disgolink_rest_client"), slog.String("node_name", config.Name)),
-		node:       node,
-		httpClient: c.httpClient,
-	}
+	node := newNode(c.logger, config, c, c.httpClient)
 	if err := node.Open(ctx); err != nil {
 		return nil, err
 	}

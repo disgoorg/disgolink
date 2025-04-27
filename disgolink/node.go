@@ -77,11 +77,26 @@ func (c NodeConfig) WsURL() string {
 	return fmt.Sprintf("%s://%s%s", scheme, c.Address, EndpointWebSocket)
 }
 
+func newNode(logger *slog.Logger, config NodeConfig, client Client, httpClient *http.Client) Node {
+	node := &nodeImpl{
+		logger: logger.With(slog.String("name", "disgolink_node"), slog.String("node_name", config.Name)),
+		config: config,
+		client: client,
+		status: StatusDisconnected,
+	}
+	node.rest = &restClientImpl{
+		logger:     logger.With(slog.String("name", "disgolink_rest_client"), slog.String("node_name", config.Name)),
+		node:       node,
+		httpClient: httpClient,
+	}
+	return node
+}
+
 type nodeImpl struct {
-	logger   *slog.Logger
-	lavalink Client
-	config   NodeConfig
-	rest     RestClient
+	logger *slog.Logger
+	client Client
+	config NodeConfig
+	rest   RestClient
 
 	conn   *websocket.Conn
 	connMu sync.Mutex
@@ -92,7 +107,7 @@ type nodeImpl struct {
 }
 
 func (n *nodeImpl) Lavalink() Client {
-	return n.lavalink
+	return n.client
 }
 
 func (n *nodeImpl) Config() NodeConfig {
@@ -167,7 +182,7 @@ func (n *nodeImpl) syncPlayers(ctx context.Context) error {
 	}
 
 	for _, player := range players {
-		p := n.lavalink.PlayerOnNode(n, player.GuildID)
+		p := n.client.PlayerOnNode(n, player.GuildID)
 		if p == nil {
 			continue
 		}
@@ -206,7 +221,7 @@ func (n *nodeImpl) open(ctx context.Context, reconnecting bool) error {
 
 	header := http.Header{
 		"Authorization": []string{n.config.Password},
-		"User-Id":       []string{n.lavalink.UserID().String()},
+		"User-Id":       []string{n.client.UserID().String()},
 		"Client-Name":   []string{fmt.Sprintf("%s/%s", Name, Version)},
 	}
 	if n.config.SessionID != "" {
@@ -358,23 +373,23 @@ loop:
 
 		case lavalink.StatsMessage:
 			n.stats = lavalink.Stats(message)
-			n.lavalink.EmitEvent(nil, m)
+			n.client.EmitEvent(nil, m)
 
 		case lavalink.PlayerUpdateMessage:
-			player := n.lavalink.ExistingPlayer(message.GuildID)
+			player := n.client.ExistingPlayer(message.GuildID)
 			if player == nil {
 				continue
 			}
 			player.OnPlayerUpdate(message.State)
-			n.lavalink.EmitEvent(player, m)
+			n.client.EmitEvent(player, m)
 
 		case lavalink.Event:
-			player := n.lavalink.ExistingPlayer(message.GetGuildID())
+			player := n.client.ExistingPlayer(message.GetGuildID())
 			if player == nil {
 				continue
 			}
 			player.OnEvent(message)
-			n.lavalink.EmitEvent(player, m)
+			n.client.EmitEvent(player, m)
 		}
 	}
 }
