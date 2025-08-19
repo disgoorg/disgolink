@@ -14,188 +14,109 @@ import (
 
 var ErrPlayerNoNode = errors.New("player has no node")
 
-type Player interface {
-	GuildID() snowflake.ID
-	ChannelID() *snowflake.ID
-	Track() *lavalink.Track
-	Paused() bool
-	Position() lavalink.Duration
-	State() lavalink.PlayerState
-	Volume() int
-	Filters() lavalink.Filters
-
-	Update(ctx context.Context, opts ...lavalink.PlayerUpdateOpt) error
-	Destroy(ctx context.Context) error
-
-	Lavalink() Client
-	Node() Node
-
-	Restore(player lavalink.Player)
-	OnEvent(event lavalink.Event)
-	OnPlayerUpdate(state lavalink.PlayerState)
-	OnVoiceServerUpdate(ctx context.Context, token string, endpoint string)
-	OnVoiceStateUpdate(ctx context.Context, channelID *snowflake.ID, sessionID string)
-}
-
-func NewPlayer(logger *slog.Logger, lavalink Client, node Node, guildID snowflake.ID) Player {
-	return &playerImpl{
-		logger:   logger.With(slog.String("name", "disgolink_player"), slog.Int64("guild_id", int64(guildID))),
-		lavalink: lavalink,
-		node:     node,
-		guildID:  guildID,
-		volume:   100,
+func newPlayer(logger *slog.Logger, lavalink *Client, node *Node, guildID snowflake.ID) *Player {
+	return &Player{
+		logger:  logger.With(slog.String("name", "disgolink_player"), slog.Int64("guild_id", int64(guildID))),
+		Client:  lavalink,
+		Node:    node,
+		GuildID: guildID,
+		Volume:  100,
 	}
 }
 
-type playerImpl struct {
-	logger   *slog.Logger
-	node     Node
-	lavalink Client
+type Player struct {
+	logger *slog.Logger
+	Node   *Node
+	Client *Client
 
-	guildID snowflake.ID
-	track   *lavalink.Track
-	volume  int
-	paused  bool
-	state   lavalink.PlayerState
-	voice   lavalink.VoiceState
-	filters lavalink.Filters
+	GuildID   snowflake.ID
+	Track     *lavalink.Track
+	Volume    int
+	Paused    bool
+	State     lavalink.PlayerState
+	Voice     lavalink.VoiceState
+	Filters   lavalink.Filters
 }
 
-func (p *playerImpl) GuildID() snowflake.ID {
-	return p.guildID
-}
-
-func (p *playerImpl) ChannelID() *snowflake.ID {
-	if p.voice.ChannelID == 0 {
-		return nil
-	}
-	return &p.voice.ChannelID
-}
-
-func (p *playerImpl) Track() *lavalink.Track {
-	return p.track
-}
-
-func (p *playerImpl) Paused() bool {
-	return p.paused
-}
-
-func (p *playerImpl) Position() lavalink.Duration {
-	if p.track == nil {
+func (p *Player) Position() lavalink.Duration {
+	if p.Track == nil {
 		return 0
 	}
-	position := p.state.Position
-	if p.paused {
+	position := p.State.Position
+	if p.Paused {
 		return position
 	}
-	position += lavalink.Duration(time.Now().UnixMilli() - p.state.Time.UnixMilli())
-	if position > p.track.Info.Length {
-		position = p.track.Info.Length
+	position += lavalink.Duration(time.Now().UnixMilli() - p.State.Time.UnixMilli())
+	if position > p.Track.Info.Length {
+		position = p.Track.Info.Length
 	} else if position < 0 {
 		position = 0
 	}
 	return position
 }
 
-func (p *playerImpl) State() lavalink.PlayerState {
-	return p.state
-}
-
-func (p *playerImpl) Volume() int {
-	return p.volume
-}
-
-func (p *playerImpl) Filters() lavalink.Filters {
-	return p.filters
-}
-
-func (p *playerImpl) Update(ctx context.Context, opts ...lavalink.PlayerUpdateOpt) error {
-	if p.node == nil {
+func (p *Player) Update(ctx context.Context, opts ...PlayerUpdateOpt) error {
+	if p.Node == nil {
 		return ErrPlayerNoNode
 	}
 
-	update := lavalink.DefaultPlayerUpdate()
-	update.Apply(opts)
+	update := defaultPlayerUpdate()
+	update.apply(opts)
 
-	updatedPlayer, err := p.node.Rest().UpdatePlayer(ctx, p.node.SessionID(), p.guildID, update)
+	updatedPlayer, err := p.Node.Rest.UpdatePlayer(ctx, p.Node.SessionID, p.GuildID, update)
 	if err != nil {
 		return err
 	}
 
-	p.volume = updatedPlayer.Volume
+	p.Volume = updatedPlayer.Volume
 
-	p.voice = updatedPlayer.Voice
-	p.filters = updatedPlayer.Filters
+	p.Voice = updatedPlayer.Voice
+	p.Filters = updatedPlayer.Filters
 
 	// dispatch artificial player resume/pause event
 	if update.Paused != nil {
 		var event lavalink.Event
-		if p.paused && !*update.Paused {
+		if p.Paused && !*update.Paused {
 			event = lavalink.PlayerResumeEvent{
-				GuildID: p.guildID,
+				GuildID: p.GuildID,
 			}
-		} else if !p.paused && *update.Paused {
+		} else if !p.Paused && *update.Paused {
 			event = lavalink.PlayerPauseEvent{
-				GuildID: p.guildID,
+				GuildID: p.GuildID,
 			}
 		}
-		p.paused = updatedPlayer.Paused
+		p.Paused = updatedPlayer.Paused
 		go p.OnEvent(event)
 	}
 
 	return nil
 }
 
-func (p *playerImpl) Destroy(ctx context.Context) error {
-	if p.node == nil {
-		return ErrPlayerNoNode
-	}
-
-	err := p.node.Rest().DestroyPlayer(ctx, p.node.SessionID(), p.guildID)
-	if err != nil {
+func (p *Player) Destroy(ctx context.Context) error {
+	if err := p.Node.Rest.DestroyPlayer(ctx, p.Node.SessionID, p.GuildID); err != nil {
 		return err
 	}
 
 	// check if this player already got destroyed
-	if player := p.lavalink.ExistingPlayer(p.guildID); player == nil {
+	if player := p.Client.ExistingPlayer(p.GuildID); player == nil {
 		return nil
 	}
 
-	p.lavalink.ForPlugins(func(plugin Plugin) {
+	for plugin := range p.Client.Plugins() {
 		if pl, ok := plugin.(PluginEventHandler); ok {
 			pl.OnDestroyPlayer(p)
 		}
-	})
+	}
 
-	p.lavalink.RemovePlayer(p.guildID)
+	p.Client.RemovePlayer(p.GuildID)
 
 	return nil
 }
 
-func (p *playerImpl) Node() Node {
-	if p.node == nil {
-		p.node = p.lavalink.BestNode()
-	}
-	return p.node
-}
-
-func (p *playerImpl) Lavalink() Client {
-	return p.lavalink
-}
-
-func (p *playerImpl) Restore(player lavalink.Player) {
-	p.track = player.Track
-	p.state = player.State
-	p.paused = player.Paused
-	p.voice = player.Voice
-	p.filters = player.Filters
-	p.volume = player.Volume
-}
-
-func (p *playerImpl) OnEvent(event lavalink.Event) {
+func (p *Player) OnEvent(event lavalink.Event) {
 	switch e := event.(type) {
 	case lavalink.UnknownEvent:
-		p.lavalink.ForPlugins(func(plugin Plugin) {
+		for plugin := range p.Client.Plugins() {
 			if pl, ok := plugin.(EventPlugin); ok && pl.Event() == e.Type() {
 				pl.OnEventInvocation(p, e.Data)
 			}
@@ -206,35 +127,35 @@ func (p *playerImpl) OnEvent(event lavalink.Event) {
 					}
 				}
 			}
-		})
+		}
 	case lavalink.PlayerPauseEvent:
-		p.paused = true
+		p.Paused = true
 
 	case lavalink.PlayerResumeEvent:
-		p.paused = false
+		p.Paused = false
 
 	case lavalink.TrackStartEvent:
-		p.track = &e.Track
+		p.Track = &e.Track
 
 	case lavalink.TrackEndEvent:
-		p.track = nil
+		p.Track = nil
 
 	case lavalink.WebSocketClosedEvent:
-		p.voice = lavalink.VoiceState{}
-		p.state.Connected = false
+		p.Voice = lavalink.VoiceState{}
+		p.State.Connected = false
 	}
 }
 
-func (p *playerImpl) OnPlayerUpdate(state lavalink.PlayerState) {
-	p.state = state
+func (p *Player) OnPlayerUpdate(state lavalink.PlayerState) {
+	p.State = state
 }
 
-func (p *playerImpl) OnVoiceServerUpdate(ctx context.Context, token string, endpoint string) {
-	p.voice.Token = token
-	p.voice.Endpoint = endpoint
+func (p *Player) OnVoiceServerUpdate(ctx context.Context, token string, endpoint string) {
+	p.Voice.Token = token
+	p.Voice.Endpoint = endpoint
 
 	// we should receive a session id from a VOICE_STATE_UPDATE event before the VOICE_SERVER_UPDATE event.
-	if p.voice.SessionID == "" {
+	if p.Voice.SessionID == "" {
 		return
 	}
 
@@ -243,17 +164,17 @@ func (p *playerImpl) OnVoiceServerUpdate(ctx context.Context, token string, endp
 	}
 }
 
-func (p *playerImpl) OnVoiceStateUpdate(ctx context.Context, channelID *snowflake.ID, sessionID string) {
+func (p *Player) OnVoiceStateUpdate(ctx context.Context, channelID *snowflake.ID, sessionID string) {
 	if channelID == nil {
-		p.voice = lavalink.VoiceState{}
+		p.Voice = lavalink.VoiceState{}
 		if err := p.Destroy(ctx); err != nil {
 			p.logger.ErrorContext(ctx, "error while destroying player", slog.Any("err", err))
 		}
-		p.lavalink.RemovePlayer(p.guildID)
+		p.Client.RemovePlayer(p.GuildID)
 		return
 	}
-	p.voice.ChannelID = *channelID
-	if sessionID != p.voice.SessionID {
+	p.Voice.ChannelID = *channelID
+	if sessionID != p.Voice.SessionID {
 		p.voice.SessionID = sessionID
 		if err := p.sendVoiceUpdate(ctx); err != nil {
 			p.logger.ErrorContext(ctx, "error while sending voice update", slog.Any("err", err))
@@ -261,15 +182,44 @@ func (p *playerImpl) OnVoiceStateUpdate(ctx context.Context, channelID *snowflak
 	}
 }
 
-func (p *playerImpl) sendVoiceUpdate(ctx context.Context) error {
-	if p.voice.SessionID == "" || p.voice.Token == "" || p.voice.Endpoint == "" || p.voice.ChannelID == 0 {
+func (p *Player) sendVoiceUpdate(ctx context.Context) error {
+	if p.Voice.SessionID == "" || p.Voice.Token == "" || p.Voice.Endpoint == "" || p.Voice.ChannelID == 0 {
 		return nil
 	}
 
-	if _, err := p.Node().Rest().UpdatePlayer(ctx, p.node.SessionID(), p.guildID, lavalink.PlayerUpdate{
-		Voice: &p.voice,
+	if _, err := p.Node.Rest.UpdatePlayer(ctx, p.Node.SessionID, p.GuildID, lavalink.PlayerUpdate{
+		Voice: &p.Voice,
 	}); err != nil {
 		return fmt.Errorf("error while sending voice update: %w", err)
 	}
+	return nil
+}
+
+func (p *Player) Move(ctx context.Context, node *Node) error {
+	if p.Node == node {
+		return nil
+	}
+
+	if err := p.Destroy(ctx); err != nil {
+		return fmt.Errorf("error while destroying player: %w", err)
+	}
+
+	p.Node = node
+
+	opts := []PlayerUpdateOpt{
+		WithPosition(p.Position()),
+		WithVolume(p.Volume),
+		WithPaused(p.Paused),
+		WithVoice(p.Voice),
+		WithFilters(p.Filters),
+	}
+	if p.Track != nil {
+		opts = append(opts, WithTrack(*p.Track))
+	}
+
+	if err := p.Update(ctx, opts...); err != nil {
+		return fmt.Errorf("error while updating player: %w", err)
+	}
+
 	return nil
 }

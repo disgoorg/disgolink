@@ -33,49 +33,60 @@ func (r *LoadResult) UnmarshalJSON(data []byte) error {
 	if err := json.Unmarshal(data, &raw); err != nil {
 		return err
 	}
-	r.LoadType = raw.LoadType
+
+	var (
+		resultData LoadResultData
+		err        error
+	)
+
 	switch raw.LoadType {
 	case LoadTypeTrack:
-		var track Track
-		if err := json.Unmarshal(raw.Data, &track); err != nil {
-			return err
-		}
-		r.Data = track
+		var v Track
+		err = json.Unmarshal(raw.Data, &v)
+		resultData = v
 	case LoadTypePlaylist:
-		var playlist Playlist
-		if err := json.Unmarshal(raw.Data, &playlist); err != nil {
-			return err
-		}
-		r.Data = playlist
+		var v Playlist
+		err = json.Unmarshal(raw.Data, &v)
+		resultData = v
 	case LoadTypeSearch:
-		var search Search
-		if err := json.Unmarshal(raw.Data, &search); err != nil {
-			return err
-		}
-		r.Data = search
+		var v Search
+		err = json.Unmarshal(raw.Data, &v)
+		resultData = v
 	case LoadTypeEmpty:
-		r.Data = Empty{}
+		resultData = Empty{}
 	case LoadTypeError:
-		var exception Exception
-		if err := json.Unmarshal(raw.Data, &exception); err != nil {
-			return err
-		}
-		r.Data = exception
+		var v Exception
+		err = json.Unmarshal(raw.Data, &v)
+		resultData = v
 	default:
 		return fmt.Errorf("unknown load type %q", raw.LoadType)
 	}
+	if err != nil {
+		return fmt.Errorf("error while unmarshalling load result data: %w", err)
+	}
+
+	r.LoadType = raw.LoadType
+	r.Data = resultData
+
 	return nil
 }
 
-var _ error = (*Exception)(nil)
+var _ LoadResultData = (*Search)(nil)
 
 type Search []Track
 
 func (Search) loadResultData() {}
 
+var _ LoadResultData = (*Empty)(nil)
+
 type Empty struct{}
 
 func (Empty) loadResultData() {}
+
+var (
+	_ error          = (*Exception)(nil)
+	_ LoadResultData = (*Exception)(nil)
+)
 
 type Exception struct {
 	Message         string   `json:"message"`

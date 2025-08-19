@@ -3,13 +3,13 @@ package disgolink
 import (
 	"bytes"
 	"context"
-	"encoding/json"
 	"fmt"
 	"io"
 	"log/slog"
 	"net/http"
 	"net/url"
 
+	"github.com/disgoorg/json/v2"
 	"github.com/disgoorg/snowflake/v2"
 
 	"github.com/disgoorg/disgolink/v4/lavalink"
@@ -52,7 +52,7 @@ type RestClient interface {
 
 	Players(ctx context.Context, sessionID string) ([]lavalink.Player, error)
 	Player(ctx context.Context, sessionID string, guildID snowflake.ID) (*lavalink.Player, error)
-	UpdatePlayer(ctx context.Context, sessionID string, guildID snowflake.ID, playerUpdate lavalink.PlayerUpdate) (*lavalink.Player, error)
+	UpdatePlayer(ctx context.Context, sessionID string, guildID snowflake.ID, playerUpdate PlayerUpdate) (*lavalink.Player, error)
 	DestroyPlayer(ctx context.Context, sessionID string, guildID snowflake.ID) error
 
 	LoadTracks(ctx context.Context, identifier string) (*lavalink.LoadResult, error)
@@ -60,9 +60,17 @@ type RestClient interface {
 	DecodeTracks(ctx context.Context, encodedTracks []string) ([]lavalink.Track, error)
 }
 
+func newRestClient(logger *slog.Logger, node *Node, httpClient *http.Client) RestClient {
+	return &restClientImpl{
+		logger:     logger.With(slog.String("name", "disgolink_rest_client"), slog.String("node_name", node.Config.Name)),
+		node:       node,
+		httpClient: httpClient,
+	}
+}
+
 type restClientImpl struct {
 	logger     *slog.Logger
-	node       Node
+	node       *Node
 	httpClient *http.Client
 }
 
@@ -99,7 +107,7 @@ func (c *restClientImpl) Player(ctx context.Context, sessionID string, guildID s
 	return
 }
 
-func (c *restClientImpl) UpdatePlayer(ctx context.Context, sessionID string, guildID snowflake.ID, playerUpdate lavalink.PlayerUpdate) (player *lavalink.Player, err error) {
+func (c *restClientImpl) UpdatePlayer(ctx context.Context, sessionID string, guildID snowflake.ID, playerUpdate PlayerUpdate) (player *lavalink.Player, err error) {
 	err = c.doJSON(ctx, http.MethodPatch, EndpointUpdatePlayer.Format(sessionID, guildID, playerUpdate.NoReplace), playerUpdate, &player)
 	return
 }
@@ -136,18 +144,18 @@ func (c *restClientImpl) Do(rq *http.Request) (*http.Response, error) {
 }
 
 func (c *restClientImpl) do(ctx context.Context, method string, path string, rqBody []byte) (int, []byte, error) {
-	rq, err := http.NewRequestWithContext(ctx, method, c.node.Config().RestURL()+path, bytes.NewReader(rqBody))
+	rq, err := http.NewRequestWithContext(ctx, method, path, bytes.NewReader(rqBody))
 	if err != nil {
 		return 0, nil, err
 	}
-	rq.Header.Set("Authorization", c.node.Config().Password)
+
 	if len(rqBody) > 0 {
 		rq.Header.Set("Content-Type", "application/json")
 	}
 
 	c.logger.DebugContext(ctx, "sending request", slog.String("method", method), slog.String("path", path), slog.String("body", string(rqBody)))
 
-	rs, err := c.httpClient.Do(rq)
+	rs, err := c.Do(rq)
 	if err != nil {
 		return 0, nil, err
 	}

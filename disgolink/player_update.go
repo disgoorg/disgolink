@@ -1,10 +1,12 @@
-package lavalink
+package disgolink
 
 import (
 	"github.com/disgoorg/omit"
+
+	"github.com/disgoorg/disgolink/v4/lavalink"
 )
 
-func DefaultPlayerUpdate() PlayerUpdate {
+func defaultPlayerUpdate() PlayerUpdate {
 	return PlayerUpdate{}
 }
 
@@ -15,19 +17,19 @@ type PlayerUpdateTrack struct {
 }
 
 type PlayerUpdate struct {
-	Track     *PlayerUpdateTrack `json:"track,omitzero"`
-	Position  *Duration          `json:"position,omitzero"`
-	EndTime   *Duration          `json:"endTime,omitzero"`
-	Volume    *int               `json:"volume,omitzero"`
-	Paused    *bool              `json:"paused,omitzero"`
-	Voice     *VoiceState        `json:"voice,omitzero"`
-	Filters   *Filters           `json:"filters,omitzero"`
-	NoReplace bool               `json:"-"`
+	Track     *PlayerUpdateTrack   `json:"track,omitzero"`
+	Position  *lavalink.Duration   `json:"position,omitzero"`
+	EndTime   *lavalink.Duration   `json:"endTime,omitzero"`
+	Volume    *int                 `json:"volume,omitzero"`
+	Paused    *bool                `json:"paused,omitzero"`
+	Voice     *lavalink.VoiceState `json:"voice,omitzero"`
+	Filters   *lavalink.Filters    `json:"filters,omitzero"`
+	NoReplace bool                 `json:"-"`
 }
 
 type PlayerUpdateOpt func(update *PlayerUpdate)
 
-func (u *PlayerUpdate) Apply(opts []PlayerUpdateOpt) {
+func (u *PlayerUpdate) apply(opts []PlayerUpdateOpt) {
 	for _, opt := range opts {
 		opt(u)
 	}
@@ -39,7 +41,7 @@ func WithNoReplace(noReplace bool) PlayerUpdateOpt {
 	}
 }
 
-func WithTrack(track Track) PlayerUpdateOpt {
+func WithTrack(track lavalink.Track) PlayerUpdateOpt {
 	return func(update *PlayerUpdate) {
 		WithEncodedTrack(track.Encoded)(update)
 		WithTrackUserData(track.UserData)(update)
@@ -82,13 +84,13 @@ func WithTrackUserData(userData any) PlayerUpdateOpt {
 	}
 }
 
-func WithPosition(position Duration) PlayerUpdateOpt {
+func WithPosition(position lavalink.Duration) PlayerUpdateOpt {
 	return func(update *PlayerUpdate) {
 		update.Position = &position
 	}
 }
 
-func WithEndTime(endTime Duration) PlayerUpdateOpt {
+func WithEndTime(endTime lavalink.Duration) PlayerUpdateOpt {
 	return func(update *PlayerUpdate) {
 		update.EndTime = &endTime
 	}
@@ -106,13 +108,13 @@ func WithPaused(paused bool) PlayerUpdateOpt {
 	}
 }
 
-func WithVoice(voice VoiceState) PlayerUpdateOpt {
+func WithVoice(voice lavalink.VoiceState) PlayerUpdateOpt {
 	return func(update *PlayerUpdate) {
 		update.Voice = &voice
 	}
 }
 
-func WithFilters(filters Filters) PlayerUpdateOpt {
+func WithFilters(filters lavalink.Filters) PlayerUpdateOpt {
 	return func(update *PlayerUpdate) {
 		update.Filters = &filters
 	}

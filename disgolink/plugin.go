@@ -1,6 +1,10 @@
 package disgolink
 
-import "github.com/disgoorg/disgolink/v4/lavalink"
+import (
+	"github.com/disgoorg/json/v2"
+
+	"github.com/disgoorg/disgolink/v4/lavalink"
+)
 
 type Plugin interface {
 	Name() string
@@ -9,12 +13,12 @@ type Plugin interface {
 
 type OpPlugin interface {
 	Op() lavalink.Op
-	OnOpInvocation(node Node, data []byte)
+	OnOpInvocation(node *Node, data json.RawMessage)
 }
 
 type EventPlugin interface {
 	Event() lavalink.EventType
-	OnEventInvocation(player Player, data []byte)
+	OnEventInvocation(player *Player, data json.RawMessage)
 }
 
 type EventPlugins interface {
@@ -22,9 +26,9 @@ type EventPlugins interface {
 }
 
 type PluginEventHandler interface {
-	OnNodeOpen(node Node)
-	OnNodeClose(node Node)
-	OnNodeMessageIn(node Node, data []byte)
-	OnNewPlayer(player Player)
-	OnDestroyPlayer(player Player)
+	OnNodeOpen(node *Node)
+	OnNodeClose(node *Node)
+	OnNodeMessageIn(node *Node, data json.RawMessage)
+	OnNewPlayer(player *Player)
+	OnDestroyPlayer(player *Player)
 }

@@ -1,23 +1,23 @@
 package lavalink
 
 import (
-	"encoding/json"
+	"github.com/disgoorg/json/v2"
 )
 
 var DefaultFilters = []string{"volume", "equalizer", "timescale", "tremolo", "vibrato", "rotation", "karaoke", "distortion", "channelMix", "lowPass"}
 
 type Filters struct {
-	Volume        *Volume        `json:"volume,omitzero"`
-	Equalizer     *Equalizer     `json:"equalizer,omitzero"`
-	Timescale     *Timescale     `json:"timescale,omitzero"`
-	Tremolo       *Tremolo       `json:"tremolo,omitzero"`
-	Vibrato       *Vibrato       `json:"vibrato,omitzero"`
-	Rotation      *Rotation      `json:"rotation,omitzero"`
-	Karaoke       *Karaoke       `json:"karaoke,omitzero"`
-	Distortion    *Distortion    `json:"distortion,omitzero"`
-	ChannelMix    *ChannelMix    `json:"channelMix,omitzero"`
-	LowPass       *LowPass       `json:"lowPass,omitzero"`
-	PluginFilters map[string]any `json:"pluginFilters,omitzero"`
+	Volume        *Volume            `json:"volume,omitzero"`
+	Equalizer     *Equalizer         `json:"equalizer,omitzero"`
+	Timescale     *Timescale         `json:"timescale,omitzero"`
+	Tremolo       *Tremolo           `json:"tremolo,omitzero"`
+	Vibrato       *Vibrato           `json:"vibrato,omitzero"`
+	Rotation      *Rotation          `json:"rotation,omitzero"`
+	Karaoke       *Karaoke           `json:"karaoke,omitzero"`
+	Distortion    *Distortion        `json:"distortion,omitzero"`
+	ChannelMix    *ChannelMix        `json:"channelMix,omitzero"`
+	LowPass       *LowPass           `json:"lowPass,omitzero"`
+	PluginFilters map[string]RawData `json:"pluginFilters,omitzero"`
 }
 
 type LowPass struct {

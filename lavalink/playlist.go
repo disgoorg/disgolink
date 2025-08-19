@@ -1,5 +1,7 @@
 package lavalink
 
+var _ LoadResultData = (*Playlist)(nil)
+
 type Playlist struct {
 	Info       PlaylistInfo `json:"info"`
 	PluginInfo RawData      `json:"pluginInfo"`

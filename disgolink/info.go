@@ -7,11 +7,13 @@ import (
 const (
 	Name   = "disgolink"
 	Module = "github.com/disgoorg/disgolink/v4"
-	GitHub = "https://github.com/disgoorg/disgo"
+	GitHub = "https://github.com/disgoorg/disgolink"
 )
 
 var (
 	Version = getVersion()
+
+	SemVersion = "semver:" + Version
 )
 
 func getVersion() string {

@@ -1,6 +1,6 @@
 module github.com/disgoorg/disgolink/v4
 
-go 1.24
+go 1.25
 
 require (
 	github.com/disgoorg/json/v2 v2.0.0

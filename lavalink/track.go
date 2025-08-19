@@ -10,8 +10,9 @@ import (
 )
 
 var (
-	_ driver.Valuer = (*Track)(nil)
-	_ sql.Scanner   = (*Track)(nil)
+	_ driver.Valuer  = (*Track)(nil)
+	_ sql.Scanner    = (*Track)(nil)
+	_ LoadResultData = (*Track)(nil)
 )
 
 type Track struct {
@@ -37,7 +38,7 @@ func (t Track) Value() (driver.Value, error) {
 	return json.Marshal(t)
 }
 
-func (t *Track) Scan(value interface{}) error {
+func (t *Track) Scan(value any) error {
 	b, ok := value.([]byte)
 	if !ok {
 		return errors.New("type assertion to []byte failed")
