@@ -33,7 +33,7 @@ func (c *config) apply(opts []ConfigOpt) {
 	c.Logger = c.Logger.With(slog.String("name", "disgolink_client"))
 }
 
-// WithLogger lets you inject your own logger implementing log.Logger
+// WithLogger lets you inject your own Logger implementing log.Logger
 func WithLogger(logger *slog.Logger) ConfigOpt {
 	return func(config *config) {
 		config.Logger = logger
@@ -52,7 +52,7 @@ func WithListeners(listeners ...EventListener) ConfigOpt {
 	}
 }
 
-func WithListenerFunc[E lavalink.Message](listenerFunc func(p Player, e E)) ConfigOpt {
+func WithListenerFunc[E lavalink.Message](listenerFunc func(p *Player, e E)) ConfigOpt {
 	return WithListeners(NewListenerFunc(listenerFunc))
 }
 

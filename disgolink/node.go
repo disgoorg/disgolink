@@ -55,7 +55,7 @@ var ErrNodeAlreadyConnected = errors.New("node already connected")
 
 func newNode(logger *slog.Logger, config NodeConfig, client *Client, httpClient *http.Client) *Node {
 	node := &Node{
-		logger: logger.With(slog.String("name", "disgolink_node"), slog.String("node_name", config.Name)),
+		Logger: logger.With(slog.String("name", "disgolink_node"), slog.String("node_name", config.Name)),
 		Config: config,
 		Client: client,
 		status: StatusDisconnected,
@@ -65,7 +65,7 @@ func newNode(logger *slog.Logger, config NodeConfig, client *Client, httpClient 
 }
 
 type Node struct {
-	logger *slog.Logger
+	Logger *slog.Logger
 	Client *Client
 	Config NodeConfig
 	Rest   RestClient
@@ -151,7 +151,7 @@ func (n *Node) Open(ctx context.Context) error {
 }
 
 func (n *Node) open(ctx context.Context) error {
-	n.logger.Debug("opening connection to node...")
+	n.Logger.Debug("opening connection to node...")
 
 	n.connMu.Lock()
 	if n.conn != nil {
@@ -164,7 +164,7 @@ func (n *Node) open(ctx context.Context) error {
 
 	header := http.Header{
 		"Authorization": []string{n.Config.Password},
-		"User-Id":       []string{n.Client.UserID().String()},
+		"User-Id":       []string{n.Client.userID.String()},
 		"Client-Name":   []string{fmt.Sprintf("%s/%s", Name, Version)},
 	}
 
@@ -187,7 +187,7 @@ func (n *Node) open(ctx context.Context) error {
 			body = string(rawBody)
 		}
 
-		n.logger.Error("error connecting to the node", slog.Any("err", err), slog.String("body", body))
+		n.Logger.Error("error connecting to the node", slog.Any("err", err), slog.String("body", body))
 		n.connMu.Unlock()
 		return err
 	}
@@ -247,7 +247,7 @@ func (n *Node) reconnectTry(ctx context.Context, try int) error {
 			return err
 		}
 
-		n.logger.ErrorContext(ctx, "failed to reconnect node", slog.Any("err", err), slog.Int("try", try), slog.Duration("delay", delay))
+		n.Logger.ErrorContext(ctx, "failed to reconnect node", slog.Any("err", err), slog.Int("try", try), slog.Duration("delay", delay))
 		n.statusMu.Lock()
 		n.status = StatusDisconnected
 		n.statusMu.Unlock()
@@ -258,12 +258,12 @@ func (n *Node) reconnectTry(ctx context.Context, try int) error {
 
 func (n *Node) reconnect() {
 	if err := n.reconnectTry(context.Background(), 0); err != nil {
-		n.logger.Error("failed to reopen node", slog.Any("err", err))
+		n.Logger.Error("failed to reopen node", slog.Any("err", err))
 	}
 }
 
 func (n *Node) listen(conn *websocket.Conn) {
-	defer n.logger.Debug("exiting listen goroutine")
+	defer n.Logger.Debug("exiting listen goroutine")
 loop:
 	for {
 		mt, r, err := conn.NextReader()
@@ -280,7 +280,7 @@ loop:
 			if errors.Is(err, net.ErrClosed) {
 				reconnect = false
 			} else {
-				n.logger.Error("failed to read next message from node", slog.Any("err", err))
+				n.Logger.Error("failed to read next message from node", slog.Any("err", err))
 			}
 
 			n.Close()
@@ -293,7 +293,7 @@ loop:
 
 		message, data, err := n.parseMessage(mt, r)
 		if err != nil {
-			n.logger.Error("error while parsing gateway message", slog.Any("err", err))
+			n.Logger.Error("error while parsing gateway message", slog.Any("err", err))
 			continue
 		}
 
@@ -314,9 +314,9 @@ loop:
 		case lavalink.ReadyMessage:
 			n.SessionID = m.SessionID
 			if m.Resumed {
-				n.logger.Info("successfully resumed session", slog.String("session_id", m.SessionID))
+				n.Logger.Info("successfully resumed session", slog.String("session_id", m.SessionID))
 			} else {
-				n.logger.Info("successfully opened session", slog.String("session_id", m.SessionID))
+				n.Logger.Info("successfully opened session", slog.String("session_id", m.SessionID))
 			}
 
 			for plugin := range n.Client.Plugins() {
@@ -326,7 +326,9 @@ loop:
 			}
 
 		case lavalink.StatsMessage:
+			n.statsMu.Lock()
 			n.stats = m.Stats
+			n.statsMu.Unlock()
 			n.Client.EmitEvent(nil, m)
 
 		case lavalink.PlayerUpdateMessage:
@@ -357,7 +359,7 @@ func (n *Node) parseMessage(mt int, r io.Reader) (lavalink.Message, []byte, erro
 	if err != nil {
 		return nil, nil, fmt.Errorf("failed to read message: %w", err)
 	}
-	n.logger.Debug("received gateway message", slog.String("data", string(data)))
+	n.Logger.Debug("received gateway message", slog.String("data", string(data)))
 
 	message, err := lavalink.UnmarshalMessage(data)
 	if err != nil {

@@ -1,6 +1,7 @@
 package lavalink
 
 import (
+	"github.com/disgoorg/omit"
 	"github.com/disgoorg/snowflake/v2"
 )
 
@@ -28,4 +29,21 @@ type PlayerState struct {
 	Position  Duration  `json:"position"`
 	Connected bool      `json:"connected"`
 	Ping      int       `json:"ping"`
+}
+
+type PlayerUpdateTrack struct {
+	Encoded    omit.Omit[*string] `json:"encoded,omitzero"`
+	Identifier *string            `json:"identifier,omitzero"`
+	UserData   any                `json:"userData,omitzero"`
+}
+
+type PlayerUpdate struct {
+	Track     *PlayerUpdateTrack `json:"track,omitzero"`
+	Position  *Duration          `json:"position,omitzero"`
+	EndTime   *Duration          `json:"endTime,omitzero"`
+	Volume    *int               `json:"volume,omitzero"`
+	Paused    *bool              `json:"paused,omitzero"`
+	Voice     *VoiceState        `json:"voice,omitzero"`
+	Filters   *Filters           `json:"filters,omitzero"`
+	NoReplace bool               `json:"-"`
 }

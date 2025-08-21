@@ -2,6 +2,7 @@ package disgolink
 
 import (
 	"context"
+	"fmt"
 	"iter"
 	"log/slog"
 	"net/http"
@@ -12,6 +13,8 @@ import (
 
 	"github.com/disgoorg/disgolink/v4/lavalink"
 )
+
+var ErrNodeAlreadyExists = fmt.Errorf("node with this name already exists")
 
 func New(userID snowflake.ID, opts ...ConfigOpt) *Client {
 	cfg := defaultConfig()
@@ -28,6 +31,7 @@ func New(userID snowflake.ID, opts ...ConfigOpt) *Client {
 	}
 }
 
+// Client represents multiple connections to Lavalink nodes.
 type Client struct {
 	logger     *slog.Logger
 	httpClient *http.Client
@@ -46,18 +50,34 @@ type Client struct {
 	plugins   []Plugin
 }
 
+func (c *Client) UserID() snowflake.ID {
+	return c.userID
+}
+
+// AddNode adds a new node to the client.
+// It will open the node and return it.
+// If a node with the same name already exists, it will return ErrNodeAlreadyExists.
+// If the node fails to connect, it will retry until the context is done.
 func (c *Client) AddNode(ctx context.Context, config NodeConfig) (*Node, error) {
-	node := newNode(c.logger, config, c, c.httpClient)
-	if err := node.Open(ctx); err != nil {
-		return nil, err
+	if n := c.Node(config.Name); n != nil {
+		return nil, ErrNodeAlreadyExists
 	}
 
+	node := newNode(c.logger, config, c, c.httpClient)
+
 	c.nodesMu.Lock()
-	defer c.nodesMu.Unlock()
 	c.nodes[config.Name] = node
+	c.nodesMu.Unlock()
+
+	if err := node.Open(ctx); err != nil {
+		return nil, fmt.Errorf("failed to open node %s: %w", config.Name, err)
+	}
+
 	return node, nil
 }
 
+// Nodes returns an iterator over all nodes in the client.
+// This will lock the nodes mutex while iterating,
 func (c *Client) Nodes() iter.Seq[*Node] {
 	return func(yield func(*Node) bool) {
 		c.nodesMu.Lock()
@@ -69,6 +89,7 @@ func (c *Client) Nodes() iter.Seq[*Node] {
 	}
 }
 
+// Node returns the node with the given name, or nil if no such node exists.
 func (c *Client) Node(name string) *Node {
 	c.nodesMu.Lock()
 	defer c.nodesMu.Unlock()
@@ -76,12 +97,18 @@ func (c *Client) Node(name string) *Node {
 	return c.nodes[name]
 }
 
+// BestNode returns the node with the lowest load or the first node if no nodes are available.
+// It only returns nodes that are connected ([StatusConnected]).
+// If no nodes are available, it returns nil.
 func (c *Client) BestNode() *Node {
 	c.nodesMu.Lock()
 	defer c.nodesMu.Unlock()
 
 	var bestNode *Node
 	for _, node := range c.nodes {
+		if node.Status() != StatusConnected {
+			continue
+		}
 		if bestNode == nil || node.Stats().Better(bestNode.Stats()) {
 			bestNode = node
 		}
@@ -214,10 +241,6 @@ func (c *Client) RemovePlugins(plugins ...Plugin) {
 			}
 		}
 	}
-}
-
-func (c *Client) UserID() snowflake.ID {
-	return c.userID
 }
 
 func (c *Client) Close() {

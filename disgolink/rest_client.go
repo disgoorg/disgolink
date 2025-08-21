@@ -52,7 +52,7 @@ type RestClient interface {
 
 	Players(ctx context.Context, sessionID string) ([]lavalink.Player, error)
 	Player(ctx context.Context, sessionID string, guildID snowflake.ID) (*lavalink.Player, error)
-	UpdatePlayer(ctx context.Context, sessionID string, guildID snowflake.ID, playerUpdate PlayerUpdate) (*lavalink.Player, error)
+	UpdatePlayer(ctx context.Context, sessionID string, guildID snowflake.ID, playerUpdate lavalink.PlayerUpdate) (*lavalink.Player, error)
 	DestroyPlayer(ctx context.Context, sessionID string, guildID snowflake.ID) error
 
 	LoadTracks(ctx context.Context, identifier string) (*lavalink.LoadResult, error)
@@ -107,7 +107,7 @@ func (c *restClientImpl) Player(ctx context.Context, sessionID string, guildID s
 	return
 }
 
-func (c *restClientImpl) UpdatePlayer(ctx context.Context, sessionID string, guildID snowflake.ID, playerUpdate PlayerUpdate) (player *lavalink.Player, err error) {
+func (c *restClientImpl) UpdatePlayer(ctx context.Context, sessionID string, guildID snowflake.ID, playerUpdate lavalink.PlayerUpdate) (player *lavalink.Player, err error) {
 	err = c.doJSON(ctx, http.MethodPatch, EndpointUpdatePlayer.Format(sessionID, guildID, playerUpdate.NoReplace), playerUpdate, &player)
 	return
 }
@@ -133,9 +133,9 @@ func (c *restClientImpl) DecodeTracks(ctx context.Context, encodedTracks []strin
 }
 
 func (c *restClientImpl) Do(rq *http.Request) (*http.Response, error) {
-	rq.Header.Set("Authorization", c.node.Config().Password)
-	rq.URL.Host = c.node.Config().Address
-	if c.node.Config().Secure {
+	rq.Header.Set("Authorization", c.node.Config.Password)
+	rq.URL.Host = c.node.Config.Address
+	if c.node.Config.Secure {
 		rq.URL.Scheme = "https"
 	} else {
 		rq.URL.Scheme = "http"

@@ -61,7 +61,7 @@ func (p *Player) Update(ctx context.Context, opts ...PlayerUpdateOpt) error {
 	}
 
 	update := defaultPlayerUpdate()
-	update.apply(opts)
+	playerUpdateApply(&update, opts)
 
 	updatedPlayer, err := p.Node.Rest.UpdatePlayer(ctx, p.Node.SessionID, p.GuildID, update)
 	if err != nil {
