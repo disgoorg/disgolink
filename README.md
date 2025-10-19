@@ -200,7 +200,7 @@ lavalinkClient := disgolink.New(userID, disgolink.WithPlugins(yourPlugin))
 Here is a list of plugins(you can pr your own to here):
 * [SponsorBlock](https://github.com/disgoorg/sponsorblock-plugin) support for [Lavalink Sponsorblock-Plugin](https://github.com/topi314/SponsorBlock-Plugin)
 * [LavaQueue](https://github.com/disgoorg/lavaqueue-plugin) support for [Lavalink LavaQueue-Plugin](https://github.com/topi314/LavaQueue)
-* [LavaSrc](https://github.com/disgoorg/sponsorblock-plugin) support for [Lavalink LavaSrc-Plugin](https://github.com/topi314/LavaSrc)
+* [LavaSrc](https://github.com/disgoorg/lavasrc-plugin) support for [Lavalink LavaSrc-Plugin](https://github.com/topi314/LavaSrc)
 * [LavaLyrics](https://github.com/disgoorg/lavalyrics-plugin) support for [Lavalink LavaLyrics-Plugin](https://github.com/topi314/LavaLyrics)
 * [LavaSearch](https://github.com/disgoorg/lavasearch-plugin) support for [Lavalink LavaSearch-Plugin](https://github.com/topi314/LavaSearch)
 
