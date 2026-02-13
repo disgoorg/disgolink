@@ -63,37 +63,21 @@ func (p *Player) Update(ctx context.Context, opts ...PlayerUpdateOpt) error {
 	update := defaultPlayerUpdate()
 	playerUpdateApply(&update, opts)
 
-	updatedPlayer, err := p.Node.Rest.UpdatePlayer(ctx, p.Node.SessionID, p.GuildID, update)
+	updatedPlayer, err := p.Node.Rest.UpdatePlayer(ctx, p.Node.Config.SessionID, p.GuildID, update)
 	if err != nil {
 		return err
 	}
 
 	p.Volume = updatedPlayer.Volume
-
 	p.Voice = updatedPlayer.Voice
 	p.Filters = updatedPlayer.Filters
-
-	// dispatch artificial player resume/pause event
-	if update.Paused != nil {
-		var event lavalink.Event
-		if p.Paused && !*update.Paused {
-			event = lavalink.PlayerResumeEvent{
-				GuildID: p.GuildID,
-			}
-		} else if !p.Paused && *update.Paused {
-			event = lavalink.PlayerPauseEvent{
-				GuildID: p.GuildID,
-			}
-		}
-		p.Paused = updatedPlayer.Paused
-		go p.OnEvent(event)
-	}
+	p.Paused = updatedPlayer.Paused
 
 	return nil
 }
 
 func (p *Player) Destroy(ctx context.Context) error {
-	if err := p.Node.Rest.DestroyPlayer(ctx, p.Node.SessionID, p.GuildID); err != nil {
+	if err := p.Node.Rest.DestroyPlayer(ctx, p.Node.Config.SessionID, p.GuildID); err != nil {
 		return err
 	}
 
@@ -128,11 +112,6 @@ func (p *Player) OnEvent(event lavalink.Event) {
 				}
 			}
 		}
-	case lavalink.PlayerPauseEvent:
-		p.Paused = true
-
-	case lavalink.PlayerResumeEvent:
-		p.Paused = false
 
 	case lavalink.TrackStartEvent:
 		p.Track = &e.Track
@@ -170,7 +149,6 @@ func (p *Player) OnVoiceStateUpdate(ctx context.Context, channelID *snowflake.ID
 		if err := p.Destroy(ctx); err != nil {
 			p.logger.ErrorContext(ctx, "error while destroying player", slog.Any("err", err))
 		}
-		p.Client.RemovePlayer(p.GuildID)
 		return
 	}
 	p.Voice.ChannelID = *channelID
@@ -187,7 +165,7 @@ func (p *Player) sendVoiceUpdate(ctx context.Context) error {
 		return nil
 	}
 
-	if _, err := p.Node.Rest.UpdatePlayer(ctx, p.Node.SessionID, p.GuildID, lavalink.PlayerUpdate{
+	if _, err := p.Node.Rest.UpdatePlayer(ctx, p.Node.Config.SessionID, p.GuildID, lavalink.PlayerUpdate{
 		Voice: &p.Voice,
 	}); err != nil {
 		return fmt.Errorf("error while sending voice update: %w", err)

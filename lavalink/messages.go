@@ -22,9 +22,6 @@ const (
 	EventTypeTrackException  EventType = "TrackExceptionEvent"
 	EventTypeTrackStuck      EventType = "TrackStuckEvent"
 	EventTypeWebSocketClosed EventType = "WebSocketClosedEvent"
-
-	EventTypePlayerPause  EventType = "PlayerPauseEvent"  // not actually sent by lavalink
-	EventTypePlayerResume EventType = "PlayerResumeEvent" // not actually sent by lavalink
 )
 
 func UnmarshalMessage(data []byte) (Message, error) {
@@ -74,14 +71,6 @@ func UnmarshalMessage(data []byte) (Message, error) {
 			message = m
 		case EventTypeWebSocketClosed:
 			var m WebSocketClosedEvent
-			err = json.Unmarshal(data, &m)
-			message = m
-		case EventTypePlayerPause:
-			var m PlayerPauseEvent
-			err = json.Unmarshal(data, &m)
-			message = m
-		case EventTypePlayerResume:
-			var m PlayerResumeEvent
 			err = json.Unmarshal(data, &m)
 			message = m
 		default:
@@ -218,22 +207,6 @@ type WebSocketClosedEvent struct {
 func (WebSocketClosedEvent) Op() Op                     { return OpEvent }
 func (WebSocketClosedEvent) Type() EventType            { return EventTypeWebSocketClosed }
 func (e WebSocketClosedEvent) GetGuildID() snowflake.ID { return e.GuildID }
-
-type PlayerPauseEvent struct {
-	GuildID snowflake.ID `json:"guildID"`
-}
-
-func (PlayerPauseEvent) Op() Op                     { return OpEvent }
-func (PlayerPauseEvent) Type() EventType            { return EventTypePlayerPause }
-func (e PlayerPauseEvent) GetGuildID() snowflake.ID { return e.GuildID }
-
-type PlayerResumeEvent struct {
-	GuildID snowflake.ID `json:"guildID"`
-}
-
-func (PlayerResumeEvent) Op() Op                     { return OpEvent }
-func (PlayerResumeEvent) Type() EventType            { return EventTypePlayerResume }
-func (e PlayerResumeEvent) GetGuildID() snowflake.ID { return e.GuildID }
 
 type UnknownEvent struct {
 	EventType EventType       `json:"type"`

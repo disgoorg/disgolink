@@ -16,6 +16,8 @@ import (
 	"github.com/disgoorg/disgolink/v4/lavalink"
 )
 
+const maximumConnectDelay = 60 * time.Second
+
 type NodeConfig struct {
 	Name      string `json:"name"`
 	Address   string `json:"address"`
@@ -55,7 +57,7 @@ var ErrNodeAlreadyConnected = errors.New("node already connected")
 
 func newNode(logger *slog.Logger, config NodeConfig, client *Client, httpClient *http.Client) *Node {
 	node := &Node{
-		Logger: logger.With(slog.String("name", "disgolink_node"), slog.String("node_name", config.Name)),
+		logger: logger.With(slog.String("name", "disgolink_node"), slog.String("node_name", config.Name)),
 		Config: config,
 		Client: client,
 		status: StatusDisconnected,
@@ -65,10 +67,10 @@ func newNode(logger *slog.Logger, config NodeConfig, client *Client, httpClient 
 }
 
 type Node struct {
-	Logger *slog.Logger
+	logger *slog.Logger
 	Client *Client
 	Config NodeConfig
-	Rest   RestClient
+	Rest   *RestClient
 
 	conn   *websocket.Conn
 	connMu sync.Mutex
@@ -78,8 +80,6 @@ type Node struct {
 
 	statsMu sync.Mutex
 	stats   lavalink.Stats
-
-	SessionID string
 }
 
 func (n *Node) Status() Status {
@@ -105,7 +105,7 @@ func (n *Node) Info(ctx context.Context) (*lavalink.Info, error) {
 }
 
 func (n *Node) Update(ctx context.Context, update lavalink.SessionUpdate) error {
-	_, err := n.Rest.UpdateSession(ctx, n.SessionID, update)
+	_, err := n.Rest.UpdateSession(ctx, n.Config.SessionID, update)
 	return err
 }
 
@@ -147,11 +147,11 @@ func (n *Node) DecodeTracks(ctx context.Context, encodedTracks []string) ([]lava
 }
 
 func (n *Node) Open(ctx context.Context) error {
-	return n.reconnectTry(ctx, 0)
+	return n.doReconnect(ctx)
 }
 
 func (n *Node) open(ctx context.Context) error {
-	n.Logger.Debug("opening connection to node...")
+	n.logger.DebugContext(ctx, "opening node connection")
 
 	n.connMu.Lock()
 	if n.conn != nil {
@@ -168,7 +168,7 @@ func (n *Node) open(ctx context.Context) error {
 		"Client-Name":   []string{fmt.Sprintf("%s/%s", Name, Version)},
 	}
 
-	sessionID := n.SessionID
+	sessionID := n.Config.SessionID
 	if sessionID == "" {
 		sessionID = n.Config.SessionID
 	}
@@ -178,16 +178,15 @@ func (n *Node) open(ctx context.Context) error {
 
 	conn, rs, err := websocket.DefaultDialer.DialContext(ctx, n.Config.WsURL(), header)
 	if err != nil {
-		var body string
+		var body []byte
 		if rs != nil {
-			defer func() {
-				_ = rs.Body.Close()
-			}()
-			rawBody, _ := io.ReadAll(rs.Body)
-			body = string(rawBody)
+			data, readErr := io.ReadAll(rs.Body)
+			if readErr != nil {
+				n.logger.ErrorContext(ctx, "error while reading response body", slog.Any("err", readErr))
+			}
+			body = data
 		}
-
-		n.Logger.Error("error connecting to the node", slog.Any("err", err), slog.String("body", body))
+		n.logger.ErrorContext(ctx, "error connecting to the node", slog.Any("err", err), slog.String("body", string(body)))
 		n.connMu.Unlock()
 		return err
 	}
@@ -227,52 +226,64 @@ func (n *Node) Close() {
 
 }
 
-func (n *Node) reconnectTry(ctx context.Context, try int) error {
-	delay := time.Duration(try) * 2 * time.Second
-	if delay > 30*time.Second {
-		delay = 30 * time.Second
-	}
+func (n *Node) doReconnect(ctx context.Context) error {
+	var (
+		try              int
+		backoffIncrement int
+	)
 
-	timer := time.NewTimer(delay)
-	defer timer.Stop()
-	select {
-	case <-ctx.Done():
-		timer.Stop()
-		return ctx.Err()
-	case <-timer.C:
-	}
+	for {
+		// Exponentially backoff up to a limit of 10s
+		delay := time.Duration(1<<backoffIncrement) * time.Second
+		if delay > maximumConnectDelay {
+			delay = maximumConnectDelay
+		} else {
+			backoffIncrement++
+		}
 
-	if err := n.open(ctx); err != nil {
+		timer := time.NewTimer(delay)
+		select {
+		case <-ctx.Done():
+			return ctx.Err()
+		case <-timer.C:
+		}
+
+		err := n.open(ctx)
+		if err == nil {
+			// Successfully connected, our job here is done
+			return nil
+		}
+
 		if errors.Is(err, ErrNodeAlreadyConnected) {
 			return err
 		}
 
-		n.Logger.ErrorContext(ctx, "failed to reconnect node", slog.Any("err", err), slog.Int("try", try), slog.Duration("delay", delay))
+		n.logger.ErrorContext(ctx, "failed to reconnect node", slog.Any("err", err), slog.Int("try", try), slog.Duration("delay", delay))
 		n.statusMu.Lock()
 		n.status = StatusDisconnected
 		n.statusMu.Unlock()
-		return n.reconnectTry(ctx, try+1)
+
+		try++
 	}
-	return nil
 }
 
 func (n *Node) reconnect() {
-	if err := n.reconnectTry(context.Background(), 0); err != nil {
-		n.Logger.Error("failed to reopen node", slog.Any("err", err))
+	if err := n.doReconnect(context.Background()); err != nil {
+		n.logger.Error("failed to reopen node", slog.Any("err", err))
 	}
 }
 
 func (n *Node) listen(conn *websocket.Conn) {
-	defer n.Logger.Debug("exiting listen goroutine")
-loop:
+	defer n.logger.Debug("exiting listen goroutine")
+
 	for {
 		mt, r, err := conn.NextReader()
 		if err != nil {
 			n.connMu.Lock()
-			sameConnection := n.conn == conn
+			sameConn := n.conn == conn
 			n.connMu.Unlock()
 
-			if !sameConnection {
+			if !sameConn {
 				return
 			}
 
@@ -280,7 +291,7 @@ loop:
 			if errors.Is(err, net.ErrClosed) {
 				reconnect = false
 			} else {
-				n.Logger.Error("failed to read next message from node", slog.Any("err", err))
+				n.logger.Warn("failed to read next message from node", slog.Any("err", err))
 			}
 
 			n.Close()
@@ -288,12 +299,12 @@ loop:
 				go n.reconnect()
 			}
 
-			break loop
+			return
 		}
 
 		message, data, err := n.parseMessage(mt, r)
 		if err != nil {
-			n.Logger.Error("error while parsing gateway message", slog.Any("err", err))
+			n.logger.Error("error while parsing gateway message", slog.Any("err", err))
 			continue
 		}
 
@@ -304,19 +315,12 @@ loop:
 		}
 
 		switch m := message.(type) {
-		case lavalink.UnknownMessage:
-			for plugin := range n.Client.Plugins() {
-				if pl, ok := plugin.(OpPlugin); ok {
-					pl.OnOpInvocation(n, m.Data)
-				}
-			}
-
 		case lavalink.ReadyMessage:
-			n.SessionID = m.SessionID
+			n.Config.SessionID = m.SessionID
 			if m.Resumed {
-				n.Logger.Info("successfully resumed session", slog.String("session_id", m.SessionID))
+				n.logger.Info("successfully resumed session", slog.String("session_id", m.SessionID))
 			} else {
-				n.Logger.Info("successfully opened session", slog.String("session_id", m.SessionID))
+				n.logger.Info("successfully opened session", slog.String("session_id", m.SessionID))
 			}
 
 			for plugin := range n.Client.Plugins() {
@@ -324,12 +328,19 @@ loop:
 					pl.OnNodeOpen(n)
 				}
 			}
+			n.Client.emitEvent(&ReadyEvent{
+				GenericEvent: newGenericEvent(n),
+				ReadyMessage: m,
+			})
 
 		case lavalink.StatsMessage:
 			n.statsMu.Lock()
 			n.stats = m.Stats
 			n.statsMu.Unlock()
-			n.Client.EmitEvent(nil, m)
+			n.Client.emitEvent(&StatsEvent{
+				GenericEvent: newGenericEvent(n),
+				StatsMessage: m,
+			})
 
 		case lavalink.PlayerUpdateMessage:
 			player := n.Client.ExistingPlayer(m.GuildID)
@@ -337,7 +348,11 @@ loop:
 				continue
 			}
 			player.OnPlayerUpdate(m.State)
-			n.Client.EmitEvent(player, m)
+			n.Client.emitEvent(&PlayerUpdateEvent{
+				GenericEvent:        newGenericEvent(n),
+				PlayerUpdateMessage: m,
+				Player:              player,
+			})
 
 		case lavalink.Event:
 			player := n.Client.ExistingPlayer(m.GetGuildID())
@@ -345,7 +360,61 @@ loop:
 				continue
 			}
 			player.OnEvent(m)
-			n.Client.EmitEvent(player, m)
+
+			switch e := m.(type) {
+			case lavalink.TrackStartEvent:
+				n.Client.emitEvent(&PlayerStartTrackEvent{
+					GenericEvent:    newGenericEvent(n),
+					TrackStartEvent: e,
+					Player:          player,
+				})
+
+			case lavalink.TrackEndEvent:
+				n.Client.emitEvent(&PlayerTrackEndEvent{
+					GenericEvent:  newGenericEvent(n),
+					TrackEndEvent: e,
+					Player:        player,
+				})
+
+			case lavalink.TrackExceptionEvent:
+				n.Client.emitEvent(&PlayerTrackExceptionEvent{
+					GenericEvent:        newGenericEvent(n),
+					TrackExceptionEvent: e,
+					Player:              player,
+				})
+
+			case lavalink.TrackStuckEvent:
+				n.Client.emitEvent(&PlayerTrackStuckEvent{
+					GenericEvent:    newGenericEvent(n),
+					TrackStuckEvent: e,
+					Player:          player,
+				})
+
+			case lavalink.WebSocketClosedEvent:
+				n.Client.emitEvent(&WebSocketClosedEvent{
+					GenericEvent:         newGenericEvent(n),
+					WebSocketClosedEvent: e,
+					Player:               player,
+				})
+
+			case lavalink.UnknownEvent:
+				n.Client.emitEvent(&UnknownEvent{
+					GenericEvent: newGenericEvent(n),
+					UnknownEvent: e,
+					Player:       player,
+				})
+			}
+
+		case lavalink.UnknownMessage:
+			for plugin := range n.Client.Plugins() {
+				if pl, ok := plugin.(OpPlugin); ok {
+					pl.OnOpInvocation(n, m.Data)
+				}
+			}
+			n.Client.emitEvent(&UnknownMessageEvent{
+				GenericEvent:   newGenericEvent(n),
+				UnknownMessage: m,
+			})
 		}
 	}
 }
@@ -359,7 +428,7 @@ func (n *Node) parseMessage(mt int, r io.Reader) (lavalink.Message, []byte, erro
 	if err != nil {
 		return nil, nil, fmt.Errorf("failed to read message: %w", err)
 	}
-	n.Logger.Debug("received gateway message", slog.String("data", string(data)))
+	n.logger.Debug("received gateway message", slog.String("data", string(data)))
 
 	message, err := lavalink.UnmarshalMessage(data)
 	if err != nil {

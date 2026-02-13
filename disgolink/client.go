@@ -10,8 +10,6 @@ import (
 	"sync"
 
 	"github.com/disgoorg/snowflake/v2"
-
-	"github.com/disgoorg/disgolink/v4/lavalink"
 )
 
 var ErrNodeAlreadyExists = fmt.Errorf("node with this name already exists")
@@ -177,7 +175,7 @@ func (c *Client) Players() iter.Seq[*Player] {
 	}
 }
 
-func (c *Client) EmitEvent(player *Player, event lavalink.Message) {
+func (c *Client) emitEvent(event Event) {
 	c.listenersMu.Lock()
 	defer c.listenersMu.Unlock()
 
@@ -188,7 +186,7 @@ func (c *Client) EmitEvent(player *Player, event lavalink.Message) {
 		}
 	}()
 	for _, listener := range c.listeners {
-		listener.OnEvent(player, event)
+		listener.OnEvent(event)
 	}
 }
 

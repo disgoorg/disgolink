@@ -1,21 +1,24 @@
 package disgolink
 
-import "github.com/disgoorg/disgolink/v4/lavalink"
-
-type EventListener interface {
-	OnEvent(player *Player, event lavalink.Message)
+type Event interface {
+	Client() *Client
+	Node() *Node
 }
 
-func NewListenerFunc[E lavalink.Message](f func(p *Player, e E)) EventListener {
+type EventListener interface {
+	OnEvent(event Event)
+}
+
+func NewListenerFunc[E Event](f func(e E)) EventListener {
 	return &listenerFunc[E]{f: f}
 }
 
-type listenerFunc[E lavalink.Message] struct {
-	f func(p *Player, e E)
+type listenerFunc[E Event] struct {
+	f func(e E)
 }
 
-func (l *listenerFunc[E]) OnEvent(p *Player, e lavalink.Message) {
+func (l *listenerFunc[E]) OnEvent(e Event) {
 	if event, ok := e.(E); ok {
-		l.f(p, event)
+		l.f(event)
 	}
 }

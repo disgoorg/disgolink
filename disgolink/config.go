@@ -4,8 +4,6 @@ import (
 	"log/slog"
 	"net/http"
 	"time"
-
-	"github.com/disgoorg/disgolink/v4/lavalink"
 )
 
 func defaultConfig() *config {
@@ -33,29 +31,33 @@ func (c *config) apply(opts []ConfigOpt) {
 	c.Logger = c.Logger.With(slog.String("name", "disgolink_client"))
 }
 
-// WithLogger lets you inject your own Logger implementing log.Logger
+// WithLogger lets you inject your own [slog.Logger].
 func WithLogger(logger *slog.Logger) ConfigOpt {
 	return func(config *config) {
 		config.Logger = logger
 	}
 }
 
+// WithHTTPClient lets you inject your own http.Client for the client to use for REST requests.
 func WithHTTPClient(httpClient *http.Client) ConfigOpt {
 	return func(config *config) {
 		config.HTTPClient = httpClient
 	}
 }
 
+// WithListeners adds event listeners to the client.
 func WithListeners(listeners ...EventListener) ConfigOpt {
 	return func(config *config) {
 		config.Listeners = append(config.Listeners, listeners...)
 	}
 }
 
-func WithListenerFunc[E lavalink.Message](listenerFunc func(p *Player, e E)) ConfigOpt {
+// WithListenerFunc adds an event listener function to the client.
+func WithListenerFunc[E Event](listenerFunc func(e E)) ConfigOpt {
 	return WithListeners(NewListenerFunc(listenerFunc))
 }
 
+// WithPlugins adds plugins to the client.
 func WithPlugins(plugins ...Plugin) ConfigOpt {
 	return func(config *config) {
 		config.Plugins = append(config.Plugins, plugins...)

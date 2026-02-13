@@ -40,41 +40,21 @@ var (
 	EndpointWebSocket = EndpointBase + "/websocket"
 )
 
-type RestClient interface {
-	// Do executes a http.Request and replaces the host and scheme with the node's config. It also sets the Authorization header to the node's password. It returns the http.Response or an error
-	Do(rq *http.Request) (*http.Response, error)
-
-	Version(ctx context.Context) (string, error)
-	Info(ctx context.Context) (*lavalink.Info, error)
-	Stats(ctx context.Context) (*lavalink.Stats, error)
-
-	UpdateSession(ctx context.Context, sessionID string, sessionUpdate lavalink.SessionUpdate) (*lavalink.Session, error)
-
-	Players(ctx context.Context, sessionID string) ([]lavalink.Player, error)
-	Player(ctx context.Context, sessionID string, guildID snowflake.ID) (*lavalink.Player, error)
-	UpdatePlayer(ctx context.Context, sessionID string, guildID snowflake.ID, playerUpdate lavalink.PlayerUpdate) (*lavalink.Player, error)
-	DestroyPlayer(ctx context.Context, sessionID string, guildID snowflake.ID) error
-
-	LoadTracks(ctx context.Context, identifier string) (*lavalink.LoadResult, error)
-	DecodeTrack(ctx context.Context, encodedTrack string) (*lavalink.Track, error)
-	DecodeTracks(ctx context.Context, encodedTracks []string) ([]lavalink.Track, error)
-}
-
-func newRestClient(logger *slog.Logger, node *Node, httpClient *http.Client) RestClient {
-	return &restClientImpl{
+func newRestClient(logger *slog.Logger, node *Node, httpClient *http.Client) *RestClient {
+	return &RestClient{
 		logger:     logger.With(slog.String("name", "disgolink_rest_client"), slog.String("node_name", node.Config.Name)),
 		node:       node,
 		httpClient: httpClient,
 	}
 }
 
-type restClientImpl struct {
+type RestClient struct {
 	logger     *slog.Logger
 	node       *Node
 	httpClient *http.Client
 }
 
-func (c *restClientImpl) Version(ctx context.Context) (string, error) {
+func (c *RestClient) Version(ctx context.Context) (string, error) {
 	_, rawBody, err := c.do(ctx, http.MethodGet, string(EndpointVersion), nil)
 	if err != nil {
 		return "", err
@@ -82,57 +62,57 @@ func (c *restClientImpl) Version(ctx context.Context) (string, error) {
 	return string(rawBody), nil
 }
 
-func (c *restClientImpl) Info(ctx context.Context) (info *lavalink.Info, err error) {
+func (c *RestClient) Info(ctx context.Context) (info *lavalink.Info, err error) {
 	err = c.doJSON(ctx, http.MethodGet, string(EndpointInfo), nil, &info)
 	return
 }
 
-func (c *restClientImpl) Stats(ctx context.Context) (stats *lavalink.Stats, err error) {
+func (c *RestClient) Stats(ctx context.Context) (stats *lavalink.Stats, err error) {
 	err = c.doJSON(ctx, http.MethodGet, string(EndpointStats), nil, &stats)
 	return
 }
 
-func (c *restClientImpl) UpdateSession(ctx context.Context, sessionID string, sessionUpdate lavalink.SessionUpdate) (session *lavalink.Session, err error) {
+func (c *RestClient) UpdateSession(ctx context.Context, sessionID string, sessionUpdate lavalink.SessionUpdate) (session *lavalink.Session, err error) {
 	err = c.doJSON(ctx, http.MethodPatch, EndpointUpdateSession.Format(sessionID), sessionUpdate, &session)
 	return
 }
 
-func (c *restClientImpl) Players(ctx context.Context, sessionID string) (players []lavalink.Player, err error) {
+func (c *RestClient) Players(ctx context.Context, sessionID string) (players []lavalink.Player, err error) {
 	err = c.doJSON(ctx, http.MethodGet, EndpointPlayers.Format(sessionID), nil, &players)
 	return
 }
 
-func (c *restClientImpl) Player(ctx context.Context, sessionID string, guildID snowflake.ID) (player *lavalink.Player, err error) {
+func (c *RestClient) Player(ctx context.Context, sessionID string, guildID snowflake.ID) (player *lavalink.Player, err error) {
 	err = c.doJSON(ctx, http.MethodGet, EndpointPlayer.Format(sessionID, guildID), nil, &player)
 	return
 }
 
-func (c *restClientImpl) UpdatePlayer(ctx context.Context, sessionID string, guildID snowflake.ID, playerUpdate lavalink.PlayerUpdate) (player *lavalink.Player, err error) {
+func (c *RestClient) UpdatePlayer(ctx context.Context, sessionID string, guildID snowflake.ID, playerUpdate lavalink.PlayerUpdate) (player *lavalink.Player, err error) {
 	err = c.doJSON(ctx, http.MethodPatch, EndpointUpdatePlayer.Format(sessionID, guildID, playerUpdate.NoReplace), playerUpdate, &player)
 	return
 }
 
-func (c *restClientImpl) DestroyPlayer(ctx context.Context, sessionID string, guildID snowflake.ID) error {
+func (c *RestClient) DestroyPlayer(ctx context.Context, sessionID string, guildID snowflake.ID) error {
 	_, _, err := c.do(ctx, http.MethodDelete, EndpointDestroyPlayer.Format(sessionID, guildID), nil)
 	return err
 }
 
-func (c *restClientImpl) LoadTracks(ctx context.Context, identifier string) (result *lavalink.LoadResult, err error) {
+func (c *RestClient) LoadTracks(ctx context.Context, identifier string) (result *lavalink.LoadResult, err error) {
 	err = c.doJSON(ctx, http.MethodGet, EndpointLoadTracks.Format(url.QueryEscape(identifier)), nil, &result)
 	return
 }
 
-func (c *restClientImpl) DecodeTrack(ctx context.Context, encodedTrack string) (track *lavalink.Track, err error) {
+func (c *RestClient) DecodeTrack(ctx context.Context, encodedTrack string) (track *lavalink.Track, err error) {
 	err = c.doJSON(ctx, http.MethodGet, EndpointDecodeTrack.Format(url.QueryEscape(encodedTrack)), nil, &track)
 	return
 }
 
-func (c *restClientImpl) DecodeTracks(ctx context.Context, encodedTracks []string) (tracks []lavalink.Track, err error) {
+func (c *RestClient) DecodeTracks(ctx context.Context, encodedTracks []string) (tracks []lavalink.Track, err error) {
 	err = c.doJSON(ctx, http.MethodPost, string(EndpointDecodeTracks), encodedTracks, &tracks)
 	return
 }
 
-func (c *restClientImpl) Do(rq *http.Request) (*http.Response, error) {
+func (c *RestClient) Do(rq *http.Request) (*http.Response, error) {
 	rq.Header.Set("Authorization", c.node.Config.Password)
 	rq.URL.Host = c.node.Config.Address
 	if c.node.Config.Secure {
@@ -143,7 +123,7 @@ func (c *restClientImpl) Do(rq *http.Request) (*http.Response, error) {
 	return c.httpClient.Do(rq)
 }
 
-func (c *restClientImpl) do(ctx context.Context, method string, path string, rqBody []byte) (int, []byte, error) {
+func (c *RestClient) do(ctx context.Context, method string, path string, rqBody []byte) (int, []byte, error) {
 	rq, err := http.NewRequestWithContext(ctx, method, path, bytes.NewReader(rqBody))
 	if err != nil {
 		return 0, nil, err
@@ -178,7 +158,7 @@ func (c *restClientImpl) do(ctx context.Context, method string, path string, rqB
 	return rs.StatusCode, rawBody, nil
 }
 
-func (c *restClientImpl) doJSON(ctx context.Context, method string, path string, rqBody any, rsBody any) error {
+func (c *RestClient) doJSON(ctx context.Context, method string, path string, rqBody any, rsBody any) error {
 	var rawRqBody []byte
 	if rqBody != nil {
 		var err error
