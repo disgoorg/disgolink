@@ -38,7 +38,7 @@ type PlayerUpdateEvent struct {
 	Player *Player
 }
 
-type PlayerStartTrackEvent struct {
+type PlayerTrackStartEvent struct {
 	*GenericEvent
 	lavalink.TrackStartEvent
 	Player *Player
@@ -62,19 +62,19 @@ type PlayerTrackStuckEvent struct {
 	Player *Player
 }
 
-type WebSocketClosedEvent struct {
+type PlayerWebSocketClosedEvent struct {
 	*GenericEvent
 	lavalink.WebSocketClosedEvent
 	Player *Player
 }
 
-type UnknownEvent struct {
+type UnknownPlayerEvent struct {
 	*GenericEvent
 	lavalink.UnknownEvent
 	Player *Player
 }
 
-type UnknownMessageEvent struct {
+type UnknownEvent struct {
 	*GenericEvent
 	lavalink.UnknownMessage
 }

@@ -363,7 +363,7 @@ func (n *Node) listen(conn *websocket.Conn) {
 
 			switch e := m.(type) {
 			case lavalink.TrackStartEvent:
-				n.Client.emitEvent(&PlayerStartTrackEvent{
+				n.Client.emitEvent(&PlayerTrackStartEvent{
 					GenericEvent:    newGenericEvent(n),
 					TrackStartEvent: e,
 					Player:          player,
@@ -391,14 +391,14 @@ func (n *Node) listen(conn *websocket.Conn) {
 				})
 
 			case lavalink.WebSocketClosedEvent:
-				n.Client.emitEvent(&WebSocketClosedEvent{
+				n.Client.emitEvent(&PlayerWebSocketClosedEvent{
 					GenericEvent:         newGenericEvent(n),
 					WebSocketClosedEvent: e,
 					Player:               player,
 				})
 
 			case lavalink.UnknownEvent:
-				n.Client.emitEvent(&UnknownEvent{
+				n.Client.emitEvent(&UnknownPlayerEvent{
 					GenericEvent: newGenericEvent(n),
 					UnknownEvent: e,
 					Player:       player,
@@ -411,7 +411,7 @@ func (n *Node) listen(conn *websocket.Conn) {
 					pl.OnOpInvocation(n, m.Data)
 				}
 			}
-			n.Client.emitEvent(&UnknownMessageEvent{
+			n.Client.emitEvent(&UnknownEvent{
 				GenericEvent:   newGenericEvent(n),
 				UnknownMessage: m,
 			})
