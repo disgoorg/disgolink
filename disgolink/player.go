@@ -254,6 +254,7 @@ func (p *playerImpl) OnVoiceStateUpdate(ctx context.Context, channelID *snowflak
 	p.channelID = channelID
 	if sessionID != p.voice.SessionID {
 		p.voice.SessionID = sessionID
+		p.voice.ChannelID = *channelID
 		if err := p.sendVoiceUpdate(ctx); err != nil {
 			p.logger.ErrorContext(ctx, "error while sending voice update", slog.Any("err", err))
 		}
@@ -261,6 +262,10 @@ func (p *playerImpl) OnVoiceStateUpdate(ctx context.Context, channelID *snowflak
 }
 
 func (p *playerImpl) sendVoiceUpdate(ctx context.Context) error {
+	if p.voice.SessionID == "" || p.voice.Token == "" || p.voice.Endpoint == "" || p.voice.ChannelID == 0 {
+		return nil
+	}
+
 	if _, err := p.Node().Rest().UpdatePlayer(ctx, p.node.SessionID(), p.guildID, lavalink.PlayerUpdate{
 		Voice: &p.voice,
 	}); err != nil {

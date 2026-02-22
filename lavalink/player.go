@@ -17,9 +17,10 @@ type Player struct {
 }
 
 type VoiceState struct {
-	Token     string `json:"token"`
-	Endpoint  string `json:"endpoint"`
-	SessionID string `json:"sessionId"`
+	Token     string       `json:"token"`
+	Endpoint  string       `json:"endpoint"`
+	SessionID string       `json:"sessionId"`
+	ChannelID snowflake.ID `json:"channelId"`
 }
 
 type PlayerState struct {
