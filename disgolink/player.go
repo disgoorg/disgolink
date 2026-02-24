@@ -52,14 +52,13 @@ type playerImpl struct {
 	node     Node
 	lavalink Client
 
-	guildID   snowflake.ID
-	channelID *snowflake.ID
-	track     *lavalink.Track
-	volume    int
-	paused    bool
-	state     lavalink.PlayerState
-	voice     lavalink.VoiceState
-	filters   lavalink.Filters
+	guildID snowflake.ID
+	track   *lavalink.Track
+	volume  int
+	paused  bool
+	state   lavalink.PlayerState
+	voice   lavalink.VoiceState
+	filters lavalink.Filters
 }
 
 func (p *playerImpl) GuildID() snowflake.ID {
@@ -67,7 +66,10 @@ func (p *playerImpl) GuildID() snowflake.ID {
 }
 
 func (p *playerImpl) ChannelID() *snowflake.ID {
-	return p.channelID
+	if p.voice.ChannelID == 0 {
+		return nil
+	}
+	return &p.voice.ChannelID
 }
 
 func (p *playerImpl) Track() *lavalink.Track {
@@ -243,7 +245,6 @@ func (p *playerImpl) OnVoiceServerUpdate(ctx context.Context, token string, endp
 
 func (p *playerImpl) OnVoiceStateUpdate(ctx context.Context, channelID *snowflake.ID, sessionID string) {
 	if channelID == nil {
-		p.channelID = nil
 		p.voice = lavalink.VoiceState{}
 		if err := p.Destroy(ctx); err != nil {
 			p.logger.ErrorContext(ctx, "error while destroying player", slog.Any("err", err))
@@ -251,10 +252,9 @@ func (p *playerImpl) OnVoiceStateUpdate(ctx context.Context, channelID *snowflak
 		p.lavalink.RemovePlayer(p.guildID)
 		return
 	}
-	p.channelID = channelID
+	p.voice.ChannelID = *channelID
 	if sessionID != p.voice.SessionID {
 		p.voice.SessionID = sessionID
-		p.voice.ChannelID = *channelID
 		if err := p.sendVoiceUpdate(ctx); err != nil {
 			p.logger.ErrorContext(ctx, "error while sending voice update", slog.Any("err", err))
 		}
