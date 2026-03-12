@@ -175,7 +175,7 @@ func (c *Client) Players() iter.Seq[*Player] {
 	}
 }
 
-func (c *Client) emitEvent(event Event) {
+func (c *Client) EmitEvent(event Event) {
 	c.listenersMu.Lock()
 	defer c.listenersMu.Unlock()
 

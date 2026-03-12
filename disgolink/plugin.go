@@ -16,6 +16,10 @@ type OpPlugin interface {
 	OnOpInvocation(node *Node, data json.RawMessage)
 }
 
+type OpPlugins interface {
+	OpPlugins() []OpPlugin
+}
+
 type EventPlugin interface {
 	Event() lavalink.EventType
 	OnEventInvocation(player *Player, data json.RawMessage)
@@ -28,7 +32,6 @@ type EventPlugins interface {
 type PluginEventHandler interface {
 	OnNodeOpen(node *Node)
 	OnNodeClose(node *Node)
-	OnNodeMessageIn(node *Node, data json.RawMessage)
 	OnNewPlayer(player *Player)
 	OnDestroyPlayer(player *Player)
 }

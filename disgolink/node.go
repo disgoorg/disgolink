@@ -265,8 +265,15 @@ func (n *Node) listen(conn *websocket.Conn) {
 		}
 
 		for plugin := range n.Client.Plugins() {
-			if pl, ok := plugin.(PluginEventHandler); ok {
-				pl.OnNodeMessageIn(n, data)
+			if pl, ok := plugin.(OpPlugin); ok && pl.Op() == message.Op() {
+				pl.OnOpInvocation(n, data)
+			}
+			if pl, ok := plugin.(OpPlugins); ok {
+				for _, pls := range pl.OpPlugins() {
+					if pls.Op() == message.Op() {
+						pls.OnOpInvocation(n, data)
+					}
+				}
 			}
 		}
 
@@ -284,7 +291,7 @@ func (n *Node) listen(conn *websocket.Conn) {
 					pl.OnNodeOpen(n)
 				}
 			}
-			n.Client.emitEvent(&ReadyEvent{
+			n.Client.EmitEvent(&ReadyEvent{
 				GenericEvent: newGenericEvent(n),
 				ReadyMessage: m,
 			})
@@ -293,7 +300,7 @@ func (n *Node) listen(conn *websocket.Conn) {
 			n.statsMu.Lock()
 			n.stats = m.Stats
 			n.statsMu.Unlock()
-			n.Client.emitEvent(&StatsEvent{
+			n.Client.EmitEvent(&StatsEvent{
 				GenericEvent: newGenericEvent(n),
 				StatsMessage: m,
 			})
@@ -304,7 +311,7 @@ func (n *Node) listen(conn *websocket.Conn) {
 				continue
 			}
 			player.OnPlayerUpdate(m.State)
-			n.Client.emitEvent(&PlayerUpdateEvent{
+			n.Client.EmitEvent(&PlayerUpdateEvent{
 				GenericEvent:        newGenericEvent(n),
 				PlayerUpdateMessage: m,
 				Player:              player,
@@ -319,42 +326,42 @@ func (n *Node) listen(conn *websocket.Conn) {
 
 			switch e := m.(type) {
 			case lavalink.TrackStartEvent:
-				n.Client.emitEvent(&PlayerTrackStartEvent{
+				n.Client.EmitEvent(&PlayerTrackStartEvent{
 					GenericEvent:    newGenericEvent(n),
 					TrackStartEvent: e,
 					Player:          player,
 				})
 
 			case lavalink.TrackEndEvent:
-				n.Client.emitEvent(&PlayerTrackEndEvent{
+				n.Client.EmitEvent(&PlayerTrackEndEvent{
 					GenericEvent:  newGenericEvent(n),
 					TrackEndEvent: e,
 					Player:        player,
 				})
 
 			case lavalink.TrackExceptionEvent:
-				n.Client.emitEvent(&PlayerTrackExceptionEvent{
+				n.Client.EmitEvent(&PlayerTrackExceptionEvent{
 					GenericEvent:        newGenericEvent(n),
 					TrackExceptionEvent: e,
 					Player:              player,
 				})
 
 			case lavalink.TrackStuckEvent:
-				n.Client.emitEvent(&PlayerTrackStuckEvent{
+				n.Client.EmitEvent(&PlayerTrackStuckEvent{
 					GenericEvent:    newGenericEvent(n),
 					TrackStuckEvent: e,
 					Player:          player,
 				})
 
 			case lavalink.WebSocketClosedEvent:
-				n.Client.emitEvent(&PlayerWebSocketClosedEvent{
+				n.Client.EmitEvent(&PlayerWebSocketClosedEvent{
 					GenericEvent:         newGenericEvent(n),
 					WebSocketClosedEvent: e,
 					Player:               player,
 				})
 
 			case lavalink.UnknownEvent:
-				n.Client.emitEvent(&UnknownPlayerEvent{
+				n.Client.EmitEvent(&UnknownPlayerEvent{
 					GenericEvent: newGenericEvent(n),
 					UnknownEvent: e,
 					Player:       player,
@@ -362,12 +369,7 @@ func (n *Node) listen(conn *websocket.Conn) {
 			}
 
 		case lavalink.UnknownMessage:
-			for plugin := range n.Client.Plugins() {
-				if pl, ok := plugin.(OpPlugin); ok {
-					pl.OnOpInvocation(n, m.Data)
-				}
-			}
-			n.Client.emitEvent(&UnknownEvent{
+			n.Client.EmitEvent(&UnknownEvent{
 				GenericEvent:   newGenericEvent(n),
 				UnknownMessage: m,
 			})
