@@ -61,9 +61,7 @@ func main() {
 
 	registerCommands(client)
 
-	b.Lavalink = disgolink.New(client.ApplicationID(),
-		disgolink.WithListenerFunc(b.onPlayerPause),
-		disgolink.WithListenerFunc(b.onPlayerResume),
+	b.Lavalink = disgolink.New(client.ApplicationID,
 		disgolink.WithListenerFunc(b.onTrackStart),
 		disgolink.WithListenerFunc(b.onTrackEnd),
 		disgolink.WithListenerFunc(b.onTrackException),
@@ -105,13 +103,13 @@ func main() {
 		slog.Error("failed to add node", slog.Any("err", err))
 		os.Exit(1)
 	}
-	version, err := node.Version(ctx)
+	version, err := node.Rest.Version(ctx)
 	if err != nil {
 		slog.Error("failed to get node version", slog.Any("err", err))
 		os.Exit(1)
 	}
 
-	slog.Info("DisGo example is now running. Press CTRL-C to exit.", slog.String("node_version", version), slog.String("node_session_id", node.SessionID()))
+	slog.Info("DisGo example is now running. Press CTRL-C to exit.", slog.String("node_version", version), slog.String("node_session_id", node.Config.SessionID))
 	s := make(chan os.Signal, 1)
 	signal.Notify(s, syscall.SIGINT, syscall.SIGTERM, os.Interrupt)
 	<-s

@@ -32,7 +32,7 @@ var (
 
 type Bot struct {
 	Session  *discordgo.Session
-	Lavalink disgolink.Client
+	Lavalink *disgolink.Client
 	Handlers map[string]func(event *discordgo.InteractionCreate, data discordgo.ApplicationCommandInteractionData) error
 	Queues   *QueueManager
 }
@@ -71,8 +71,6 @@ func main() {
 	registerCommands(session)
 
 	b.Lavalink = disgolink.New(snowflake.MustParse(session.State.User.ID),
-		disgolink.WithListenerFunc(b.onPlayerPause),
-		disgolink.WithListenerFunc(b.onPlayerResume),
 		disgolink.WithListenerFunc(b.onTrackStart),
 		disgolink.WithListenerFunc(b.onTrackEnd),
 		disgolink.WithListenerFunc(b.onTrackException),
@@ -101,7 +99,7 @@ func main() {
 	if err != nil {
 		log.Fatal(err)
 	}
-	version, err := node.Version(ctx)
+	version, err := node.Rest.Version(ctx)
 	if err != nil {
 		log.Fatal(err)
 	}

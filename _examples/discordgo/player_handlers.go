@@ -10,19 +10,11 @@ import (
 	"github.com/disgoorg/disgolink/v4/lavalink"
 )
 
-func (b *Bot) onPlayerPause(player disgolink.Player, event lavalink.PlayerPauseEvent) {
-	fmt.Printf("onPlayerPause: %v\n", event)
-}
-
-func (b *Bot) onPlayerResume(player disgolink.Player, event lavalink.PlayerResumeEvent) {
-	fmt.Printf("onPlayerResume: %v\n", event)
-}
-
-func (b *Bot) onTrackStart(player disgolink.Player, event lavalink.TrackStartEvent) {
+func (b *Bot) onTrackStart(event *disgolink.PlayerTrackStartEvent) {
 	fmt.Printf("onTrackStart: %v\n", event)
 }
 
-func (b *Bot) onTrackEnd(player disgolink.Player, event lavalink.TrackEndEvent) {
+func (b *Bot) onTrackEnd(event *disgolink.PlayerTrackEndEvent) {
 	fmt.Printf("onTrackEnd: %v\n", event)
 
 	if !event.Reason.MayStartNext() {
@@ -49,19 +41,19 @@ func (b *Bot) onTrackEnd(player disgolink.Player, event lavalink.TrackEndEvent) 
 	if !ok {
 		return
 	}
-	if err := player.Update(context.TODO(), lavalink.WithTrack(nextTrack)); err != nil {
+	if err := event.Player.Update(context.TODO(), disgolink.WithTrack(nextTrack)); err != nil {
 		log.Error("Failed to play next track: ", err)
 	}
 }
 
-func (b *Bot) onTrackException(player disgolink.Player, event lavalink.TrackExceptionEvent) {
+func (b *Bot) onTrackException(event *disgolink.PlayerTrackExceptionEvent) {
 	fmt.Printf("onTrackException: %v\n", event)
 }
 
-func (b *Bot) onTrackStuck(player disgolink.Player, event lavalink.TrackStuckEvent) {
+func (b *Bot) onTrackStuck(event *disgolink.PlayerTrackStuckEvent) {
 	fmt.Printf("onTrackStuck: %v\n", event)
 }
 
-func (b *Bot) onWebSocketClosed(player disgolink.Player, event lavalink.WebSocketClosedEvent) {
+func (b *Bot) onWebSocketClosed(event *disgolink.PlayerWebSocketClosedEvent) {
 	fmt.Printf("onWebSocketClosed: %v\n", event)
 }

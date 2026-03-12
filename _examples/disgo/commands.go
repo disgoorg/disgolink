@@ -154,7 +154,7 @@ var commands = []discord.ApplicationCommandCreate{
 	},
 }
 
-func registerCommands(client bot.Client) {
+func registerCommands(client *bot.Client) {
 	if err := handler.SyncCommands(client, commands, []snowflake.ID{GuildID}); err != nil {
 		slog.Error("error while registering commands", slog.Any("err", err))
 	}

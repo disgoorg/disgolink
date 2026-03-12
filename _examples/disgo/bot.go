@@ -21,8 +21,8 @@ func newBot() *Bot {
 }
 
 type Bot struct {
-	Client   bot.Client
-	Lavalink disgolink.Client
+	Client   *bot.Client
+	Lavalink *disgolink.Client
 	Handlers map[string]func(event *events.ApplicationCommandInteractionCreate, data discord.SlashCommandInteractionData) error
 	Queues   *QueueManager
 }
@@ -41,7 +41,7 @@ func (b *Bot) onApplicationCommand(event *events.ApplicationCommandInteractionCr
 }
 
 func (b *Bot) onVoiceStateUpdate(event *events.GuildVoiceStateUpdate) {
-	if event.VoiceState.UserID != b.Client.ApplicationID() {
+	if event.VoiceState.UserID != b.Client.ApplicationID {
 		return
 	}
 	b.Lavalink.OnVoiceStateUpdate(context.TODO(), event.VoiceState.GuildID, event.VoiceState.ChannelID, event.VoiceState.SessionID)

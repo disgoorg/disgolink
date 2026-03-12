@@ -2,25 +2,18 @@ package main
 
 import (
 	"context"
+	"fmt"
 	"log/slog"
 
 	"github.com/disgoorg/disgolink/v4/disgolink"
 	"github.com/disgoorg/disgolink/v4/lavalink"
 )
 
-func (b *Bot) onPlayerPause(player disgolink.Player, event lavalink.PlayerPauseEvent) {
-	slog.Info("player paused", slog.Any("event", event))
+func (b *Bot) onTrackStart(event *disgolink.PlayerTrackStartEvent) {
+	fmt.Printf("onTrackStart: %v\n", event)
 }
 
-func (b *Bot) onPlayerResume(player disgolink.Player, event lavalink.PlayerResumeEvent) {
-	slog.Info("player resumed", slog.Any("event", event))
-}
-
-func (b *Bot) onTrackStart(player disgolink.Player, event lavalink.TrackStartEvent) {
-	slog.Info("track started", slog.Any("event", event))
-}
-
-func (b *Bot) onTrackEnd(player disgolink.Player, event lavalink.TrackEndEvent) {
+func (b *Bot) onTrackEnd(event *disgolink.PlayerTrackEndEvent) {
 	if !event.Reason.MayStartNext() {
 		return
 	}
@@ -45,23 +38,27 @@ func (b *Bot) onTrackEnd(player disgolink.Player, event lavalink.TrackEndEvent) 
 	if !ok {
 		return
 	}
-	if err := player.Update(context.TODO(), lavalink.WithTrack(nextTrack)); err != nil {
+	if err := event.Player.Update(context.TODO(), disgolink.WithTrack(nextTrack)); err != nil {
 		slog.Error("Failed to play next track", slog.Any("err", err))
 	}
 }
 
-func (b *Bot) onTrackException(player disgolink.Player, event lavalink.TrackExceptionEvent) {
+func (b *Bot) onTrackException(event *disgolink.PlayerTrackExceptionEvent) {
 	slog.Info("track exception", slog.Any("event", event))
 }
 
-func (b *Bot) onTrackStuck(player disgolink.Player, event lavalink.TrackStuckEvent) {
+func (b *Bot) onTrackStuck(event *disgolink.PlayerTrackStuckEvent) {
 	slog.Info("track stuck", slog.Any("event", event))
 }
 
-func (b *Bot) onWebSocketClosed(player disgolink.Player, event lavalink.WebSocketClosedEvent) {
+func (b *Bot) onWebSocketClosed(event *disgolink.PlayerWebSocketClosedEvent) {
 	slog.Info("websocket closed", slog.Any("event", event))
 }
 
-func (b *Bot) onUnknownEvent(p disgolink.Player, e lavalink.UnknownEvent) {
-	slog.Info("unknown event", slog.Any("event", e.Type()), slog.String("data", string(e.Data)))
+func (b *Bot) onUnknownPlayerEvent(event *disgolink.UnknownPlayerEvent) {
+	slog.Info("unknown player event", slog.Any("op", event.Op()), slog.Any("event", event.Type()), slog.String("data", string(event.Data)))
+}
+
+func (b *Bot) onUnknownEvent(event *disgolink.UnknownEvent) {
+	slog.Info("unknown event", slog.Any("op", event.Op()), slog.String("data", string(event.Data)))
 }

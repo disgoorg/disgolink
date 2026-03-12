@@ -117,7 +117,7 @@ func (b *Bot) pause(event *discordgo.InteractionCreate, data discordgo.Applicati
 		})
 	}
 
-	if err := player.Update(context.TODO(), lavalink.WithPaused(!player.Paused())); err != nil {
+	if err := player.Update(context.TODO(), disgolink.WithPaused(!player.Paused)); err != nil {
 		return b.Session.InteractionRespond(event.Interaction, &discordgo.InteractionResponse{
 			Type: discordgo.InteractionResponseChannelMessageWithSource,
 			Data: &discordgo.InteractionResponseData{
@@ -127,7 +127,7 @@ func (b *Bot) pause(event *discordgo.InteractionCreate, data discordgo.Applicati
 	}
 
 	status := "playing"
-	if player.Paused() {
+	if player.Paused {
 		status = "paused"
 	}
 
@@ -178,7 +178,7 @@ func (b *Bot) nowPlaying(event *discordgo.InteractionCreate, data discordgo.Appl
 		})
 	}
 
-	track := player.Track()
+	track := player.Track
 	if track == nil {
 		return b.Session.InteractionRespond(event.Interaction, &discordgo.InteractionResponse{
 			Type: discordgo.InteractionResponseChannelMessageWithSource,
@@ -232,12 +232,12 @@ func (b *Bot) play(event *discordgo.InteractionCreate, data discordgo.Applicatio
 	defer cancel()
 
 	var toPlay *lavalink.Track
-	b.Lavalink.BestNode().LoadTracksHandler(ctx, identifier, disgolink.NewResultHandler(
+	b.Lavalink.BestNode().Rest.LoadTracksHandler(ctx, identifier, disgolink.NewTrackLoadingResultHandler(
 		func(track lavalink.Track) {
 			_, _ = b.Session.InteractionResponseEdit(event.Interaction, &discordgo.WebhookEdit{
 				Content: omit.Ptr(fmt.Sprintf("Loading track: [`%s`](<%s>)", track.Info.Title, *track.Info.URI)),
 			})
-			if player.Track() == nil {
+			if player.Track == nil {
 				toPlay = &track
 			} else {
 				queue.Add(track)
@@ -247,7 +247,7 @@ func (b *Bot) play(event *discordgo.InteractionCreate, data discordgo.Applicatio
 			_, _ = b.Session.InteractionResponseEdit(event.Interaction, &discordgo.WebhookEdit{
 				Content: omit.Ptr(fmt.Sprintf("Loaded playlist: `%s` with `%d` tracks", playlist.Info.Name, len(playlist.Tracks))),
 			})
-			if player.Track() == nil {
+			if player.Track == nil {
 				toPlay = &playlist.Tracks[0]
 				queue.Add(playlist.Tracks[1:]...)
 			} else {
@@ -258,7 +258,7 @@ func (b *Bot) play(event *discordgo.InteractionCreate, data discordgo.Applicatio
 			_, _ = b.Session.InteractionResponseEdit(event.Interaction, &discordgo.WebhookEdit{
 				Content: omit.Ptr(fmt.Sprintf("Loaded search result: [`%s`](<%s>)", tracks[0].Info.Title, *tracks[0].Info.URI)),
 			})
-			if player.Track() == nil {
+			if player.Track == nil {
 				toPlay = &tracks[0]
 			} else {
 				queue.Add(tracks[0])
@@ -283,5 +283,5 @@ func (b *Bot) play(event *discordgo.InteractionCreate, data discordgo.Applicatio
 		return err
 	}
 
-	return player.Update(context.TODO(), lavalink.WithTrack(*toPlay))
+	return player.Update(context.TODO(), disgolink.WithTrack(*toPlay))
 }

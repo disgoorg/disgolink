@@ -7,7 +7,7 @@ import (
 
 	"github.com/disgoorg/disgo/discord"
 	"github.com/disgoorg/disgo/events"
-	"github.com/disgoorg/json/v2"
+	"github.com/disgoorg/omit"
 
 	"github.com/disgoorg/disgolink/v4/disgolink"
 	"github.com/disgoorg/disgolink/v4/lavalink"
@@ -54,7 +54,7 @@ func (b *Bot) volume(event *events.ApplicationCommandInteractionCreate, data dis
 	}
 
 	volume := data.Int("volume")
-	if err := player.Update(context.TODO(), lavalink.WithVolume(volume)); err != nil {
+	if err := player.Update(context.TODO(), disgolink.WithVolume(volume)); err != nil {
 		return event.CreateMessage(discord.MessageCreate{
 			Content: fmt.Sprintf("Error while setting volume: `%s`", err),
 		})
@@ -79,7 +79,7 @@ func (b *Bot) seek(event *events.ApplicationCommandInteractionCreate, data disco
 		unit = 1
 	}
 	finalPosition := lavalink.Duration(position * unit)
-	if err := player.Update(context.TODO(), lavalink.WithPosition(finalPosition)); err != nil {
+	if err := player.Update(context.TODO(), disgolink.WithPosition(finalPosition)); err != nil {
 		return event.CreateMessage(discord.MessageCreate{
 			Content: fmt.Sprintf("Error while seeking: `%s`", err),
 		})
@@ -99,14 +99,14 @@ func (b *Bot) bassBoost(event *events.ApplicationCommandInteractionCreate, data 
 	}
 
 	enabled := data.Bool("enabled")
-	filters := player.Filters()
+	filters := player.Filters
 	if enabled {
 		filters.Equalizer = bassBoost
 	} else {
 		filters.Equalizer = nil
 	}
 
-	if err := player.Update(context.TODO(), lavalink.WithFilters(filters)); err != nil {
+	if err := player.Update(context.TODO(), disgolink.WithFilters(filters)); err != nil {
 		return event.CreateMessage(discord.MessageCreate{
 			Content: fmt.Sprintf("Error while setting bass boost: `%s`", err),
 		})
@@ -138,7 +138,7 @@ func (b *Bot) skip(event *events.ApplicationCommandInteractionCreate, data disco
 		})
 	}
 
-	if err := player.Update(context.TODO(), lavalink.WithTrack(track)); err != nil {
+	if err := player.Update(context.TODO(), disgolink.WithTrack(track)); err != nil {
 		return event.CreateMessage(discord.MessageCreate{
 			Content: fmt.Sprintf("Error while skipping track: `%s`", err),
 		})
@@ -203,9 +203,9 @@ func (b *Bot) queue(event *events.ApplicationCommandInteractionCreate, data disc
 
 func (b *Bot) players(event *events.ApplicationCommandInteractionCreate, data discord.SlashCommandInteractionData) error {
 	var description string
-	b.Lavalink.ForPlayers(func(player disgolink.Player) {
-		description += fmt.Sprintf("GetGuildID: `%s`\n", player.GuildID())
-	})
+	for player := range b.Lavalink.Players() {
+		description += fmt.Sprintf("GetGuildID: `%s`\n", player.GuildID)
+	}
 
 	return event.CreateMessage(discord.MessageCreate{
 		Content: fmt.Sprintf("Players:\n%s", description),
@@ -220,14 +220,14 @@ func (b *Bot) pause(event *events.ApplicationCommandInteractionCreate, data disc
 		})
 	}
 
-	if err := player.Update(context.TODO(), lavalink.WithPaused(!player.Paused())); err != nil {
+	if err := player.Update(context.TODO(), disgolink.WithPaused(!player.Paused)); err != nil {
 		return event.CreateMessage(discord.MessageCreate{
 			Content: fmt.Sprintf("Error while pausing: `%s`", err),
 		})
 	}
 
 	status := "playing"
-	if player.Paused() {
+	if player.Paused {
 		status = "paused"
 	}
 	return event.CreateMessage(discord.MessageCreate{
@@ -243,7 +243,7 @@ func (b *Bot) stop(event *events.ApplicationCommandInteractionCreate, data disco
 		})
 	}
 
-	if err := player.Update(context.TODO(), lavalink.WithNullTrack()); err != nil {
+	if err := player.Update(context.TODO(), disgolink.WithNullTrack()); err != nil {
 		return event.CreateMessage(discord.MessageCreate{
 			Content: fmt.Sprintf("Error while stopping: `%s`", err),
 		})
@@ -281,7 +281,7 @@ func (b *Bot) nowPlaying(event *events.ApplicationCommandInteractionCreate, data
 		})
 	}
 
-	track := player.Track()
+	track := player.Track
 	if track == nil {
 		return event.CreateMessage(discord.MessageCreate{
 			Content: "No track found",
@@ -308,7 +308,7 @@ func (b *Bot) play(event *events.ApplicationCommandInteractionCreate, data disco
 		identifier = lavalink.SearchTypeYouTube.Apply(identifier)
 	}
 
-	voiceState, ok := b.Client.Caches().VoiceState(*event.GuildID(), event.User().ID)
+	voiceState, ok := b.Client.Caches.VoiceState(*event.GuildID(), event.User().ID)
 	if !ok {
 		return event.CreateMessage(discord.MessageCreate{
 			Content: "You need to be in a voice channel to use this command",
@@ -323,33 +323,33 @@ func (b *Bot) play(event *events.ApplicationCommandInteractionCreate, data disco
 	defer cancel()
 
 	var toPlay *lavalink.Track
-	b.Lavalink.BestNode().LoadTracksHandler(ctx, identifier, disgolink.NewResultHandler(
+	b.Lavalink.BestNode().Rest.LoadTracksHandler(ctx, identifier, disgolink.NewTrackLoadingResultHandler(
 		func(track lavalink.Track) {
-			_, _ = b.Client.Rest().UpdateInteractionResponse(event.ApplicationID(), event.Token(), discord.MessageUpdate{
-				Content: json.Ptr(fmt.Sprintf("Loaded track: [`%s`](<%s>)", track.Info.Title, *track.Info.URI)),
+			_, _ = b.Client.Rest.UpdateInteractionResponse(event.ApplicationID(), event.Token(), discord.MessageUpdate{
+				Content: omit.Ptr(fmt.Sprintf("Loaded track: [`%s`](<%s>)", track.Info.Title, *track.Info.URI)),
 			})
 			toPlay = &track
 		},
 		func(playlist lavalink.Playlist) {
-			_, _ = b.Client.Rest().UpdateInteractionResponse(event.ApplicationID(), event.Token(), discord.MessageUpdate{
-				Content: json.Ptr(fmt.Sprintf("Loaded playlist: `%s` with `%d` tracks", playlist.Info.Name, len(playlist.Tracks))),
+			_, _ = b.Client.Rest.UpdateInteractionResponse(event.ApplicationID(), event.Token(), discord.MessageUpdate{
+				Content: omit.Ptr(fmt.Sprintf("Loaded playlist: `%s` with `%d` tracks", playlist.Info.Name, len(playlist.Tracks))),
 			})
 			toPlay = &playlist.Tracks[0]
 		},
 		func(tracks []lavalink.Track) {
-			_, _ = b.Client.Rest().UpdateInteractionResponse(event.ApplicationID(), event.Token(), discord.MessageUpdate{
-				Content: json.Ptr(fmt.Sprintf("Loaded search result: [`%s`](<%s>)", tracks[0].Info.Title, *tracks[0].Info.URI)),
+			_, _ = b.Client.Rest.UpdateInteractionResponse(event.ApplicationID(), event.Token(), discord.MessageUpdate{
+				Content: omit.Ptr(fmt.Sprintf("Loaded search result: [`%s`](<%s>)", tracks[0].Info.Title, *tracks[0].Info.URI)),
 			})
 			toPlay = &tracks[0]
 		},
 		func() {
-			_, _ = b.Client.Rest().UpdateInteractionResponse(event.ApplicationID(), event.Token(), discord.MessageUpdate{
-				Content: json.Ptr(fmt.Sprintf("Nothing found for: `%s`", identifier)),
+			_, _ = b.Client.Rest.UpdateInteractionResponse(event.ApplicationID(), event.Token(), discord.MessageUpdate{
+				Content: omit.Ptr(fmt.Sprintf("Nothing found for: `%s`", identifier)),
 			})
 		},
 		func(err error) {
-			_, _ = b.Client.Rest().UpdateInteractionResponse(event.ApplicationID(), event.Token(), discord.MessageUpdate{
-				Content: json.Ptr(fmt.Sprintf("Error while looking up query: `%s`", err)),
+			_, _ = b.Client.Rest.UpdateInteractionResponse(event.ApplicationID(), event.Token(), discord.MessageUpdate{
+				Content: omit.Ptr(fmt.Sprintf("Error while looking up query: `%s`", err)),
 			})
 		},
 	))
@@ -361,5 +361,5 @@ func (b *Bot) play(event *events.ApplicationCommandInteractionCreate, data disco
 		return err
 	}
 
-	return b.Lavalink.Player(*event.GuildID()).Update(context.TODO(), lavalink.WithTrack(*toPlay))
+	return b.Lavalink.Player(*event.GuildID()).Update(context.TODO(), disgolink.WithTrack(*toPlay))
 }
