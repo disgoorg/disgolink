@@ -96,56 +96,6 @@ func (n *Node) Stats() lavalink.Stats {
 	return n.stats
 }
 
-func (n *Node) Version(ctx context.Context) (string, error) {
-	return n.Rest.Version(ctx)
-}
-
-func (n *Node) Info(ctx context.Context) (*lavalink.Info, error) {
-	return n.Rest.Info(ctx)
-}
-
-func (n *Node) Update(ctx context.Context, update lavalink.SessionUpdate) error {
-	_, err := n.Rest.UpdateSession(ctx, n.Config.SessionID, update)
-	return err
-}
-
-func (n *Node) LoadTracks(ctx context.Context, identifier string) (*lavalink.LoadResult, error) {
-	return n.Rest.LoadTracks(ctx, identifier)
-}
-
-func (n *Node) LoadTracksHandler(ctx context.Context, identifier string, handler AudioLoadResultHandler) {
-	result, err := n.LoadTracks(ctx, identifier)
-	if err != nil {
-		handler.LoadFailed(err)
-		return
-	}
-
-	switch d := result.Data.(type) {
-	case lavalink.Track:
-		handler.TrackLoaded(d)
-
-	case lavalink.Playlist:
-		handler.PlaylistLoaded(d)
-
-	case lavalink.Search:
-		handler.SearchResultLoaded(d)
-
-	case lavalink.Empty:
-		handler.NoMatches()
-
-	case lavalink.Exception:
-		handler.LoadFailed(d)
-	}
-}
-
-func (n *Node) DecodeTrack(ctx context.Context, encodedTrack string) (*lavalink.Track, error) {
-	return n.Rest.DecodeTrack(ctx, encodedTrack)
-}
-
-func (n *Node) DecodeTracks(ctx context.Context, encodedTracks []string) ([]lavalink.Track, error) {
-	return n.Rest.DecodeTracks(ctx, encodedTracks)
-}
-
 func (n *Node) Open(ctx context.Context) error {
 	return n.doReconnect(ctx)
 }
@@ -154,11 +104,15 @@ func (n *Node) open(ctx context.Context) error {
 	n.logger.DebugContext(ctx, "opening node connection")
 
 	n.connMu.Lock()
+	defer n.connMu.Unlock()
 	if n.conn != nil {
-		n.connMu.Unlock()
 		return ErrNodeAlreadyConnected
 	}
 	n.statusMu.Lock()
+	if n.status != StatusDisconnected {
+		n.statusMu.Unlock()
+		return ErrNodeAlreadyConnected
+	}
 	n.status = StatusConnecting
 	n.statusMu.Unlock()
 
@@ -187,7 +141,6 @@ func (n *Node) open(ctx context.Context) error {
 			body = data
 		}
 		n.logger.ErrorContext(ctx, "error connecting to the node", slog.Any("err", err), slog.String("body", string(body)))
-		n.connMu.Unlock()
 		return err
 	}
 
@@ -196,7 +149,6 @@ func (n *Node) open(ctx context.Context) error {
 	})
 
 	n.conn = conn
-	n.connMu.Unlock()
 
 	n.statusMu.Lock()
 	n.status = StatusConnected
@@ -211,6 +163,14 @@ func (n *Node) Close() {
 	n.connMu.Lock()
 	defer n.connMu.Unlock()
 
+	n.statusMu.Lock()
+	if n.status != StatusDisconnected {
+		n.statusMu.Unlock()
+		return
+	}
+	n.status = StatusDisconnected
+	n.statusMu.Unlock()
+
 	for plugin := range n.Client.Plugins() {
 		if pl, ok := plugin.(PluginEventHandler); ok {
 			pl.OnNodeClose(n)
@@ -220,10 +180,6 @@ func (n *Node) Close() {
 		_ = n.conn.Close()
 		n.conn = nil
 	}
-	n.statsMu.Lock()
-	n.status = StatusDisconnected
-	n.statusMu.Unlock()
-
 }
 
 func (n *Node) doReconnect(ctx context.Context) error {

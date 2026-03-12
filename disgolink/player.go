@@ -29,13 +29,13 @@ type Player struct {
 	Node   *Node
 	Client *Client
 
-	GuildID   snowflake.ID
-	Track     *lavalink.Track
-	Volume    int
-	Paused    bool
-	State     lavalink.PlayerState
-	Voice     lavalink.VoiceState
-	Filters   lavalink.Filters
+	GuildID snowflake.ID
+	Track   *lavalink.Track
+	Volume  int
+	Paused  bool
+	State   lavalink.PlayerState
+	Voice   lavalink.VoiceState
+	Filters lavalink.Filters
 }
 
 func (p *Player) Position() lavalink.Duration {
@@ -153,7 +153,7 @@ func (p *Player) OnVoiceStateUpdate(ctx context.Context, channelID *snowflake.ID
 	}
 	p.Voice.ChannelID = *channelID
 	if sessionID != p.Voice.SessionID {
-		p.voice.SessionID = sessionID
+		p.Voice.SessionID = sessionID
 		if err := p.sendVoiceUpdate(ctx); err != nil {
 			p.logger.ErrorContext(ctx, "error while sending voice update", slog.Any("err", err))
 		}

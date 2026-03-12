@@ -72,34 +72,59 @@ func (c *RestClient) Stats(ctx context.Context) (stats *lavalink.Stats, err erro
 	return
 }
 
-func (c *RestClient) UpdateSession(ctx context.Context, sessionID string, sessionUpdate lavalink.SessionUpdate) (session *lavalink.Session, err error) {
-	err = c.doJSON(ctx, http.MethodPatch, EndpointUpdateSession.Format(sessionID), sessionUpdate, &session)
+func (c *RestClient) UpdateSession(ctx context.Context, sessionUpdate lavalink.SessionUpdate) (session *lavalink.Session, err error) {
+	err = c.doJSON(ctx, http.MethodPatch, EndpointUpdateSession.Format(c.node.Config.SessionID), sessionUpdate, &session)
 	return
 }
 
-func (c *RestClient) Players(ctx context.Context, sessionID string) (players []lavalink.Player, err error) {
-	err = c.doJSON(ctx, http.MethodGet, EndpointPlayers.Format(sessionID), nil, &players)
+func (c *RestClient) Players(ctx context.Context) (players []lavalink.Player, err error) {
+	err = c.doJSON(ctx, http.MethodGet, EndpointPlayers.Format(c.node.Config.SessionID), nil, &players)
 	return
 }
 
-func (c *RestClient) Player(ctx context.Context, sessionID string, guildID snowflake.ID) (player *lavalink.Player, err error) {
-	err = c.doJSON(ctx, http.MethodGet, EndpointPlayer.Format(sessionID, guildID), nil, &player)
+func (c *RestClient) Player(ctx context.Context, guildID snowflake.ID) (player *lavalink.Player, err error) {
+	err = c.doJSON(ctx, http.MethodGet, EndpointPlayer.Format(c.node.Config.SessionID, guildID), nil, &player)
 	return
 }
 
-func (c *RestClient) UpdatePlayer(ctx context.Context, sessionID string, guildID snowflake.ID, playerUpdate lavalink.PlayerUpdate) (player *lavalink.Player, err error) {
-	err = c.doJSON(ctx, http.MethodPatch, EndpointUpdatePlayer.Format(sessionID, guildID, playerUpdate.NoReplace), playerUpdate, &player)
+func (c *RestClient) UpdatePlayer(ctx context.Context, guildID snowflake.ID, playerUpdate lavalink.PlayerUpdate) (player *lavalink.Player, err error) {
+	err = c.doJSON(ctx, http.MethodPatch, EndpointUpdatePlayer.Format(c.node.Config.SessionID, guildID, playerUpdate.NoReplace), playerUpdate, &player)
 	return
 }
 
-func (c *RestClient) DestroyPlayer(ctx context.Context, sessionID string, guildID snowflake.ID) error {
-	_, _, err := c.do(ctx, http.MethodDelete, EndpointDestroyPlayer.Format(sessionID, guildID), nil)
+func (c *RestClient) DestroyPlayer(ctx context.Context, guildID snowflake.ID) error {
+	_, _, err := c.do(ctx, http.MethodDelete, EndpointDestroyPlayer.Format(c.node.Config.SessionID, guildID), nil)
 	return err
 }
 
 func (c *RestClient) LoadTracks(ctx context.Context, identifier string) (result *lavalink.LoadResult, err error) {
 	err = c.doJSON(ctx, http.MethodGet, EndpointLoadTracks.Format(url.QueryEscape(identifier)), nil, &result)
 	return
+}
+
+func (c *RestClient) LoadTracksHandler(ctx context.Context, identifier string, handler TrackLoadingResultHandler) {
+	result, err := c.LoadTracks(ctx, identifier)
+	if err != nil {
+		handler.OnError(err)
+		return
+	}
+
+	switch d := result.Data.(type) {
+	case lavalink.Track:
+		handler.OnTrack(d)
+
+	case lavalink.Playlist:
+		handler.OnPlaylist(d)
+
+	case lavalink.Search:
+		handler.OnSearch(d)
+
+	case lavalink.Empty:
+		handler.OnEmpty()
+
+	case lavalink.Exception:
+		handler.OnError(d)
+	}
 }
 
 func (c *RestClient) DecodeTrack(ctx context.Context, encodedTrack string) (track *lavalink.Track, err error) {

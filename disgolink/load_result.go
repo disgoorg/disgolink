@@ -2,56 +2,56 @@ package disgolink
 
 import "github.com/disgoorg/disgolink/v4/lavalink"
 
-type AudioLoadResultHandler interface {
-	TrackLoaded(track lavalink.Track)
-	PlaylistLoaded(playlist lavalink.Playlist)
-	SearchResultLoaded(tracks []lavalink.Track)
-	NoMatches()
-	LoadFailed(err error)
+type TrackLoadingResultHandler interface {
+	OnTrack(track lavalink.Track)
+	OnPlaylist(playlist lavalink.Playlist)
+	OnSearch(tracks []lavalink.Track)
+	OnEmpty()
+	OnError(err error)
 }
 
-var _ AudioLoadResultHandler = (*FunctionalResultHandler)(nil)
+var _ TrackLoadingResultHandler = (*functionalTrackLoadingResultHandler)(nil)
 
-func NewResultHandler(trackLoaded func(track lavalink.Track), playlistLoaded func(playlist lavalink.Playlist), searchResultLoaded func(tracks []lavalink.Track), noMatches func(), loadFailed func(err error)) AudioLoadResultHandler {
-	return FunctionalResultHandler{
-		trackLoaded:        trackLoaded,
-		playlistLoaded:     playlistLoaded,
-		searchResultLoaded: searchResultLoaded,
-		noMatches:          noMatches,
-		loadFailed:         loadFailed,
+func NewTrackLoadingResultHandler(trackLoaded func(track lavalink.Track), playlistLoaded func(playlist lavalink.Playlist), searchResultLoaded func(tracks []lavalink.Track), noMatches func(), loadFailed func(err error)) TrackLoadingResultHandler {
+	return functionalTrackLoadingResultHandler{
+		onTrack:    trackLoaded,
+		onPlaylist: playlistLoaded,
+		onSearch:   searchResultLoaded,
+		onEmpty:    noMatches,
+		onError:    loadFailed,
 	}
-}
-
-type FunctionalResultHandler struct {
-	trackLoaded        func(track lavalink.Track)
-	playlistLoaded     func(playlist lavalink.Playlist)
-	searchResultLoaded func(tracks []lavalink.Track)
-	noMatches          func()
-	loadFailed         func(err error)
 }
 
-func (h FunctionalResultHandler) TrackLoaded(track lavalink.Track) {
-	if h.trackLoaded != nil {
-		h.trackLoaded(track)
+type functionalTrackLoadingResultHandler struct {
+	onTrack    func(track lavalink.Track)
+	onPlaylist func(playlist lavalink.Playlist)
+	onSearch   func(tracks []lavalink.Track)
+	onEmpty    func()
+	onError    func(err error)
+}
+
+func (h functionalTrackLoadingResultHandler) OnTrack(track lavalink.Track) {
+	if h.onTrack != nil {
+		h.onTrack(track)
 	}
 }
-func (h FunctionalResultHandler) PlaylistLoaded(playlist lavalink.Playlist) {
-	if h.playlistLoaded != nil {
-		h.playlistLoaded(playlist)
+func (h functionalTrackLoadingResultHandler) OnPlaylist(playlist lavalink.Playlist) {
+	if h.onPlaylist != nil {
+		h.onPlaylist(playlist)
 	}
 }
-func (h FunctionalResultHandler) SearchResultLoaded(tracks []lavalink.Track) {
-	if h.searchResultLoaded != nil {
-		h.searchResultLoaded(tracks)
+func (h functionalTrackLoadingResultHandler) OnSearch(tracks []lavalink.Track) {
+	if h.onSearch != nil {
+		h.onSearch(tracks)
 	}
 }
-func (h FunctionalResultHandler) NoMatches() {
-	if h.noMatches != nil {
-		h.noMatches()
+func (h functionalTrackLoadingResultHandler) OnEmpty() {
+	if h.onEmpty != nil {
+		h.onEmpty()
 	}
 }
-func (h FunctionalResultHandler) LoadFailed(err error) {
-	if h.loadFailed != nil {
-		h.loadFailed(err)
+func (h functionalTrackLoadingResultHandler) OnError(err error) {
+	if h.onError != nil {
+		h.onError(err)
 	}
 }
