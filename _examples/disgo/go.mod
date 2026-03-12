@@ -4,7 +4,7 @@ go 1.25.0
 
 require (
 	github.com/disgoorg/disgo v0.19.2
-	github.com/disgoorg/disgolink/v4 v4.0.0-20260312191035-7e43e19fdb22
+	github.com/disgoorg/disgolink/v4 v4.0.0-20260312192103-c1eeff348743
 	github.com/disgoorg/omit v1.0.0
 	github.com/disgoorg/snowflake/v2 v2.0.3
 )
