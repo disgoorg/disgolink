@@ -165,7 +165,9 @@ func (c *RestClient) do(ctx context.Context, method string, path string, rqBody 
 		return 0, nil, err
 	}
 
-	defer rs.Body.Close()
+	defer func() {
+		_ = rs.Body.Close()
+	}()
 	rawBody, err := io.ReadAll(rs.Body)
 	c.logger.DebugContext(ctx, "received response", slog.String("path", path), slog.Int("status_code", rs.StatusCode), slog.String("body", string(rawBody)))
 	if err != nil {
