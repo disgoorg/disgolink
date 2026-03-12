@@ -63,7 +63,7 @@ func (p *Player) Update(ctx context.Context, opts ...PlayerUpdateOpt) error {
 	update := defaultPlayerUpdate()
 	playerUpdateApply(&update, opts)
 
-	updatedPlayer, err := p.Node.Rest.UpdatePlayer(ctx, p.Node.Config.SessionID, p.GuildID, update)
+	updatedPlayer, err := p.Node.Rest.UpdatePlayer(ctx, p.GuildID, update)
 	if err != nil {
 		return err
 	}
@@ -77,7 +77,7 @@ func (p *Player) Update(ctx context.Context, opts ...PlayerUpdateOpt) error {
 }
 
 func (p *Player) Destroy(ctx context.Context) error {
-	if err := p.Node.Rest.DestroyPlayer(ctx, p.Node.Config.SessionID, p.GuildID); err != nil {
+	if err := p.Node.Rest.DestroyPlayer(ctx, p.GuildID); err != nil {
 		return err
 	}
 
@@ -165,7 +165,7 @@ func (p *Player) sendVoiceUpdate(ctx context.Context) error {
 		return nil
 	}
 
-	if _, err := p.Node.Rest.UpdatePlayer(ctx, p.Node.Config.SessionID, p.GuildID, lavalink.PlayerUpdate{
+	if _, err := p.Node.Rest.UpdatePlayer(ctx, p.GuildID, lavalink.PlayerUpdate{
 		Voice: &p.Voice,
 	}); err != nil {
 		return fmt.Errorf("error while sending voice update: %w", err)
