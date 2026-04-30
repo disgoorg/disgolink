@@ -345,7 +345,7 @@ loop:
 		m, err := lavalink.UnmarshalMessage(data)
 		if err != nil {
 			n.logger.Error("error while unmarshalling ws data", slog.Any("err", err))
-			return
+			continue
 		}
 
 		switch message := m.(type) {
