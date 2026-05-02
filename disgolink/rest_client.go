@@ -139,17 +139,17 @@ func (c *RestClient) DecodeTracks(ctx context.Context, encodedTracks []string) (
 
 func (c *RestClient) Do(rq *http.Request) (*http.Response, error) {
 	rq.Header.Set("Authorization", c.node.Config.Password)
-	rq.URL.Host = c.node.Config.Address
-	if c.node.Config.Secure {
-		rq.URL.Scheme = "https"
-	} else {
-		rq.URL.Scheme = "http"
-	}
 	return c.httpClient.Do(rq)
 }
 
 func (c *RestClient) do(ctx context.Context, method string, path string, rqBody []byte) (int, []byte, error) {
-	rq, err := http.NewRequestWithContext(ctx, method, path, bytes.NewReader(rqBody))
+	scheme := "http"
+	if c.node.Config.Secure {
+		scheme += "s"
+	}
+	fullURL := fmt.Sprintf("%s://%s%s", scheme, c.node.Config.Address, path)
+
+	rq, err := http.NewRequestWithContext(ctx, method, fullURL, bytes.NewReader(rqBody))
 	if err != nil {
 		return 0, nil, err
 	}
