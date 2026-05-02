@@ -144,9 +144,9 @@ You can listen for following lavalink events
 for this add and event listener for each event to your `Client` instance when you create it or with `Client.AddEventListener`
 ```go
 lavalinkClient := disgolink.New(userID,
+    disgolink.WithListenerFunc(onReady),
+    disgolink.WithListenerFunc(onStats),
     disgolink.WithListenerFunc(onPlayerUpdate),
-    disgolink.WithListenerFunc(onPlayerPause),
-	disgolink.WithListenerFunc(onPlayerResume),
 	disgolink.WithListenerFunc(onTrackStart),
 	disgolink.WithListenerFunc(onTrackEnd),
 	disgolink.WithListenerFunc(onTrackException),
@@ -154,35 +154,35 @@ lavalinkClient := disgolink.New(userID,
 	disgolink.WithListenerFunc(onWebSocketClosed),
 )
 
-func onPlayerUpdate(player disgolink.Player, event lavalink.PlayerUpdateMessage) {
+func onReady(event *disgolink.ReadyEvent) {
     // do something with the event
 }
 
-func onPlayerPause(player disgolink.Player, event lavalink.PlayerPauseEvent) {
+func onStats(event *disgolink.StatsEvent) {
     // do something with the event
 }
 
-func onPlayerResume(player disgolink.Player, event lavalink.PlayerResumeEvent) {
+func onPlayerUpdate(event *disgolink.PlayerUpdateEvent) {
     // do something with the event
 }
 
-func onTrackStart(player disgolink.Player, event lavalink.TrackStartEvent) {
+func onTrackStart(event *disgolink.PlayerTrackStartEvent) {
     // do something with the event
 }
 
-func onTrackEnd(player disgolink.Player, event lavalink.TrackEndEvent) {
+func onTrackEnd(event *disgolink.PlayerTrackEndEvent) {
     // do something with the event
 }
 
-func onTrackException(player disgolink.Player, event lavalink.TrackExceptionEvent) {
+func onTrackException(event *disgolink.PlayerTrackExceptionEvent) {
     // do something with the event
 }
 
-func onTrackStuck(player disgolink.Player, event lavalink.TrackStuckEvent) {
+func onTrackStuck(event *disgolink.PlayerTrackStuckEvent) {
     // do something with the event
 }
 
-func onWebSocketClosed(player disgolink.Player, event lavalink.WebSocketClosedEvent) {
+func onWebSocketClosed(event *disgolink.PlayerWebSocketClosedEvent) {
     // do something with the event
 }
 ```
