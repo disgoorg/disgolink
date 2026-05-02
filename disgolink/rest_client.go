@@ -198,10 +198,10 @@ func (c *RestClient) doJSON(ctx context.Context, method string, path string, rqB
 	if err != nil {
 		return err
 	}
-	if statusCode != http.StatusNoContent {
+	if statusCode != http.StatusNoContent && rsBody != nil {
 		if err = json.Unmarshal(rawBody, rsBody); err != nil {
 			return fmt.Errorf("failed to unmarshal response body: %w", err)
 		}
 	}
-	return json.Unmarshal(rawBody, rsBody)
+	return nil
 }
