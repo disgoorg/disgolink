@@ -164,7 +164,7 @@ func (n *Node) Close() {
 	defer n.connMu.Unlock()
 
 	n.statusMu.Lock()
-	if n.status != StatusDisconnected {
+	if n.status == StatusDisconnected {
 		n.statusMu.Unlock()
 		return
 	}
