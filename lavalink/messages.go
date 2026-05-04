@@ -141,7 +141,7 @@ type Event interface {
 
 type TrackStartEvent struct {
 	Track   Track        `json:"track"`
-	GuildID snowflake.ID `json:"guildID"`
+	GuildID snowflake.ID `json:"guildId"`
 }
 
 func (TrackStartEvent) Op() Op                     { return OpEvent }
@@ -151,7 +151,7 @@ func (e TrackStartEvent) GetGuildID() snowflake.ID { return e.GuildID }
 type TrackEndEvent struct {
 	Track   Track          `json:"track"`
 	Reason  TrackEndReason `json:"reason"`
-	GuildID snowflake.ID   `json:"guildID"`
+	GuildID snowflake.ID   `json:"guildId"`
 }
 
 func (TrackEndEvent) Op() Op                     { return OpEvent }
@@ -180,7 +180,7 @@ func (e TrackEndReason) MayStartNext() bool {
 type TrackExceptionEvent struct {
 	Track     Track        `json:"track"`
 	Exception Exception    `json:"exception"`
-	GuildID   snowflake.ID `json:"guildID"`
+	GuildID   snowflake.ID `json:"guildId"`
 }
 
 func (TrackExceptionEvent) Op() Op                     { return OpEvent }
@@ -190,7 +190,7 @@ func (e TrackExceptionEvent) GetGuildID() snowflake.ID { return e.GuildID }
 type TrackStuckEvent struct {
 	Track     Track        `json:"track"`
 	Threshold Duration     `json:"thresholdMs"`
-	GuildID   snowflake.ID `json:"guildID"`
+	GuildID   snowflake.ID `json:"guildId"`
 }
 
 func (TrackStuckEvent) Op() Op                     { return OpEvent }
@@ -201,7 +201,7 @@ type WebSocketClosedEvent struct {
 	Code     int          `json:"code"`
 	Reason   string       `json:"reason"`
 	ByRemote bool         `json:"byRemote"`
-	GuildID  snowflake.ID `json:"guildID"`
+	GuildID  snowflake.ID `json:"guildId"`
 }
 
 func (WebSocketClosedEvent) Op() Op                     { return OpEvent }
@@ -210,7 +210,7 @@ func (e WebSocketClosedEvent) GetGuildID() snowflake.ID { return e.GuildID }
 
 type UnknownEvent struct {
 	EventType EventType       `json:"type"`
-	GuildID   snowflake.ID    `json:"guildID"`
+	GuildID   snowflake.ID    `json:"guildId"`
 	Data      json.RawMessage `json:"-"`
 }
 
