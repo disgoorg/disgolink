@@ -11,34 +11,44 @@ func makeStats(systemLoad float64, cores int) Stats {
 	}
 }
 
-func TestStats_Better_LowerLoadWins(t *testing.T) {
-	low := makeStats(0.1, 4)  // 10% load
-	high := makeStats(0.8, 4) // 80% load
-
-	if !low.Better(high) {
-		t.Error("low-load node should be better than high-load node")
+func TestStats_Better(t *testing.T) {
+	tests := []struct {
+		name  string
+		self  Stats
+		other Stats
+		want  bool
+	}{
+		{
+			name:  "lower load wins",
+			self:  makeStats(0.1, 4),
+			other: makeStats(0.8, 4),
+			want:  true,
+		},
+		{
+			name:  "higher load loses",
+			self:  makeStats(0.8, 4),
+			other: makeStats(0.1, 4),
+			want:  false,
+		},
+		{
+			name:  "equal load does not displace",
+			self:  makeStats(0.5, 4),
+			other: makeStats(0.5, 4),
+			want:  false,
+		},
+		{
+			name:  "same load across more cores is better",
+			self:  makeStats(0.5, 8),
+			other: makeStats(0.5, 2),
+			want:  true,
+		},
 	}
-	if high.Better(low) {
-		t.Error("high-load node should not be better than low-load node")
-	}
-}
 
-func TestStats_Better_EqualLoad(t *testing.T) {
-	a := makeStats(0.5, 4)
-	b := makeStats(0.5, 4)
-
-	if a.Better(b) {
-		t.Error("equal load nodes should not displace each other")
-	}
-}
-
-func TestStats_Better_DifferentCoreCount(t *testing.T) {
-	// 50% load on 8 cores = 6.25% per core
-	// 50% load on 2 cores = 25% per core
-	manycores := makeStats(0.5, 8)
-	fewcores := makeStats(0.5, 2)
-
-	if !manycores.Better(fewcores) {
-		t.Error("same load spread across more cores should be better")
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			if got := test.self.Better(test.other); got != test.want {
+				t.Errorf("Better() = %v, want %v", got, test.want)
+			}
+		})
 	}
 }
