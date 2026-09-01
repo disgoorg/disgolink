@@ -207,8 +207,8 @@ Here is a list of plugins(you can pr your own to here):
 ## Examples
 
 You can find examples under 
-* disgo: [_example](https://github.com/disgoorg/disgolink/tree/v2/_examples/disgo)
-* discordgo:   [_examples](https://github.com/disgoorg/disgolink/tree/v2/_examples/discordgo)
+* disgo: [_example](https://github.com/disgoorg/disgolink/tree/v4/_examples/disgo)
+* discordgo:   [_examples](https://github.com/disgoorg/disgolink/tree/v4/_examples/discordgo)
 
 ## Troubleshooting
 
