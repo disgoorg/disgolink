@@ -1,7 +1,7 @@
 [![Go Reference](https://pkg.go.dev/badge/github.com/disgoorg/disgolink.svg)](https://pkg.go.dev/github.com/disgoorg/disgolink)
 [![Go Report](https://goreportcard.com/badge/github.com/disgoorg/disgolink)](https://goreportcard.com/report/github.com/disgoorg/disgolink)
 [![Go Version](https://img.shields.io/github/go-mod/go-version/disgoorg/disgolink?filename=go.mod)](https://golang.org/doc/devel/release.html)
-[![License](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](https://github.com/disgoorg/disgolink/blob/master/LICENSE)
+[![License](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](LICENSE)
 [![Disgolink Version](https://img.shields.io/github/v/release/disgoorg/disgolink?label=release)](https://github.com/disgoorg/disgolink/releases/latest)
 [![Support Discord](https://discord.com/api/guilds/817327181659111454/widget.png)](https://discord.gg/NFmvZYmZMF)
 
@@ -207,8 +207,8 @@ Here is a list of plugins(you can pr your own to here):
 ## Examples
 
 You can find examples under 
-* disgo: [_example](https://github.com/disgoorg/disgolink/tree/v2/_examples/disgo)
-* discordgo:   [_examples](https://github.com/disgoorg/disgolink/tree/v2/_examples/discordgo)
+* disgo: [_example](_examples/disgo)
+* discordgo:   [_examples](_examples/discordgo)
 
 ## Troubleshooting
 
@@ -220,4 +220,4 @@ Contributions are welcomed but for bigger changes please first reach out via [Di
 
 ## License
 
-Distributed under the [![License](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](https://github.com/disgoorg/disgolink/blob/master/LICENSE). See LICENSE for more information.
+Distributed under the [![License](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](LICENSE). See LICENSE for more information.
