@@ -122,12 +122,8 @@ func (n *Node) open(ctx context.Context) error {
 		"Client-Name":   []string{fmt.Sprintf("%s/%s", Name, Version)},
 	}
 
-	sessionID := n.Config.SessionID
-	if sessionID == "" {
-		sessionID = n.Config.SessionID
-	}
-	if sessionID != "" {
-		header.Add("Session-Id", sessionID)
+	if n.Config.SessionID != "" {
+		header.Add("Session-Id", n.Config.SessionID)
 	}
 
 	conn, rs, err := websocket.DefaultDialer.DialContext(ctx, n.Config.WsURL(), header)
@@ -183,30 +179,11 @@ func (n *Node) Close() {
 }
 
 func (n *Node) doReconnect(ctx context.Context) error {
-	var (
-		try              int
-		backoffIncrement int
-	)
-
-	for {
-		// Exponentially backoff up to a limit of 10s
-		delay := time.Duration(1<<backoffIncrement) * time.Second
-		if delay > maximumConnectDelay {
-			delay = maximumConnectDelay
-		} else {
-			backoffIncrement++
-		}
-
-		timer := time.NewTimer(delay)
-		select {
-		case <-ctx.Done():
-			return ctx.Err()
-		case <-timer.C:
-		}
-
+	for attempt := 0; ; attempt++ {
+		// The first attempt happens immediately. After that the delay doubles
+		// up to maximumConnectDelay.
 		err := n.open(ctx)
 		if err == nil {
-			// Successfully connected, our job here is done
 			return nil
 		}
 
@@ -214,13 +191,35 @@ func (n *Node) doReconnect(ctx context.Context) error {
 			return err
 		}
 
-		n.logger.ErrorContext(ctx, "failed to reconnect node", slog.Any("err", err), slog.Int("try", try), slog.Duration("delay", delay))
+		delay := reconnectDelay(attempt)
+		n.logger.ErrorContext(ctx, "failed to reconnect node", slog.Any("err", err), slog.Int("attempt", attempt), slog.Duration("delay", delay))
 		n.statusMu.Lock()
 		n.status = StatusDisconnected
 		n.statusMu.Unlock()
 
-		try++
+		timer := time.NewTimer(delay)
+		select {
+		case <-ctx.Done():
+			timer.Stop()
+			return ctx.Err()
+		case <-timer.C:
+		}
 	}
+}
+
+// reconnectDelay returns the delay before retrying a failed connection.
+// It starts at one second and doubles after every failed attempt, capped at
+// maximumConnectDelay.
+func reconnectDelay(attempt int) time.Duration {
+	if attempt <= 0 {
+		return time.Second
+	}
+
+	delay := time.Second
+	for i := 0; i < attempt && delay < maximumConnectDelay; i++ {
+		delay *= 2
+	}
+	return min(delay, maximumConnectDelay)
 }
 
 func (n *Node) reconnect() {

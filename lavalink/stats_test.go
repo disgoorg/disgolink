@@ -42,6 +42,24 @@ func TestStats_Better(t *testing.T) {
 			other: makeStats(0.5, 2),
 			want:  true,
 		},
+		{
+			name:  "unmeasured node is never better",
+			self:  makeStats(0, 0),
+			other: makeStats(0.5, 4),
+			want:  false,
+		},
+		{
+			name:  "measured node is better than unmeasured node",
+			self:  makeStats(0.5, 4),
+			other: makeStats(0, 0),
+			want:  true,
+		},
+		{
+			name:  "fractional load difference is not truncated",
+			self:  makeStats(0.501, 1),
+			other: makeStats(0.509, 1),
+			want:  true,
+		},
 	}
 
 	for _, test := range tests {

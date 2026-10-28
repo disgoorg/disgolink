@@ -10,10 +10,13 @@ type Stats struct {
 }
 
 func (s Stats) Better(stats Stats) bool {
-	sLoad := int(s.CPU.SystemLoad / float64(s.CPU.Cores) * 100)
-	statsLoad := int(stats.CPU.SystemLoad / float64(stats.CPU.Cores) * 100)
-
-	return sLoad < statsLoad
+	if s.CPU.Cores <= 0 {
+		return false
+	}
+	if stats.CPU.Cores <= 0 {
+		return true
+	}
+	return s.CPU.SystemLoad/float64(s.CPU.Cores) < stats.CPU.SystemLoad/float64(stats.CPU.Cores)
 }
 
 type Memory struct {

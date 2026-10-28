@@ -68,6 +68,12 @@ func (p *Player) Update(ctx context.Context, opts ...PlayerUpdateOpt) error {
 		return err
 	}
 
+	// Lavalink responds with 204 No Content when it has no player body to return.
+	if updatedPlayer == nil {
+		return nil
+	}
+
+	p.Track = updatedPlayer.Track
 	p.Volume = updatedPlayer.Volume
 	p.Voice = updatedPlayer.Voice
 	p.Filters = updatedPlayer.Filters
